@@ -1,12 +1,9 @@
-import AppRoutes from "@/routes/AppRoutes";
 import { useEffect } from "react";
-import { useAuthStore } from "./Stores/useAuthStore";
+import { useAuthStore } from "@/Stores/useAuthStore";
+import AppRoutes from "@/routes/AppRoutes";
 
 export default function App() {
-
-    useEffect(() => {
-    useAuthStore.getState().init();   // 새로고침 시 role 복원
-  }, []);
-
+  const init = useAuthStore((s) => s.init);
+  useEffect(() => { init(); }, [init]);
   return <AppRoutes />;
 }

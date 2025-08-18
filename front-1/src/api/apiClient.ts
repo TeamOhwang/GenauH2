@@ -1,3 +1,4 @@
+
 // src/api/apiClient.ts
 import axios, {
   AxiosInstance,
@@ -6,7 +7,7 @@ import axios, {
   AxiosRequestConfig,
 } from "axios";
 
-/* ------------------------ 1) 상수 & 타입 ------------------------ */
+/* ------------------------ 상수 & 타입 ------------------------ */
 const API_BASE_URL: string =
   (import.meta as any)?.env?.VITE_API_BASE_URL || "http://localhost:8089/api";
 
@@ -18,7 +19,7 @@ type ApiEnvelope<T> = { data: T };
 type RefreshRes = ApiEnvelope<{ accessToken: string }>;
 type JwtPayload = { exp?: number };
 
-/* ------------------ 2) 토큰 저장소(메모리 + 로컬) ------------------ */
+/* ------------------ 토큰 저장소 (메모리 + 로컬) ------------------ */
 let accessToken: string | null =
   typeof window !== "undefined" ? localStorage.getItem(ACCESS_TOKEN_KEY) : null;
 
@@ -39,7 +40,7 @@ export const authToken = {
   },
 };
 
-/* ------------------------ 3) JWT 유틸 ------------------------ */
+/* -------------------- JWT 유틸 -------------------- */
 function base64UrlToBase64(input: string): string {
   let s = input.replace(/-/g, "+").replace(/_/g, "/");
   const pad = s.length % 4;
@@ -50,8 +51,9 @@ function base64UrlToBase64(input: string): string {
 function decodeJwt(token?: string | null): JwtPayload | null {
   if (!token) return null;
   try {
-    const [, payload] = token.split(".");
-    if (!payload) return null;
+    const parts = token.split(".", 2);
+    if (parts.length < 2) return null;
+    const payload = parts[1];
     const json = atob(base64UrlToBase64(payload));
     return JSON.parse(json) as JwtPayload;
   } catch {
@@ -61,22 +63,30 @@ function decodeJwt(token?: string | null): JwtPayload | null {
 
 function isExpiredOrClose(token: string | null, marginSec = EXP_MARGIN_SEC): boolean {
   if (!token) return true;
+
   const payload = decodeJwt(token);
-  if (!payload?.exp) return true;
+  const exp = payload?.exp;
+
+  if (typeof exp !== "number" || !Number.isFinite(exp)) return true;
+
   const now = Math.floor(Date.now() / 1000);
-  return payload.exp <= now + marginSec;
+  return exp <= now + marginSec;
 }
 
-/* ------------------ 4) 재발급 (전역 axios 사용) ------------------ */
+/* ------------------ 재발급 (전역 axios 사용) ------------------ */
 async function requestNewAccessToken(): Promise<string> {
-  const res = await axios.post<RefreshRes>(`${API_BASE_URL}/reissue`, {}, { withCredentials: true });
+  const res = await axios.post<RefreshRes>(
+    `${API_BASE_URL}/reissue`,
+    {},
+    { withCredentials: true }
+  );
   const newToken = res.data?.data?.accessToken;
   if (!newToken) throw new Error("No accessToken in reissue response");
   authToken.set(newToken);
   return newToken;
 }
 
-/* ------------- 5) 동시 재발급 1회 보장(대기열 큐) ------------- */
+/* ------------- 동시 재발급 1회 보장(대기열 큐) ------------- */
 let isRefreshing = false;
 type Waiter = { resolve: (t: string) => void; reject: (e: unknown) => void };
 let waitQueue: Waiter[] = [];
@@ -89,26 +99,36 @@ function notifyQueue(error: unknown | null, token?: string) {
   waitQueue = [];
 }
 
-/* -------- 6) headers 도우미 (AxiosHeaders/Plain 객체 모두 지원) -------- */
+/* -------- headers 도우미 (AxiosHeaders/Plain 모두 지원) -------- */
 function setHeader(h: any, key: string, value?: string) {
   if (!h) return;
+
+  // 삭제 우선 처리
+  if (value === undefined) {
+    if (typeof h.delete === "function") {
+      h.delete(key); // AxiosHeaders 안전 삭제
+    } else {
+      delete (h as Record<string, any>)[key];
+    }
+    return;
+  }
+
+  // 설정
   if (typeof h.set === "function") {
-    h.set(key, value as any); // AxiosHeaders
-  } else if (value === undefined) {
-    delete (h as Record<string, any>)[key];
+    h.set(key, value); // AxiosHeaders
   } else {
-    (h as Record<string, any>)[key] = value;
+    (h as Record<string, any>)[key] = value; // Plain object
   }
 }
 
-/* -------------------- 7) Axios 인스턴스 -------------------- */
+/* -------------------- Axios 인스턴스 -------------------- */
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10_000,
-  withCredentials: true, // Refresh 쿠키 포함
+  withCredentials: true, // Refresh 쿠키 포함(브라우저 자동 전송)
 });
 
-/* ------------- 8) 요청 인터셉터 (사전 재발급 + 헤더 부착) ------------- */
+/* ------------- 요청 인터셉터 (사전 재발급 + 헤더 부착) ------------- */
 apiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
     // FormData 업로드 시 Content-Type 강제 제거(브라우저가 설정하도록)
@@ -148,11 +168,13 @@ apiClient.interceptors.request.use(
   (error: AxiosError) => Promise.reject(error)
 );
 
-/* --------- 9) 응답 인터셉터 (401 시 1회 사후 재발급 후 재시도) --------- */
+/* --------- 응답 인터셉터 (401 시 1회 사후 재발급 후 재시도) --------- */
 apiClient.interceptors.response.use(
   (res) => res,
   async (error: AxiosError) => {
-    const original = error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
+    const original = error.config as
+      | (InternalAxiosRequestConfig & { _retry?: boolean })
+      | undefined;
 
     if (error.response?.status === 401 && original && !original._retry) {
       original._retry = true;
@@ -188,13 +210,17 @@ apiClient.interceptors.response.use(
 
 export default apiClient;
 
-/* ----------------------- 10) (선택) 헬퍼 ----------------------- */
+/* ----------------------- (선택) 헬퍼 ----------------------- */
 // 서버가 { data: T }로 주면 언래핑, 아니면 원본 반환
 export async function getD<T = unknown>(url: string, config?: AxiosRequestConfig) {
   const res = await apiClient.get(url, config);
   return ((res.data as ApiEnvelope<T>)?.data ?? res.data) as T;
 }
-export async function postD<T = unknown>(url: string, body?: unknown, config?: AxiosRequestConfig) {
+export async function postD<T = unknown>(
+  url: string,
+  body?: unknown,
+  config?: AxiosRequestConfig
+) {
   const res = await apiClient.post(url, body, config);
   return ((res.data as ApiEnvelope<T>)?.data ?? res.data) as T;
 }
