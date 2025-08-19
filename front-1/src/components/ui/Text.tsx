@@ -1,9 +1,5 @@
 import { forwardRef, ReactNode } from "react";
 
-
-//import { Button, Text } from "@/components/ui";   외부 imports 
-
-
 type Variant = "title" | "body" | "caption";
 
 type OwnProps = {

@@ -36,6 +36,3 @@ export async function logout(): Promise<void> {
   }
 }
 
-export function fetchMe() {
-  return getD<Me>("/users/me");
-}

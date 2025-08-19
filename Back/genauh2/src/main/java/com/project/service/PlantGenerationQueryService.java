@@ -9,9 +9,23 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Service;
+//페이징 로직
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.PageRequest;
 
 import com.project.dto.DailyTotal;
+import com.project.dto.MonthlyTotal;
+import com.project.dto.WeeklyTotal;
+import java.time.temporal.WeekFields;
+import java.util.Locale;
+//import java.util.Map;
+import java.util.stream.Collectors;
+
 import com.project.dto.HourlyAvg;
+import com.project.dto.DashboardSummaryDTO;
+
 import com.project.entity.PlantGeneration;
 import com.project.repository.PlantGenerationRepository;
 
@@ -67,6 +81,76 @@ public class PlantGenerationQueryService {
         return result;
     }
 
+    /* 주별 합계 (kW를 1시간 간격으로 kWh 합산 가정)  */
+    public List<WeeklyTotal> getWeekly(LocalDate start, LocalDate end) {
+        LocalDate s = (start != null) ? start : LocalDate.now().minusDays(90);
+        LocalDate e = (end != null) ? end : LocalDate.now();
+        List<PlantGeneration> rows = repo.findByDateBetween(s, e);
+
+        // 연도와 주차를 기준으로 데이터를 그룹화하고 합계를 계산합니다.
+        Map<String, double[]> weeklySums = rows.stream()
+                .collect(Collectors.groupingBy(r -> {
+                    int year = r.getDate().getYear();
+        
+                    int week = r.getDate().get(WeekFields.of(Locale.getDefault()).weekOfWeekBasedYear());
+                    return year + "-" + week;
+                }, Collectors.reducing(new double[2], r -> 
+                    new double[]{r.getGenerationKw(), r.getForecastKwh()}, 
+                    (a, b) -> new double[]{a[0] + b[0], a[1] + b[1]}
+                )));
+
+        // 결과를 WeeklyTotal DTO 리스트로 변환합니다.
+        return weeklySums.entrySet().stream()
+                .map(entry -> {
+                    String[] parts = entry.getKey().split("-");
+                    int year = Integer.parseInt(parts[0]);
+                    int week = Integer.parseInt(parts[1]);
+                    double[] totals = entry.getValue();
+                    return WeeklyTotal.builder()
+                            .year(year)
+                            .weekOfYear(week)
+                            .genKwhTotal(totals[0])
+                            .predKwhTotal(totals[1])
+                            .build();
+                })
+                .sorted(Comparator.comparingInt(WeeklyTotal::getYear).thenComparingInt(WeeklyTotal::getWeekOfYear))
+                .collect(Collectors.toList());
+    }
+
+    /* 월별 합계 (kW를 1시간 간격으로 kWh 합산 가정) */
+    public List<MonthlyTotal> getMonthly(LocalDate start, LocalDate end) {
+        LocalDate s = (start != null) ? start : LocalDate.now().minusDays(365);
+        LocalDate e = (end != null) ? end : LocalDate.now();
+        List<PlantGeneration> rows = repo.findByDateBetween(s, e);
+
+        // 연도와 월을 기준으로 데이터를 그룹화하고 합계를 계산합니다.
+        Map<String, double[]> monthlySums = rows.stream()
+                .collect(Collectors.groupingBy(r -> 
+                    r.getDate().getYear() + "-" + r.getDate().getMonthValue(),
+                    Collectors.reducing(new double[2], r -> 
+                        new double[]{r.getGenerationKw(), r.getForecastKwh()},
+                        (a, b) -> new double[]{a[0] + b[0], a[1] + b[1]}
+                    )
+                ));
+
+        // 결과를 MonthlyTotal DTO 리스트로 변환합니다.
+        return monthlySums.entrySet().stream()
+                .map(entry -> {
+                    String[] parts = entry.getKey().split("-");
+                    int year = Integer.parseInt(parts[0]);
+                    int month = Integer.parseInt(parts[1]);
+                    double[] totals = entry.getValue();
+                    return MonthlyTotal.builder()
+                            .year(year)
+                            .month(month)
+                            .genKwhTotal(totals[0])
+                            .predKwhTotal(totals[1])
+                            .build();
+                })
+                .sorted(Comparator.comparingInt(MonthlyTotal::getYear).thenComparingInt(MonthlyTotal::getMonth))
+                .collect(Collectors.toList());
+    }
+
     /** 시간대 평균(0~23시) */
     public List<HourlyAvg> getHourlyAvg(LocalDate start, LocalDate end) {
         LocalDate s = (start != null) ? start : LocalDate.now().minusDays(30);
@@ -95,4 +179,50 @@ public class PlantGenerationQueryService {
         }
         return result;
     }
+
+     /* 대시보드 요약 정보  */
+    public DashboardSummaryDTO getDashboardSummary() {
+        // DB에서 가장 최신 데이터 1건을 가져옵니다.
+        PlantGeneration latest = repo.findFirstByOrderByDateDescHourDesc();
+
+        if (latest == null) {
+            // 데이터가 없는 경우 기본값 또는 예외 처리를 할 수 있습니다.
+            return DashboardSummaryDTO.builder()
+                .currentGenerationKw(0.0)
+                .currentForecastKwh(0.0)
+                .capacityKw(0)
+                .idlePowerKw(0.0)
+                .conversionEfficiency(0.0)
+                .build();
+        }
+
+        double generationKw = latest.getGenerationKw();
+        int capacityKw = latest.getCapacityKw();
+        double idlePower = capacityKw - generationKw;
+        
+        // 설비용량이 0일 경우 0으로 나누는 것을 방지
+        double efficiency = (capacityKw > 0) ? (generationKw / capacityKw) * 100 : 0.0;
+
+        return DashboardSummaryDTO.builder()
+                .currentGenerationKw(generationKw)
+                .currentForecastKwh(latest.getForecastKwh())
+                .capacityKw(capacityKw)
+                .idlePowerKw(idlePower)
+                .conversionEfficiency(efficiency)
+                .build();
+    }
+
+    /* 상세 데이터 페이징 조회 */
+    public Page<PlantGeneration> getDetailedData(LocalDate start, LocalDate end, int page, int size) {
+        LocalDate s = (start != null) ? start : LocalDate.now().minusDays(30);
+        LocalDate e = (end != null) ? end : LocalDate.now();
+
+        // 페이지 번호, 페이지 크기, 정렬 기준을 포함하는 Pageable 객체 생성
+        Pageable pageable = PageRequest.of(page, size, Sort.by("date").descending().and(Sort.by("hour").descending()));
+
+        return repo.findByDateBetween(s, e, pageable);
+    }
+
+
+
 }
