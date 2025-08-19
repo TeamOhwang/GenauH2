@@ -3,7 +3,7 @@ package com.project.controller;
 import com.project.dto.LoginRequestDTO;
 import com.project.dto.UserDTO;
 import com.project.service.UserService;
-import com.project.security.TokenProvider; // TokenProvider 사용
+import com.project.security.TokenProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +15,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/user")
-@CrossOrigin(origins = {"http://localhost:5173"})
+@CrossOrigin(origins = { "http://localhost:5173" })
 public class UserController {
 
     @Autowired
@@ -55,9 +55,47 @@ public class UserController {
             System.err.println("오류 타입: " + e.getClass().getSimpleName());
             System.err.println("오류 메시지: " + e.getMessage());
             e.printStackTrace();
-            
+
             response.put("success", false);
             response.put("message", "로그인 처리 중 오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    // 조직 + 사용자 등록 (관리자 권한 필요)
+    @PostMapping("/register")
+    public ResponseEntity<Map<String, Object>> registerOrganizationAndUser(
+            @RequestBody Map<String, String> request,
+            @RequestHeader(value = "Authorization", required = false) String token) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            // 관리자 권한 검증
+            UserDTO currentUser = validateAdminToken(token, response);
+            if (currentUser == null) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+
+            String orgname = request.get("orgname");
+            String name = request.get("name");
+            String bizRegNo = request.get("bizRegNo");
+            String email = request.get("email");
+            String password = request.get("password");
+
+            if (orgname == null || name == null || bizRegNo == null || email == null || password == null) {
+                response.put("success", false);
+                response.put("message", "필수 입력값이 누락되었습니다.");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            UserDTO created = userService.createOrganizationAndUser(orgname, name, bizRegNo, email, password);
+
+            response.put("success", true);
+            response.put("data", created);
+            response.put("message", "조직 및 사용자가 등록되었습니다.");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
@@ -86,7 +124,7 @@ public class UserController {
 
             String actualToken = token.substring(7);
             String userId = tokenProvider.validateAndGetUserId(actualToken);
-            
+
             if (userId == null) {
                 response.put("success", false);
                 response.put("message", "유효하지 않은 토큰입니다.");
@@ -112,7 +150,8 @@ public class UserController {
 
     // 사용자 프로필 조회
     @GetMapping("/profile")
-    public ResponseEntity<Map<String, Object>> getUserProfile(@RequestHeader(value = "Authorization", required = false) String token) {
+    public ResponseEntity<Map<String, Object>> getUserProfile(
+            @RequestHeader(value = "Authorization", required = false) String token) {
         Map<String, Object> response = new HashMap<>();
 
         try {
@@ -124,7 +163,7 @@ public class UserController {
 
             String actualToken = token.substring(7);
             String userId = tokenProvider.validateAndGetUserId(actualToken);
-            
+
             if (userId == null) {
                 response.put("success", false);
                 response.put("message", "유효하지 않은 토큰입니다.");
@@ -205,7 +244,7 @@ public class UserController {
 
             String actualToken = token.substring(7);
             String userId = tokenProvider.validateAndGetUserId(actualToken);
-            
+
             if (userId == null) {
                 response.put("success", false);
                 response.put("message", "유효하지 않은 토큰입니다.");
@@ -229,9 +268,9 @@ public class UserController {
 
     // 관리자 권한 확인 헬퍼 메소드
     private boolean isAdmin(UserDTO user) {
-        return user.getRole() != null && 
-               (user.getRole().equals(com.project.entity.User.Role.SUPERVISOR) || 
-                "SUPERVISOR".equals(user.getRole().toString()));
+        return user.getRole() != null &&
+                (user.getRole().equals(com.project.entity.User.Role.SUPERVISOR) ||
+                        "SUPERVISOR".equals(user.getRole().toString()));
     }
 
     // 사용자 상태 업데이트
