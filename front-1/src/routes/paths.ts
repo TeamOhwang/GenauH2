@@ -5,7 +5,6 @@ export const PATHS = {
   user: "/user",    
   admin: "/admin",  
   notFound: "*",
-  hourly: "/hourly",
   daily: "/daily",
   weekly: "/weekly",
   monthly: "/monthly",

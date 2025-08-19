@@ -6,7 +6,6 @@ import Home from "@/pages/Home";
 import About from "@/pages/About";
 import NotFound from "@/pages/NotFound";
 import Login from "@/pages/Login";
-import Hourly from "@/pages/Houly";
 import Daily from "@/pages/Daily";
 import Weekly from "@/pages/Weekly";
 import Monthly from "@/pages/Monthly";
@@ -21,7 +20,6 @@ export default function AppRoutes() {
         <Route path={PATHS.home} element={<Home />} />
         <Route path={PATHS.about} element={<About />} />
         <Route path={PATHS.login} element={<Login />} />   
-        <Route path={PATHS.hourly} element={<Hourly/>} />
         <Route path={PATHS.daily} element={<Daily/>} />
         <Route path={PATHS.weekly} element={<Weekly/>} />
         <Route path={PATHS.monthly} element={<Monthly/>} />
