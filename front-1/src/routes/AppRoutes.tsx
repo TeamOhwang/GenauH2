@@ -6,6 +6,7 @@ import Home from "@/pages/Home";
 import About from "@/pages/About";
 import NotFound from "@/pages/NotFound";
 import Login from "@/pages/Login";
+import Admin from "@/pages/Admin";
 import Hourly from "@/pages/Houly";
 import Daily from "@/pages/Daily";
 import Weekly from "@/pages/Weekly";
@@ -17,10 +18,11 @@ import Setting from "@/pages/Setting";
 export default function AppRoutes() {
   return (
     <Routes>
+      <Route path="/" element={<Login />} />
       <Route element={<RootLayout />}>
         <Route path={PATHS.home} element={<Home />} />
+        <Route path={PATHS.admin} element={<Admin />} />
         <Route path={PATHS.about} element={<About />} />
-        <Route path={PATHS.login} element={<Login />} />   
         <Route path={PATHS.hourly} element={<Hourly/>} />
         <Route path={PATHS.daily} element={<Daily/>} />
         <Route path={PATHS.weekly} element={<Weekly/>} />

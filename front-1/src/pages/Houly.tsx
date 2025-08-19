@@ -11,7 +11,7 @@ import {
 
 } from "chart.js"
 
-import LineChart from "@/components/ChartComponent";
+import LineChart from "@/components/ui/ChartComponent";
 
 ChartJs.register(
     CategoryScale,
