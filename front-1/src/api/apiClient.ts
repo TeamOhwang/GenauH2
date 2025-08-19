@@ -14,6 +14,7 @@ export const ACCESS_TOKEN_KEY = "accessToken";
 const LOGIN_PATH = "/login";                 // 프론트 라우트
 const EXP_MARGIN_SEC = 30;                   // 만료 30초 전부터 만료 간주
 const DEBUG = !!(import.meta as any)?.env?.DEV;
+const ENABLE_REFRESH = ((import.meta as any)?.env?.VITE_ENABLE_REFRESH ?? "false") === "true";
 
 export type ApiEnvelope<T> = { data: T };
 type RefreshRes = ApiEnvelope<{ accessToken: string }>;
@@ -176,6 +177,7 @@ AUTH_CH?.addEventListener("message", (e: MessageEvent) => {
 
 /* ======================== 재발급(전역 axios) & 동시성 큐 ======================== */
 async function requestNewAccessToken(): Promise<string> {
+  if (!ENABLE_REFRESH) throw new Error("Token refresh disabled in this environment");
   log("reissuing token…");
   const res = await axios.post<RefreshRes>(
     `${API_BASE_URL}${PATHS.reissue}`,
@@ -223,7 +225,7 @@ apiClient.interceptors.request.use(
     let token = authToken.get();
 
     // 만료(또는 임박) 시 선재발급
-    if (token && isExpiredOrClose(token)) {
+    if (ENABLE_REFRESH && token && isExpiredOrClose(token)) {
       if (!isRefreshing) {
         isRefreshing = true;
         try {
@@ -273,6 +275,7 @@ apiClient.interceptors.response.use(
       undefined;
 
     if (
+      ENABLE_REFRESH &&
       error.response?.status === 401 &&
       original &&
       !original._retry &&

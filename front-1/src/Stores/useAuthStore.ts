@@ -22,7 +22,13 @@ const decodeRole = (t: string | null): Role => {
       if (p.roles.includes("USER")) return "USER";
     }
   } catch {}
-  return null;
+  return null; // 실제론 JWT에 role이 없으므로 대부분 null
+};
+
+// 서버 역할 → 프론트 역할 매핑
+const mapServerRole = (serverRole?: string): "ADMIN" | "USER" | null => {
+  if (!serverRole) return null;
+  return serverRole.toUpperCase() === "SUPERVISOR" ? "ADMIN" : "USER";
 };
 
 const isExpiredOrClose = (t: string | null, marginSec = EXP_MARGIN_SEC): boolean => {
@@ -41,7 +47,6 @@ const hasBC =
   typeof window !== "undefined" && typeof (window as any).BroadcastChannel !== "undefined";
 const AUTH_CH: BroadcastChannel | null = hasBC ? new BroadcastChannel("auth") : null;
 
-/** StrictMode 대비: 리스너 1회만 바인딩, init 중복 호출 병합 */
 let __authListenersBound = false;
 let __initInFlight: Promise<void> | null = null;
 
@@ -49,63 +54,60 @@ export const useAuthStore = create<{
   role: Role;
   isInit: boolean;
   init: () => Promise<void>;
+  syncRoleFromServer: () => Promise<void>; // ← 추가
   loginWithToken: (t: string) => void;
   logout: () => void;
 }>()((set, get) => ({
   role: decodeRole(authToken.get()),
   isInit: false,
 
+  // 서버에서 역할 조회해서 세팅
+  syncRoleFromServer: async () => {
+    const token = authToken.get();
+    if (!token) { set({ role: null }); return; }
+    try {
+      const res = await apiClient.get(`${API_BASE_URL}/user/profile`);
+      // { success, data: { role: "SUPERVISOR" | "USER", ... } }
+      const serverRole: string | undefined =
+        (res as any)?.data?.data?.role ?? (res as any)?.data?.role;
+      set({ role: mapServerRole(serverRole) });
+    } catch {
+      set({ role: null });
+    }
+  },
+
   init: async () => {
     if (__initInFlight) {
-      await __initInFlight;
-      return;
+      await __initInFlight; return;
     }
 
     if (!__authListenersBound) {
       __authListenersBound = true;
-
       if (typeof window !== "undefined") {
         window.addEventListener("storage", (e) => {
           if (e.key === ACCESS_TOKEN_KEY) {
-            set({ role: decodeRole(e.newValue) });
+            set({ role: decodeRole(e.newValue) }); // 토큰 변경 시 우선 업데이트
           }
         });
       }
-
       AUTH_CH?.addEventListener("message", (e: MessageEvent) => {
-        const { type, token } =
-          (e.data ?? {}) as { type?: string; token?: string | null };
+        const { type, token } = (e.data ?? {}) as { type?: string; token?: string | null };
         if (type === "SET") set({ role: decodeRole(token ?? null) });
         if (type === "LOGOUT") set({ role: null });
       });
     }
 
     __initInFlight = (async () => {
-      let t = authToken.get();
-
-      // 토큰 없거나 만료 임박 → 쿠키 기반 /reissue (절대 URL)
-      if (!t || isExpiredOrClose(t)) {
-        try {
-          const res = await apiClient.post(`${API_BASE_URL}${PATHS.reissue}`, {});
-          const newToken =
-            (res as any)?.data?.data?.accessToken ?? (res as any)?.data?.accessToken;
-          if (typeof newToken === "string" && newToken.length > 0) {
-            authToken.set(newToken);
-            t = newToken;
-          }
-        } catch {
-          // 재발급 실패 → 로그인 필요 상태 유지
-        }
+      const t = authToken.get();
+      // 리프레시 비활성화 환경이므로 재발급 호출은 생략(또는 실패 용인)
+      // decodeRole만으로는 null이므로 서버에 한 번 더 물어봄
+      if (!get().role && t) {
+        await get().syncRoleFromServer();
       }
-
-      set({ role: decodeRole(t), isInit: true });
+      set({ isInit: true });
     })();
 
-    try {
-      await __initInFlight;
-    } finally {
-      __initInFlight = null;
-    }
+    try { await __initInFlight; } finally { __initInFlight = null; }
   },
 
   loginWithToken: (t) => {
@@ -114,7 +116,7 @@ export const useAuthStore = create<{
   },
 
   logout: () => {
-    authToken.clear(); // location.replace("/login")
+    authToken.clear();
     set({ role: null, isInit: true });
   },
 }));
