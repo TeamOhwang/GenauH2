@@ -8,7 +8,7 @@ export default function RootLayout() {
   return (
     <div className="bg-gray-100 flex flex-col h-screen">
       <Header />
-      <div className="flex flex-1">
+      <div className="flex flex-1 overflow-hidden scrollbar-hide">
         <Sidebar/>
         <Main>
           <Outlet />

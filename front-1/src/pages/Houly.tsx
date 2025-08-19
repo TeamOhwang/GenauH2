@@ -26,16 +26,42 @@ ChartJs.register(
 
 export default function Hourly() {
 
-    const data = [
-        { "time_hour": 5, "time_amount": 27710, "time_count": 5 },
-        { "time_hour": 6, "time_amount": 27682, "time_count": 2 },
-        { "time_hour": 7, "time_amount": 22764, "time_count": 4 },
-        { "time_hour": 8, "time_amount": 46618, "time_count": 2 },
-        { "time_hour": 9, "time_amount": 49682, "time_count": 2 },
-        { "time_hour": 10, "time_amount": 30535, "time_count": 2 }
-    ]
+    // 가데이터
+    const solaData = {
+        labels: ["9시", "10시", "11시", "12시"],
+        datasets: [
+            {
+                label: "시간별 태양광 발전량",
+                data: [100, 200, 150, 300],
+                borderColor: "rgba(75,192,192,1)",
+                backgroundColor: "rgba(75,192,192,0.2)",
+            },
+        ],
+    };
+
+    const h2Data = {
+        labels: ["9시", "10시", "11시", "12시"],
+        datasets: [
+            {
+                label: "시간별 수소 생산량",
+                data: [200, 400, 350, 283],
+                borderColor: "#4880ff",
+                backgroundColor: "#4880ff",
+            },
+        ],
+    }
+
+    const options = {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: "bottom" as const,
+            },
+        },
+    };
+
     return (
-        <>
+        <div className="h-full overflow-auto scrollbar-hide">
             <p className="m-6 font-bold text-2xl ">시간별 모니터링</p>
 
             <div className="grid grid-cols-4 gap-4 m-6">
@@ -58,11 +84,14 @@ export default function Hourly() {
 
             <div className="m-6 bg-white rounded-2xl shadow p-4">
                 <p className="text-xl font-bold mb-3">태양광 발전량</p>
-                <LineChart />
+                <LineChart data={solaData} options={options}/>
             </div>
 
+            <div className="m-6 bg-white rounded-2xl shadow p-4">
+                <p className="text-xl font-bold mb-3">수소 생산량</p>
+                <LineChart data={h2Data} options={options}/>
+            </div>
 
-
-        </>
+        </div>
     )
 }
