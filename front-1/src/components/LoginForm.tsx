@@ -19,10 +19,10 @@ export default function LoginForm({ loading = false, error, onSubmit }: Props) {
   };
 
   return (
-    <div style={{ maxWidth: 360, margin: "60px auto", padding: 24, border: "1px solid #eee", borderRadius: 12 }}>
+    <div >
       <Text variant="title">로그인</Text>
 
-      <form onSubmit={handleSubmit} style={{ marginTop: 16, display: "grid", gap: 12 }}>
+      <form onSubmit={handleSubmit} >
         <label>
           <Text>이메일</Text>
           <input
@@ -31,7 +31,6 @@ export default function LoginForm({ loading = false, error, onSubmit }: Props) {
             onChange={(e) => setEmail(e.currentTarget.value)}
             required
             autoComplete="email"
-            style={{ width: "100%", padding: 8, borderRadius: 6, border: "1px solid #ccc" }}
           />
         </label>
 
@@ -43,13 +42,12 @@ export default function LoginForm({ loading = false, error, onSubmit }: Props) {
             onChange={(e) => setPassword(e.currentTarget.value)}
             required
             autoComplete="current-password"
-            style={{ width: "100%", padding: 8, borderRadius: 6, border: "1px solid #ccc" }}
           />
         </label>
 
-        {error && <Text color="#c00" style={{ marginTop: 4 }}>{error}</Text>}
+        {error && <Text>{error}</Text>}
 
-        <Button type="submit" disabled={loading} style={{ marginTop: 8 }}>
+        <Button type="submit" disabled={loading}>
           {loading ? "로그인 중..." : "로그인"}
         </Button>
       </form>
