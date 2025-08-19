@@ -18,7 +18,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
     
-    private String bizRegNo;
+    private Long orgId;
     
     @Column(unique = true, nullable = false)
     private String email;

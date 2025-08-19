@@ -15,7 +15,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/user")
-@CrossOrigin(origins = { "http://localhost:5173" })
+@CrossOrigin(origins = {"http://localhost:5173"})
 public class UserController {
 
     @Autowired
@@ -55,7 +55,7 @@ public class UserController {
             System.err.println("오류 타입: " + e.getClass().getSimpleName());
             System.err.println("오류 메시지: " + e.getMessage());
             e.printStackTrace();
-
+            
             response.put("success", false);
             response.put("message", "로그인 처리 중 오류가 발생했습니다: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
@@ -86,7 +86,7 @@ public class UserController {
 
             String actualToken = token.substring(7);
             String userId = tokenProvider.validateAndGetUserId(actualToken);
-
+            
             if (userId == null) {
                 response.put("success", false);
                 response.put("message", "유효하지 않은 토큰입니다.");
@@ -112,8 +112,7 @@ public class UserController {
 
     // 사용자 프로필 조회
     @GetMapping("/profile")
-    public ResponseEntity<Map<String, Object>> getUserProfile(
-            @RequestHeader(value = "Authorization", required = false) String token) {
+    public ResponseEntity<Map<String, Object>> getUserProfile(@RequestHeader(value = "Authorization", required = false) String token) {
         Map<String, Object> response = new HashMap<>();
 
         try {
@@ -125,7 +124,7 @@ public class UserController {
 
             String actualToken = token.substring(7);
             String userId = tokenProvider.validateAndGetUserId(actualToken);
-
+            
             if (userId == null) {
                 response.put("success", false);
                 response.put("message", "유효하지 않은 토큰입니다.");
@@ -146,88 +145,6 @@ public class UserController {
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "사용자 정보를 가져올 수 없습니다.");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-
-    // 사용자 생성 (관리자 권한 필요) - 새로 추가
-    @PostMapping("/create")
-    public ResponseEntity<Map<String, Object>> createUser(
-            @RequestBody Map<String, Object> request,
-            @RequestHeader(value = "Authorization", required = false) String token) {
-        
-        Map<String, Object> response = new HashMap<>();
-        
-        try {
-            // 관리자 권한 확인
-            UserDTO currentUser = validateAdminToken(token, response);
-            if (currentUser == null) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-            }
-            
-            String email = (String) request.get("email");
-            String password = (String) request.get("password");
-            String roleStr = (String) request.get("role");
-            String bizRegNo = (String) request.get("bizRegNo");
-            
-            // 필수 필드 확인
-            if (email == null || password == null || roleStr == null) {
-                response.put("success", false);
-                response.put("message", "이메일, 비밀번호, 역할은 필수 입력 항목입니다.");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-            }
-            
-            // Role enum 변환
-            com.project.entity.User.Role role;
-            if ("SUPERVISOR".equalsIgnoreCase(roleStr)) {
-                role = com.project.entity.User.Role.SUPERVISOR;
-            } else {
-                role = com.project.entity.User.Role.USER;
-            }
-            
-            UserDTO newUser = userService.createUser(email, password, role, bizRegNo);
-            
-            response.put("success", true);
-            response.put("data", newUser);
-            response.put("message", "사용자가 성공적으로 생성되었습니다.");
-            return ResponseEntity.ok(response);
-            
-        } catch (RuntimeException e) {
-            response.put("success", false);
-            response.put("message", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "사용자 생성 중 오류가 발생했습니다.");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-
-    // 조직별 사용자 조회 (관리자 권한 필요) - 새로 추가
-    @GetMapping("/by-organization/{bizRegNo}")
-    public ResponseEntity<Map<String, Object>> getUsersByOrganization(
-            @PathVariable String bizRegNo,
-            @RequestHeader(value = "Authorization", required = false) String token) {
-        
-        Map<String, Object> response = new HashMap<>();
-        
-        try {
-            // 관리자 권한 확인
-            UserDTO currentUser = validateAdminToken(token, response);
-            if (currentUser == null) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-            }
-            
-            List<UserDTO> users = userService.getUsersByBizRegNo(bizRegNo);
-            
-            response.put("success", true);
-            response.put("data", users);
-            response.put("message", "조직별 사용자 조회가 완료되었습니다.");
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "조직별 사용자 조회 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
@@ -288,7 +205,7 @@ public class UserController {
 
             String actualToken = token.substring(7);
             String userId = tokenProvider.validateAndGetUserId(actualToken);
-
+            
             if (userId == null) {
                 response.put("success", false);
                 response.put("message", "유효하지 않은 토큰입니다.");
@@ -312,9 +229,9 @@ public class UserController {
 
     // 관리자 권한 확인 헬퍼 메소드
     private boolean isAdmin(UserDTO user) {
-        return user.getRole() != null &&
-                (user.getRole().equals(com.project.entity.User.Role.SUPERVISOR) ||
-                        "SUPERVISOR".equals(user.getRole().toString()));
+        return user.getRole() != null && 
+               (user.getRole().equals(com.project.entity.User.Role.SUPERVISOR) || 
+                "SUPERVISOR".equals(user.getRole().toString()));
     }
 
     // 사용자 상태 업데이트
@@ -369,73 +286,6 @@ public class UserController {
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "상태 업데이트 중 오류가 발생했습니다.");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-
-    // 사용자 삭제 (관리자 권한 필요)
-    @DeleteMapping("/delete")
-    public ResponseEntity<Map<String, Object>> deleteUsers(
-            @RequestBody Map<String, Object> request,
-            @RequestHeader(value = "Authorization", required = false) String token) {
-
-        Map<String, Object> response = new HashMap<>();
-
-        try {
-            System.out.println("사용자 삭제 요청 받음: " + request);
-
-            // 관리자 권한 확인
-            UserDTO currentUser = validateAdminToken(token, response);
-            if (currentUser == null) {
-                System.out.println("관리자 권한 확인 실패");
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-            }
-
-            System.out.println("현재 사용자: " + currentUser.getEmail() + " (ID: " + currentUser.getUserId() + ")");
-
-            @SuppressWarnings("unchecked")
-            List<Object> userIds = (List<Object>) request.get("userIds");
-
-            System.out.println("삭제 요청된 사용자 ID 목록: " + userIds);
-
-            if (userIds == null || userIds.isEmpty()) {
-                response.put("success", false);
-                response.put("message", "삭제할 사용자 ID 목록이 필요합니다.");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-            }
-
-            // 자기 자신을 삭제하려는 경우 방지
-            String currentUserIdStr = currentUser.getUserId().toString();
-            boolean containsCurrentUser = userIds.stream()
-                    .anyMatch(id -> currentUserIdStr.equals(id.toString()));
-
-            if (containsCurrentUser) {
-                response.put("success", false);
-                response.put("message", "자기 자신을 삭제할 수 없습니다.");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-            }
-
-            System.out.println("UserService.deleteUsers 호출 시작");
-            boolean deleteResult = userService.deleteUsers(userIds);
-            System.out.println("UserService.deleteUsers 결과: " + deleteResult);
-
-            if (deleteResult) {
-                response.put("success", true);
-                response.put("data", userIds);
-                response.put("message", "선택된 사용자가 성공적으로 삭제되었습니다.");
-                System.out.println("사용자 삭제 성공");
-                return ResponseEntity.ok(response);
-            } else {
-                response.put("success", false);
-                response.put("message", "사용자 삭제에 실패했습니다.");
-                System.out.println("사용자 삭제 실패");
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-            }
-        } catch (Exception e) {
-            System.err.println("사용자 삭제 중 예외 발생: " + e.getClass().getSimpleName() + ": " + e.getMessage());
-            e.printStackTrace();
-            response.put("success", false);
-            response.put("message", "사용자 삭제 중 오류가 발생했습니다: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
