@@ -6,9 +6,15 @@ import axios, {
   AxiosRequestConfig,
 } from "axios";
 
+
+
+// - 토큰 자동 첨부 (Authorization 헤더)
+// - 토큰 만료 시 자동 재발급
+// - 401 에러 시 자동 재시도
+// - 쿠키 기반 리프레시 토큰 관리
 /* ------------------------ 상수 & 타입 ------------------------ */
 const API_BASE_URL: string =
-  (import.meta as any)?.env?.VITE_API_BASE_URL || "http://localhost:8089/api";
+  (import.meta as any)?.env?.VITE_API_BASE_URL || "http://localhost:8088/gh";
 
 const ACCESS_TOKEN_KEY = "accessToken";
 const LOGIN_PATH = "/login";
@@ -72,7 +78,7 @@ function isExpiredOrClose(token: string | null, marginSec = EXP_MARGIN_SEC): boo
 function shouldSkipAuth(url?: string | null): boolean {
   if (!url) return false;
   const u = url.toLowerCase();
-  return u.includes("/auth/login") || u.includes("/auth/logout") || u.includes("/reissue");
+  return u.includes("/user/login") || u.includes("/user/logout") || u.includes("/reissue");
 }
 
 /* ------------------ 재발급 (전역 axios 사용) ------------------ */
