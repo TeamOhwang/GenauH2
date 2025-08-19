@@ -1,4 +1,3 @@
-
 // src/api/apiClient.ts
 import axios, {
   AxiosInstance,
@@ -15,7 +14,7 @@ const ACCESS_TOKEN_KEY = "accessToken";
 const LOGIN_PATH = "/login";
 const EXP_MARGIN_SEC = 30; // 만료 30초 전부터 만료 간주
 
-type ApiEnvelope<T> = { data: T };
+export type ApiEnvelope<T> = { data: T };
 type RefreshRes = ApiEnvelope<{ accessToken: string }>;
 type JwtPayload = { exp?: number };
 
@@ -63,23 +62,23 @@ function decodeJwt(token?: string | null): JwtPayload | null {
 
 function isExpiredOrClose(token: string | null, marginSec = EXP_MARGIN_SEC): boolean {
   if (!token) return true;
-
-  const payload = decodeJwt(token);
-  const exp = payload?.exp;
-
+  const exp = decodeJwt(token)?.exp;
   if (typeof exp !== "number" || !Number.isFinite(exp)) return true;
-
   const now = Math.floor(Date.now() / 1000);
   return exp <= now + marginSec;
 }
 
+/* ------------------ 인증 제외 엔드포인트 ------------------ */
+function shouldSkipAuth(url?: string | null): boolean {
+  if (!url) return false;
+  const u = url.toLowerCase();
+  return u.includes("/auth/login") || u.includes("/auth/logout") || u.includes("/reissue");
+}
+
 /* ------------------ 재발급 (전역 axios 사용) ------------------ */
 async function requestNewAccessToken(): Promise<string> {
-  const res = await axios.post<RefreshRes>(
-    `${API_BASE_URL}/reissue`,
-    {},
-    { withCredentials: true }
-  );
+  // 전역 axios 사용(자기 인스턴스 인터셉터 루프 방지)
+  const res = await axios.post<RefreshRes>(`${API_BASE_URL}/reissue`, {}, { withCredentials: true });
   const newToken = res.data?.data?.accessToken;
   if (!newToken) throw new Error("No accessToken in reissue response");
   authToken.set(newToken);
@@ -103,38 +102,34 @@ function notifyQueue(error: unknown | null, token?: string) {
 function setHeader(h: any, key: string, value?: string) {
   if (!h) return;
 
-  // 삭제 우선 처리
+  // 삭제
   if (value === undefined) {
-    if (typeof h.delete === "function") {
-      h.delete(key); // AxiosHeaders 안전 삭제
-    } else {
-      delete (h as Record<string, any>)[key];
-    }
+    if (typeof h.delete === "function") h.delete(key);
+    else delete (h as Record<string, any>)[key];
     return;
   }
 
   // 설정
-  if (typeof h.set === "function") {
-    h.set(key, value); // AxiosHeaders
-  } else {
-    (h as Record<string, any>)[key] = value; // Plain object
-  }
+  if (typeof h.set === "function") h.set(key, value);
+  else (h as Record<string, any>)[key] = value;
 }
 
 /* -------------------- Axios 인스턴스 -------------------- */
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10_000,
-  withCredentials: true, // Refresh 쿠키 포함(브라우저 자동 전송)
+  withCredentials: true, // Refresh 쿠키 자동 포함
 });
 
 /* ------------- 요청 인터셉터 (사전 재발급 + 헤더 부착) ------------- */
 apiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
-    // FormData 업로드 시 Content-Type 강제 제거(브라우저가 설정하도록)
     if (config.data instanceof FormData && config.headers) {
-      setHeader(config.headers, "Content-Type", undefined as unknown as string);
+      setHeader(config.headers, "Content-Type"); // 값 생략 = 삭제
     }
+
+    // 인증 스킵 대상은 바로 통과
+    if (shouldSkipAuth(config.url)) return config;
 
     let token = authToken.get();
 
@@ -148,6 +143,7 @@ apiClient.interceptors.request.use(
           token = newToken;
         } catch (e) {
           notifyQueue(e, undefined);
+          authToken.clear(); // 요청 단계 실패도 동일 UX 처리
           throw e;
         } finally {
           isRefreshing = false;
@@ -172,11 +168,14 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (res) => res,
   async (error: AxiosError) => {
-    const original = error.config as
-      | (InternalAxiosRequestConfig & { _retry?: boolean })
-      | undefined;
+    const original = error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
 
-    if (error.response?.status === 401 && original && !original._retry) {
+    if (
+      error.response?.status === 401 &&
+      original &&
+      !original._retry &&
+      !shouldSkipAuth(original.url)
+    ) {
       original._retry = true;
 
       try {
@@ -197,7 +196,7 @@ apiClient.interceptors.response.use(
         return apiClient(original);
       } catch (e) {
         notifyQueue(e, undefined);
-        authToken.clear(); // 재발급 자체 실패 → 로그아웃
+        authToken.clear(); // 재발급 실패 → 로그아웃
         return Promise.reject(e);
       } finally {
         isRefreshing = false;
@@ -210,17 +209,13 @@ apiClient.interceptors.response.use(
 
 export default apiClient;
 
-/* ----------------------- (선택) 헬퍼 ----------------------- */
-// 서버가 { data: T }로 주면 언래핑, 아니면 원본 반환
+/* ----------------------- 공용 헬퍼 ----------------------- */
+// 서버가 { data: T }면 언래핑, 아니면 원본 반환
 export async function getD<T = unknown>(url: string, config?: AxiosRequestConfig) {
   const res = await apiClient.get(url, config);
   return ((res.data as ApiEnvelope<T>)?.data ?? res.data) as T;
 }
-export async function postD<T = unknown>(
-  url: string,
-  body?: unknown,
-  config?: AxiosRequestConfig
-) {
+export async function postD<T = unknown>(url: string, body?: unknown, config?: AxiosRequestConfig) {
   const res = await apiClient.post(url, body, config);
   return ((res.data as ApiEnvelope<T>)?.data ?? res.data) as T;
 }
