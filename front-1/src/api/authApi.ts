@@ -1,40 +1,29 @@
-import { postD } from "@/api/apiClient";
-import { useAuthStore } from "@/Stores/useAuthStore";
+import apiClient, { API_BASE_URL, PATHS, authToken } from "@/api/apiClient";
 
-export interface LoginReq {
-  email: string;
-  password: string;
-}
+export type LoginReq = { email: string; password: string };
 
-export interface Me {
-  id: number;
-  email: string;
-  name: string;
-  role: "USER" | "ADMIN";
-}
+export async function login(body: LoginReq): Promise<void> {
+  // 절대 URL로 호출 (프리픽스 보호)
+  const res = await apiClient.post(`${API_BASE_URL}${PATHS.login}`, body, {
+    withCredentials: true, // 서버가 Refresh 쿠키를 내려줄 수 있음
+  });
 
-// 백엔드 응답: { success, token, user?, message? }
-type LoginRes = {
-  success: boolean;
-  token?: string;
-  user?: Me;
-  message?: string;
-};
+  // 서버가 { data: { accessToken } } 또는 { accessToken } 형태 모두 지원
+  const token: unknown =
+    (res as any)?.data?.data?.accessToken ?? (res as any)?.data?.accessToken;
 
-export async function login(body: LoginReq): Promise<string> {
-  const res = await postD<LoginRes>("/user/login", body); 
-  if (!res?.success || !res.token) {
-    throw new Error(res?.message || "로그인 실패");
+  if (typeof token === "string" && token.length > 0) {
+    // 즉시 사용 가능하도록 accessToken 저장
+    authToken.set(token);
   }
-  useAuthStore.getState().loginWithToken(res.token);
-  // (선택) user.role을 스토어에 직접 반영하고 싶다면 setRole 추가해서 여기서 반영
-  return res.token;
 }
 
 export async function logout(): Promise<void> {
   try {
-    await postD<void>("/user/logout"); 
+    // 서버 로그아웃(세션/쿠키 정리)
+    await apiClient.post(`${API_BASE_URL}${PATHS.logout}`, {}, { withCredentials: true });
   } finally {
-    useAuthStore.getState().logout(); 
+    // 클라이언트 토큰 정리 및 /login 이동
+    authToken.clear();
   }
 }

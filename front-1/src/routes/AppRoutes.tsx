@@ -1,4 +1,3 @@
-
 import { Routes, Route, Navigate } from "react-router-dom";
 import RootLayout from "@/layouts/RootLayout";
 import ProtectedRoute from "./ProtectedRoute";
@@ -13,14 +12,14 @@ import Price from "@/pages/Price";
 import Detailed from "@/pages/Detailed";
 import Setting from "@/pages/Setting";
 
-import Admin from "@/pages/Admin";         
+import Admin from "@/pages/Admin";
 import About from "@/pages/About";
 import NotFound from "@/pages/NotFound";
 
 export default function AppRoutes() {
   return (
     <Routes>
-      {/* 메인은 로그인 페이지 (로그인된 사용자는 자기 홈으로 이동) */}
+      {/* 메인 → 로그인 (로그인된 사용자는 자기 홈으로 이동) */}
       <Route
         path="/"
         element={
@@ -37,10 +36,13 @@ export default function AppRoutes() {
           </PublicOnlyRoute>
         }
       />
+
+      {/* 공용 레이아웃 하위 */}
       <Route element={<RootLayout />}>
+        {/* /home 접근 시 /daily로 리다이렉트 */}
+        <Route path={PATHS.home} element={<Navigate to={PATHS.daily} replace />} />
 
-
-        {/* 유저 전용 */}
+        {/* USER 전용 */}
         <Route
           path={PATHS.daily}
           element={
@@ -90,7 +92,7 @@ export default function AppRoutes() {
           }
         />
 
-        {/*  관리자 전용 */}
+        {/* ADMIN 전용 */}
         <Route
           path={PATHS.admin}
           element={
@@ -100,14 +102,11 @@ export default function AppRoutes() {
           }
         />
 
-
-
         {/* 공개 라우트 */}
-        <Route path={PATHS.about}    element={<About />} />
-        <Route path={PATHS.notFound} element={<NotFound />} />
+        <Route path={PATHS.about} element={<About />} />
 
-        {/* 안전망 */}
-        <Route path="*" element={<Navigate to={PATHS.notFound} replace />} />
+        {/* 404 */}
+        <Route path={PATHS.notFound} element={<NotFound />} />
       </Route>
     </Routes>
   );

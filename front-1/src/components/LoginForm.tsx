@@ -1,15 +1,16 @@
 import { useState, FormEvent } from "react";
 import Button from "@/components/ui/Button";
 import Text from "@/components/ui/Text";
+import type { LoginValues } from "@/hooks/useLogin";
 
 type Props = {
   loading?: boolean;
   error?: string | null;
-  onSubmit: (v: { email: string; password: string }) => void | Promise<void>;
+  onSubmit: (v: LoginValues) => Promise<boolean>;
 };
 
 export default function LoginForm({ loading = false, error, onSubmit }: Props) {
-  const [email, setEmail] = useState("");
+  const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
 
   const handleSubmit = async (e: FormEvent) => {
@@ -19,10 +20,10 @@ export default function LoginForm({ loading = false, error, onSubmit }: Props) {
   };
 
   return (
-    <div >
+    <div>
       <Text variant="title">로그인</Text>
 
-      <form onSubmit={handleSubmit} >
+      <form onSubmit={handleSubmit}>
         <label>
           <Text>이메일</Text>
           <input
@@ -31,6 +32,7 @@ export default function LoginForm({ loading = false, error, onSubmit }: Props) {
             onChange={(e) => setEmail(e.currentTarget.value)}
             required
             autoComplete="email"
+            disabled={loading}
           />
         </label>
 
@@ -42,10 +44,15 @@ export default function LoginForm({ loading = false, error, onSubmit }: Props) {
             onChange={(e) => setPassword(e.currentTarget.value)}
             required
             autoComplete="current-password"
+            disabled={loading}
           />
         </label>
 
-        {error && <Text>{error}</Text>}
+        {error && (
+          <Text aria-live="polite" role="alert">
+            {error}
+          </Text>
+        )}
 
         <Button type="submit" disabled={loading}>
           {loading ? "로그인 중..." : "로그인"}
