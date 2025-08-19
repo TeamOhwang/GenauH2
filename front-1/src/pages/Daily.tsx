@@ -1,4 +1,4 @@
-import LineChart from "@/components/ChartComponent";
+import LineChart from "@/components/ui/ChartComponent";
 
 
 export default function Daily() {
