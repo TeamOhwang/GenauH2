@@ -65,8 +65,8 @@ public class PlantGenerationQueryService {
         for (PlantGeneration r : rows) {
             LocalDate key = r.getDate();
             acc.computeIfAbsent(key, k -> new double[2]);
-            acc.get(key)[0] += r.getGenerationKw();
-            acc.get(key)[1] += r.getForecastKwh();
+            acc.get(key)[0] += r.getGeneration_Kw();
+            acc.get(key)[1] += r.getForecast_Kwh();
         }
 
         List<DailyTotal> result = acc.entrySet().stream()
@@ -95,7 +95,7 @@ public class PlantGenerationQueryService {
                     int week = r.getDate().get(WeekFields.of(Locale.getDefault()).weekOfWeekBasedYear());
                     return year + "-" + week;
                 }, Collectors.reducing(new double[2], r -> 
-                    new double[]{r.getGenerationKw(), r.getForecastKwh()}, 
+                    new double[]{r.getGeneration_Kw(), r.getForecast_Kwh()}, 
                     (a, b) -> new double[]{a[0] + b[0], a[1] + b[1]}
                 )));
 
@@ -128,7 +128,7 @@ public class PlantGenerationQueryService {
                 .collect(Collectors.groupingBy(r -> 
                     r.getDate().getYear() + "-" + r.getDate().getMonthValue(),
                     Collectors.reducing(new double[2], r -> 
-                        new double[]{r.getGenerationKw(), r.getForecastKwh()},
+                        new double[]{r.getGeneration_Kw(), r.getForecast_Kwh()},
                         (a, b) -> new double[]{a[0] + b[0], a[1] + b[1]}
                     )
                 ));
@@ -161,9 +161,9 @@ public class PlantGenerationQueryService {
 
         for (PlantGeneration r : rows) {
             int h = r.getHour();
-            bucket[h][0] += r.getGenerationKw();
+            bucket[h][0] += r.getGeneration_Kw();
             bucket[h][1] += 1.0;
-            bucket[h][2] += r.getForecastKwh();
+            bucket[h][2] += r.getForecast_Kwh();
             bucket[h][3] += 1.0;
         }
 
@@ -196,8 +196,8 @@ public class PlantGenerationQueryService {
                 .build();
         }
 
-        double generationKw = latest.getGenerationKw();
-        int capacityKw = latest.getCapacityKw();
+        double generationKw = latest.getGeneration_Kw();
+        int capacityKw = latest.getCapacity_Kw();
         double idlePower = capacityKw - generationKw;
         
         // 설비용량이 0일 경우 0으로 나누는 것을 방지
@@ -205,7 +205,7 @@ public class PlantGenerationQueryService {
 
         return DashboardSummaryDTO.builder()
                 .currentGenerationKw(generationKw)
-                .currentForecastKwh(latest.getForecastKwh())
+                .currentForecastKwh(latest.getForecast_Kwh())
                 .capacityKw(capacityKw)
                 .idlePowerKw(idlePower)
                 .conversionEfficiency(efficiency)

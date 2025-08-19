@@ -62,7 +62,8 @@ public class UserService {
     }
     
     // 사용자 생성
-    public UserDTO createUser(String email, String password, User.Role role, Long orgId) {
+    // orgId 대신 bizRegNo를 사용하도록 매개변수 수정
+    public UserDTO createUser(String email, String password, User.Role role, String bizRegNo) {
         // 이메일 중복 확인
         if (userRepository.existsByEmail(email)) {
             throw new RuntimeException("이미 존재하는 이메일입니다.");
@@ -72,7 +73,8 @@ public class UserService {
         user.setEmail(email);
         user.setPasswordHash(passwordEncoder.encode(password));
         user.setRole(role);
-        user.setOrgId(orgId);
+        // orgId 대신 bizRegNo를 설정
+        user.setBizRegNo(bizRegNo);
         user.setStatus(User.Status.ACTIVE);
         
         User savedUser = userRepository.save(user);
@@ -122,8 +124,9 @@ public class UserService {
     }
     
     // 조직별 사용자 조회
-    public List<UserDTO> getUsersByOrg(Long orgId) {
-        List<User> users = userRepository.findByOrgIdAndStatus(orgId, User.Status.ACTIVE);
+    // orgId 대신 bizRegNo를 사용하도록 매개변수 및 로직 수정
+    public List<UserDTO> getUsersByOrg(String bizRegNo) {
+        List<User> users = userRepository.findByBizRegNoAndStatus(bizRegNo, User.Status.ACTIVE);
         return users.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -133,7 +136,8 @@ public class UserService {
     private UserDTO convertToDTO(User user) {
         return new UserDTO(
             user.getUserId(),
-            user.getOrgId(),
+            // orgId() 대신 bizRegNo()를 사용하도록 수정
+            user.getBizRegNo(), 
             user.getEmail(),
             user.getRole(),
             user.getStatus(),
@@ -142,8 +146,8 @@ public class UserService {
         );
     }
 
-	public List<UserDTO> searchUsers(String keyword) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    public List<UserDTO> searchUsers(String keyword) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

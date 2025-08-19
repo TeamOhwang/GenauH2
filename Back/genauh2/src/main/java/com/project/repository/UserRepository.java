@@ -25,13 +25,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByRole(User.Role role);
     
     // 조직별 사용자 조회
-    List<User> findByOrgId(Long orgId);
+    List<User> findByBizRegNo(String bizRegNo);
     
     // 이메일과 활성 상태로 사용자 찾기
     Optional<User> findByEmailAndStatus(String email, User.Status status);
     
     // 조직과 상태로 사용자 조회
-    List<User> findByOrgIdAndStatus(Long orgId, User.Status status);
+    List<User> findByBizRegNoAndStatus(String bizRegNo, User.Status status);
     
     // 역할과 상태로 사용자 조회
     List<User> findByRoleAndStatus(User.Role role, User.Status status);
