@@ -35,7 +35,7 @@ export const useAuthStore = create<{
   },
   // 로그아웃은 redirect 포함된 authToken.clear() 사용 권장
   logout: () => {
-    authToken.clear();               // 토큰 삭제 + /login으로 이동
+    authToken.clear();               
     set({ role: null, isInit: true });
   },
 }));

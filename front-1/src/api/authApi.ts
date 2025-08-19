@@ -1,13 +1,10 @@
-
-import { postD, getD } from "@/api/apiClient";
+import { postD } from "@/api/apiClient";
 import { useAuthStore } from "@/Stores/useAuthStore";
 
 export interface LoginReq {
   email: string;
   password: string;
 }
-
-type LoginRes = { accessToken: string } | string;
 
 export interface Me {
   id: number;
@@ -16,23 +13,28 @@ export interface Me {
   role: "USER" | "ADMIN";
 }
 
-function extractAccessToken(res: LoginRes): string | null {
-  return typeof res === "string" ? (res || null) : (res?.accessToken ?? null);
-}
+// 백엔드 응답: { success, token, user?, message? }
+type LoginRes = {
+  success: boolean;
+  token?: string;
+  user?: Me;
+  message?: string;
+};
 
 export async function login(body: LoginReq): Promise<string> {
-  const data = await postD<LoginRes>("/auth/login", body);
-  const token = extractAccessToken(data);
-  if (!token) throw new Error("No accessToken from /auth/login");
-  useAuthStore.getState().loginWithToken(token);
-  return token;
+  const res = await postD<LoginRes>("/user/login", body); 
+  if (!res?.success || !res.token) {
+    throw new Error(res?.message || "로그인 실패");
+  }
+  useAuthStore.getState().loginWithToken(res.token);
+  // (선택) user.role을 스토어에 직접 반영하고 싶다면 setRole 추가해서 여기서 반영
+  return res.token;
 }
 
 export async function logout(): Promise<void> {
   try {
-    await postD<void>("/auth/logout");
+    await postD<void>("/user/logout"); 
   } finally {
-    useAuthStore.getState().logout();
+    useAuthStore.getState().logout(); 
   }
 }
-
