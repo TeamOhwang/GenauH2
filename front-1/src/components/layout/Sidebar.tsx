@@ -12,6 +12,7 @@ export default function Sidebar() {
                 <NavLink className="block text-gray-700 hover:text-blue-500" to={PATHS.detailed}>상세 데이터</NavLink>
                 <NavLink className="block text-gray-700 hover:text-blue-500" to={PATHS.price}>수소 가격 정보</NavLink>
                 <NavLink className="block text-gray-700 hover:text-blue-500" to={PATHS.setting}>알림 설정</NavLink>
+                <NavLink className="block text-gray-700 hover:text-blue-500" to={PATHS.admin}>관리자 페이지</NavLink>
             </nav>
         </aside>
     )

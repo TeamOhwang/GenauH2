@@ -21,7 +21,7 @@ export default function AppRoutes() {
   return (
     <Routes>
       {/* 메인은 로그인 페이지 (로그인된 사용자는 자기 홈으로 이동) */}
-      <Route
+      {/* <Route
         path="/"
         element={
           <PublicOnlyRoute>
@@ -36,7 +36,7 @@ export default function AppRoutes() {
             <Login />
           </PublicOnlyRoute>
         }
-      />
+      /> */}
       <Route element={<RootLayout />}>
 
 
@@ -44,9 +44,9 @@ export default function AppRoutes() {
         <Route
           path={PATHS.daily}
           element={
-            <ProtectedRoute require="USER">
+            // <ProtectedRoute require="USER">
               <Daily />
-            </ProtectedRoute>
+            // </ProtectedRoute>
           }
         />
         <Route
@@ -94,9 +94,9 @@ export default function AppRoutes() {
         <Route
           path={PATHS.admin}
           element={
-            <ProtectedRoute require="ADMIN">
+            // <ProtectedRoute require="ADMIN">
               <Admin />
-            </ProtectedRoute>
+            // </ProtectedRoute>
           }
         />
 
