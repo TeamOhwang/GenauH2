@@ -8,25 +8,27 @@ import axios, {
 
 /* ======================== 상수 & 타입 ======================== */
 export const API_BASE_URL: string =
-  (import.meta as any)?.env?.VITE_API_BASE_URL || "http://localhost:8088/gh";
+  (import.meta as any)?.env?.VITE_API_BASE_URL || "/gh";
 export const ACCESS_TOKEN_KEY = "accessToken";
 
-const LOGIN_PATH = "/login";                 // 프론트 라우트
-const EXP_MARGIN_SEC = 30;                   // 만료 30초 전부터 만료 간주
+const LOGIN_ROUTE = "/login"; // 프론트 라우트(리다이렉트용)
+const EXP_MARGIN_SEC = 30; // 만료 30초 전부터 만료 간주
 const DEBUG = !!(import.meta as any)?.env?.DEV;
-const ENABLE_REFRESH = ((import.meta as any)?.env?.VITE_ENABLE_REFRESH ?? "false") === "true";
+const ENABLE_REFRESH =
+  ((import.meta as any)?.env?.VITE_ENABLE_REFRESH ?? "false") === "true";
 
 export type ApiEnvelope<T> = { data: T };
-type RefreshRes = ApiEnvelope<{ accessToken: string }>;
-type JwtPayload = { exp?: number };
-
 export type NormalizedError =
   | { kind: "timeout"; message: string; _redirect?: string }
   | { kind: "network"; message: string; _redirect?: string }
   | { kind: "http"; status?: number; message: string; _redirect?: string };
 
-/* ======================== 경로 상수 ======================== */
-export const PATHS = {
+type RefreshRes = ApiEnvelope<{ accessToken: string }>;
+type JwtPayload = { exp?: number };
+
+/* ======================== 백엔드 경로 상수(인증만) ======================== */
+// ⚠️ 프론트 라우팅 PATHS와 혼용 금지. 오직 백엔드 엔드포인트만.
+const AUTH_ENDPOINTS = {
   login: "/user/login",
   logout: "/user/logout",
   reissue: "/reissue",
@@ -68,7 +70,10 @@ function isExpiredOrClose(token: string | null, marginSec = EXP_MARGIN_SEC): boo
 function shouldSkipAuth(url?: string | null): boolean {
   if (!url) return false;
   const u = url.toLowerCase();
-  return u.includes(PATHS.login) || u.includes(PATHS.logout) || u.includes(PATHS.reissue);
+  // 백엔드 인증 관련 엔드포인트만 스킵 판정
+  return [AUTH_ENDPOINTS.login, AUTH_ENDPOINTS.logout, AUTH_ENDPOINTS.reissue].some((p) =>
+    u.includes(p)
+  );
 }
 
 /* ---- 범용 Header 유틸 (AxiosHeaders/POJO 모두 지원) ---- */
@@ -91,10 +96,13 @@ function setHeader(h: HeaderLike, key: string, value?: string) {
   }
 }
 
+/* ---- 에러 정규화 ---- */
 function normalizeAxiosError(err: AxiosError): NormalizedError {
   const st = err.response?.status;
-  if (err.code === "ECONNABORTED") return { kind: "timeout", message: "요청이 지연되었습니다." };
-  if (!err.response) return { kind: "network", message: "네트워크 연결을 확인해주세요." };
+  if (err.code === "ECONNABORTED")
+    return { kind: "timeout", message: "요청이 지연되었습니다." };
+  if (!err.response)
+    return { kind: "network", message: "네트워크 연결을 확인해주세요." };
   const serverMsg =
     (err.response.data as any)?.message ||
     (err.response.data as any)?.error ||
@@ -102,6 +110,7 @@ function normalizeAxiosError(err: AxiosError): NormalizedError {
   return { kind: "http", status: st, message: serverMsg };
 }
 
+/* ---- 일시적 오류 1회 재시도 ---- */
 async function retryOnce<T>(fn: () => Promise<T>) {
   try {
     return await fn();
@@ -113,6 +122,7 @@ async function retryOnce<T>(fn: () => Promise<T>) {
   }
 }
 
+/* ---- Axios 응답 언래핑 (data | { data }) ---- */
 function unwrap<T>(res: any): T {
   if (!res) return undefined as unknown as T;
   const d = res.data;
@@ -120,9 +130,8 @@ function unwrap<T>(res: any): T {
   return ((d as ApiEnvelope<T>)?.data ?? d) as T;
 }
 
-/* ---- 역할 파싱 헬퍼 (스토어 의존 없이 토큰만으로 판단) ---- */
+/* ---- 역할 파싱 (403 처리 힌트용) ---- */
 type Role = "USER" | "ADMIN" | null;
-
 function getRoleFromToken(t: string | null): Role {
   if (!t) return null;
   const p = (decodeJwt(t) as { role?: "USER" | "ADMIN"; roles?: string[] } | null) ?? null;
@@ -159,7 +168,7 @@ export const authToken = {
     this.set(null);
     if (typeof window !== "undefined") {
       AUTH_CH?.postMessage({ type: "LOGOUT" });
-      window.location.replace(LOGIN_PATH);
+      window.location.replace(LOGIN_ROUTE);
     }
   },
 };
@@ -171,7 +180,7 @@ AUTH_CH?.addEventListener("message", (e: MessageEvent) => {
   }
   if (type === "LOGOUT") {
     accessToken = null;
-    if (typeof window !== "undefined") window.location.replace(LOGIN_PATH);
+    if (typeof window !== "undefined") window.location.replace(LOGIN_ROUTE);
   }
 });
 
@@ -180,11 +189,12 @@ async function requestNewAccessToken(): Promise<string> {
   if (!ENABLE_REFRESH) throw new Error("Token refresh disabled in this environment");
   log("reissuing token…");
   const res = await axios.post<RefreshRes>(
-    `${API_BASE_URL}${PATHS.reissue}`,
+    `${API_BASE_URL}${AUTH_ENDPOINTS.reissue}`,
     {},
     { withCredentials: true }
   );
-  const newToken = res.data?.data?.accessToken;
+  const newToken =
+    (res as any)?.data?.data?.accessToken ?? (res as any)?.data?.accessToken;
   if (!newToken || typeof newToken !== "string") {
     throw new Error("Reissue response missing a valid 'accessToken'");
   }
@@ -214,17 +224,14 @@ const apiClient: AxiosInstance = axios.create({
 /* ---------------- 요청 인터셉터: 사전 재발급 + 헤더 부착 ---------------- */
 apiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
-    // FormData면 브라우저가 Content-Type 설정하도록 삭제
     if (config.data instanceof FormData) {
       setHeader(config.headers as HeaderLike, "Content-Type");
     }
 
-    // 인증 스킵 대상은 통과
     if (shouldSkipAuth(config.url)) return config;
 
     let token = authToken.get();
 
-    // 만료(또는 임박) 시 선재발급
     if (ENABLE_REFRESH && token && isExpiredOrClose(token)) {
       if (!isRefreshing) {
         isRefreshing = true;
@@ -247,7 +254,6 @@ apiClient.interceptors.request.use(
     }
 
     if (token) {
-      // 헤더 객체가 없으면 생성 (POJO/Headers 모두 커버)
       config.headers = (config.headers ?? {}) as any;
       setHeader(config.headers as HeaderLike, "Authorization", `Bearer ${token}`);
     }
@@ -257,11 +263,10 @@ apiClient.interceptors.request.use(
   (error: AxiosError) => Promise.reject(error)
 );
 
-/* ---------------- 응답 인터셉터: 401 사후 재발급 + 403 역할 홈 리다이렉트 ---------------- */
+/* ---------------- 응답 인터셉터: 401 사후 재발급 + 403 역할 홈 힌트 ---------------- */
 apiClient.interceptors.response.use(
   (res) => res,
   async (error: AxiosError & { _redirect?: string }) => {
-    // 403 → 사용자 역할 홈(/admin | /home) 또는 토큰 없으면 /login
     if (error.response?.status === 403) {
       const latest = authToken.get();
       const role = getRoleFromToken(latest);
@@ -298,7 +303,7 @@ apiClient.interceptors.response.use(
         return apiClient(original);
       } catch (e) {
         notifyQueue(e, undefined);
-        authToken.clear(); // 재발급 실패 → 로그아웃
+        authToken.clear();
         return Promise.reject(normalizeAxiosError(error));
       } finally {
         isRefreshing = false;
@@ -315,15 +320,23 @@ export async function getD<T = unknown>(url: string, config?: AxiosRequestConfig
     const res = await apiClient.get(url, config);
     return unwrap<T>(res);
   };
-  return retryOnce(run); // GET만 1회 재시도
+  return retryOnce(run);
 }
 
-export async function postD<T = unknown>(url: string, body?: unknown, config?: AxiosRequestConfig) {
+export async function postD<T = unknown>(
+  url: string,
+  body?: unknown,
+  config?: AxiosRequestConfig
+) {
   const res = await apiClient.post(url, body, config);
   return unwrap<T>(res);
 }
 
-export async function putD<T = unknown>(url: string, body?: unknown, config?: AxiosRequestConfig) {
+export async function putD<T = unknown>(
+  url: string,
+  body?: unknown,
+  config?: AxiosRequestConfig
+) {
   const res = await apiClient.put(url, body, config);
   return unwrap<T>(res);
 }
@@ -337,7 +350,6 @@ export async function patchD<T = unknown>(
   return unwrap<T>(res);
 }
 
-// axios.delete는 body 전송 시 { data }로 감싸야 함
 export async function deleteD<T = unknown>(
   url: string,
   body?: unknown,
@@ -348,3 +360,4 @@ export async function deleteD<T = unknown>(
 }
 
 export default apiClient;
+export { AUTH_ENDPOINTS }; // 필요 시 다른 레이어에서 백엔드 경로 상수만 사용
