@@ -1,7 +1,7 @@
 import { useState, FormEvent } from "react";
-import Button from "@/components/ui/Button";
 import Text from "@/components/ui/Text";
 import type { LoginValues } from "@/hooks/useLogin";
+import Button from "./ui/Button";
 
 
 type Props = {
