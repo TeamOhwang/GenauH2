@@ -225,3 +225,11 @@ export async function postD<T = unknown>(url: string, body?: unknown, config?: A
   const res = await apiClient.post(url, body, config);
   return ((res.data as ApiEnvelope<T>)?.data ?? res.data) as T;
 }
+
+export async function putD<T = unknown>() {
+  
+}
+
+export async function delD<T = unknown>(url: string) {
+  
+}
