@@ -4,7 +4,6 @@ export const ADMIN_ENDPOINTS = {
     register: "/user/register",
     getUserList: "/user/list",
     deleteUser: (userId: string) => `/user/${userId}`,
-
 }
 
 // 회원 등록
@@ -24,7 +23,7 @@ export async function registerApi(params:{
 
 export async function getUserListApi() {
     const res = await apiClient.get(ADMIN_ENDPOINTS.getUserList);
-    return (res as any)?.data?.data ?? [];
+    return res.data ?? [];
 }
 
 // 회원 삭제

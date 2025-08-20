@@ -46,9 +46,9 @@ export default function AppRoutes() {
         <Route
           path={PATHS.daily}
           element={
-            // <ProtectedRoute require="USER">
+            <ProtectedRoute require="USER">
               <Daily />
-            // </ProtectedRoute>
+            </ProtectedRoute>
           }
         />
         <Route
@@ -96,9 +96,9 @@ export default function AppRoutes() {
         <Route
           path={PATHS.admin}
           element={
-            // <ProtectedRoute require="ADMIN">
+            <ProtectedRoute require="ADMIN">
               <Admin />
-            // </ProtectedRoute>
+            </ProtectedRoute>
           }
         />
 
