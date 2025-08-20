@@ -17,7 +17,8 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
-
+    
+    @Column(nullable = false)
     private String bizRegNo;
 
     @Column(unique = true, nullable = false)
@@ -33,13 +34,13 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Status status = Status.ACTIVE;
-
-    @Column(nullable = false)
+    
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
-
+    
+    @Column(insertable = false)
     private LocalDateTime updatedAt;
-
-    // Enum 정의
+    
     public enum Role {
         SUPERVISOR, USER
     }
@@ -51,7 +52,6 @@ public class User {
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
     }
 
     @PreUpdate

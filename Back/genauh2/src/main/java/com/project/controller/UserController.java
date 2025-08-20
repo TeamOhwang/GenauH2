@@ -43,8 +43,8 @@ public class UserController {
                 response.put("token", token);
                 response.put("user", user);
                 response.put("message", "로그인 성공");
-
                 return ResponseEntity.ok(response);
+
             } else {
                 response.put("success", false);
                 response.put("message", "이메일 또는 비밀번호가 올바르지 않습니다.");
@@ -75,19 +75,19 @@ public class UserController {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
             }
 
-            String orgname = request.get("orgname");
+            String orgName = request.get("orgName");
             String name = request.get("name");
             String bizRegNo = request.get("bizRegNo");
             String email = request.get("email");
             String password = request.get("password");
 
-            if (orgname == null || name == null || bizRegNo == null || email == null || password == null) {
+            if (orgName == null || name == null || bizRegNo == null || email == null || password == null) {
                 response.put("success", false);
                 response.put("message", "필수 입력값이 누락되었습니다.");
                 return ResponseEntity.badRequest().body(response);
             }
 
-            UserDTO created = userService.createOrganizationAndUser(orgname, name, bizRegNo, email, password);
+            UserDTO created = userService.createOrganizationAndUser(orgName, name, bizRegNo, email, password);
 
             response.put("success", true);
             response.put("data", created);
