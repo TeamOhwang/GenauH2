@@ -2,8 +2,8 @@ import apiClient from "./apiClient";
 
 export const ADMIN_ENDPOINTS = {
     register: "/user/register",
-    getUserList: "/user/list",
-    deleteUser: (userId: string) => `/user/${userId}`,
+    getUserList: "/userOrgan/all",
+    updateUserStatus: (userId: string) => `/user/${userId}`,
 }
 
 // 회원 등록
@@ -26,7 +26,11 @@ export async function getUserListApi() {
     return res.data ?? [];
 }
 
-// 회원 삭제
+// 회원 상태 업데이트
+
+export async function updateUserStatusApi(userId:string) {
+    // const res = await apiClient.put()
+}
 
 // 시설 등록
 

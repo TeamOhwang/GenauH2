@@ -9,6 +9,8 @@ export default function Admin() {
 
   const { getUsers, loading, error } = useAdmin();
   const [users, setUsers] = useState<any[]>([]);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"활성화" | "비활성화" | "전체">("전체");
 
   useEffect(() => {
     getUsers().then(setUsers);
@@ -16,6 +18,11 @@ export default function Admin() {
 
   if (loading) return <p>로딩 중...</p>;
   if (error) return <p>오류: {error}</p>;
+
+ const filteredUsers = users.filter(user => 
+ (statusFilter === "전체" || user.status === statusFilter) &&
+  (user.email.includes(search) || user.group.includes(search))
+ )
 
   return (
     <div className="h-full p-6">
@@ -28,10 +35,13 @@ export default function Admin() {
         </Modal>
       </div>
       {/* 요약 통계 */}
-      <div>
-        <div></div>
-      </div>
-      <div className="flex justify-between mb-3 items-center bg-white h-10 rounded-xl shadow">
+      {/* <div className="p-6">
+        <div className="flex gap-6 mb-6">
+        </div>
+      </div> */}
+
+      {/* 검색  + 필터 */}
+      <div className="flex justify-between mb-4 items-center bg-white h-10 rounded-xl shadow">
         <div className="ml-3 w-1/3 h-2/3 bg-gray-200 rounded-3xl">검색</div>
       </div>
       <div className="flex flex-col h-2/3 w-full bg-white rounded-2xl shadow overflow-y-scroll p-3">
@@ -52,14 +62,15 @@ export default function Admin() {
             {users.map((u) => (
               <>
                 <tr key={u.userId}>
-                  <td>회사명</td>
+                  <td>{u.orgname}</td>
                   <td>{u.email}</td>
-                  <td>{u.name}</td>
+                  <td>{u.organizationName}</td>
+                  <td>{u.userUpdatedAt}</td>
                   <td>{u.role}</td>
                   <td>{u.status}</td>
                   <td><button className="bg-blue-100">변경</button></td>
                 </tr>
-                <tr className="border-style: solid">드롭다운</tr>
+                {/* <tr className="border-style: solid">드롭다운</tr> */}
               </>
             ))}
           </tbody>
