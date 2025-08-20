@@ -15,7 +15,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/user")
-@CrossOrigin(origins = { "http://localhost:5173" })
+@CrossOrigin(origins = { "http://localhost:5174" })
 public class UserController {
 
     @Autowired
@@ -233,46 +233,6 @@ public class UserController {
         }
     }
 
-    // 관리자 토큰 검증 헬퍼 메소드 (수정됨)
-    private UserDTO validateAdminToken(String token, Map<String, Object> response) {
-        try {
-            if (token == null || !token.startsWith("Bearer ")) {
-                response.put("success", false);
-                response.put("message", "인증 토큰이 필요합니다.");
-                return null;
-            }
-
-            String actualToken = token.substring(7);
-            String userId = tokenProvider.validateAndGetUserId(actualToken);
-
-            if (userId == null) {
-                response.put("success", false);
-                response.put("message", "유효하지 않은 토큰입니다.");
-                return null;
-            }
-
-            UserDTO currentUser = userService.getUserById(Long.parseLong(userId));
-            if (currentUser == null || !isAdmin(currentUser)) {
-                response.put("success", false);
-                response.put("message", "관리자 권한이 필요합니다.");
-                return null;
-            }
-
-            return currentUser;
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "토큰 검증 중 오류가 발생했습니다.");
-            return null;
-        }
-    }
-
-    // 관리자 권한 확인 헬퍼 메소드
-    private boolean isAdmin(UserDTO user) {
-        return user.getRole() != null &&
-                (user.getRole().equals(com.project.entity.User.Role.SUPERVISOR) ||
-                        "SUPERVISOR".equals(user.getRole().toString()));
-    }
-
     // 사용자 상태 업데이트
     @PutMapping("/{userId}/status")
     public ResponseEntity<Map<String, Object>> updateUserStatus(
@@ -327,5 +287,153 @@ public class UserController {
             response.put("message", "상태 업데이트 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
+    }
+
+    // 사용자 비밀번호 변경 (관리자 권한 필요)
+    @PutMapping("/{userId}/password")
+    public ResponseEntity<Map<String, Object>> updateUserPassword(
+            @PathVariable Long userId,
+            @RequestBody Map<String, String> request,
+            @RequestHeader(value = "Authorization", required = false) String token) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // 관리자 권한 확인
+            UserDTO currentUser = validateAdminToken(token, response);
+            if (currentUser == null) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+
+            String newPassword = request.get("newPassword");
+
+            if (newPassword == null || newPassword.trim().isEmpty()) {
+                response.put("success", false);
+                response.put("message", "새 비밀번호가 필요합니다.");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            boolean updateResult = userService.updateUserPassword(userId, newPassword);
+
+            if (updateResult) {
+                response.put("success", true);
+                response.put("message", "비밀번호가 성공적으로 변경되었습니다.");
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("success", false);
+                response.put("message", "사용자를 찾을 수 없습니다.");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "비밀번호 변경 중 오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    // 사용자 삭제 (관리자 권한 필요)
+    @DeleteMapping("/delete")
+    public ResponseEntity<Map<String, Object>> deleteUsers(
+            @RequestBody Map<String, Object> request,
+            @RequestHeader(value = "Authorization", required = false) String token) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        System.out.println("=== 사용자 삭제 요청 시작 ===");
+        System.out.println("요청 본문: " + request);
+        System.out.println("요청 본문 타입: " + (request != null ? request.getClass().getSimpleName() : "null"));
+        System.out
+                .println("토큰: " + (token != null ? token.substring(0, Math.min(20, token.length())) + "..." : "null"));
+
+        try {
+            // 관리자 권한 확인
+            System.out.println("관리자 권한 확인 중...");
+            UserDTO currentUser = validateAdminToken(token, response);
+            if (currentUser == null) {
+                System.out.println("관리자 권한 확인 실패");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+            System.out.println("관리자 권한 확인 완료: " + currentUser.getEmail());
+
+            @SuppressWarnings("unchecked")
+            List<Object> userIds = (List<Object>) request.get("userIds");
+            System.out.println("삭제할 사용자 ID 목록: " + userIds);
+            System.out.println("userIds 타입: " + (userIds != null ? userIds.getClass().getSimpleName() : "null"));
+
+            if (userIds == null || userIds.isEmpty()) {
+                System.out.println("사용자 ID 목록이 비어있음");
+                response.put("success", false);
+                response.put("message", "삭제할 사용자 ID 목록이 필요합니다.");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            // 사용자 삭제 처리
+            System.out.println("UserService.deleteUsers 호출 중...");
+            boolean deleteResult = userService.deleteUsers(userIds);
+            System.out.println("UserService.deleteUsers 결과: " + deleteResult);
+
+            if (deleteResult) {
+                response.put("success", true);
+                response.put("message", "선택된 사용자가 삭제되었습니다.");
+                System.out.println("사용자 삭제 성공");
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("success", false);
+                response.put("message", "사용자 삭제 중 오류가 발생했습니다.");
+                System.out.println("사용자 삭제 실패");
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }
+
+        } catch (Exception e) {
+            System.err.println("사용자 삭제 컨트롤러에서 예외 발생: " + e.getMessage());
+            System.err.println("예외 타입: " + e.getClass().getSimpleName());
+            System.err.println("예외 스택 트레이스:");
+            e.printStackTrace();
+            response.put("success", false);
+            response.put("message", "사용자 삭제 중 오류가 발생했습니다: " + e.getMessage());
+            response.put("error", e.getClass().getSimpleName());
+            response.put("details", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    // 관리자 토큰 검증 헬퍼 메소드 (수정됨)
+    private UserDTO validateAdminToken(String token, Map<String, Object> response) {
+        try {
+            if (token == null || !token.startsWith("Bearer ")) {
+                response.put("success", false);
+                response.put("message", "인증 토큰이 필요합니다.");
+                return null;
+            }
+
+            String actualToken = token.substring(7);
+            String userId = tokenProvider.validateAndGetUserId(actualToken);
+
+            if (userId == null) {
+                response.put("success", false);
+                response.put("message", "유효하지 않은 토큰입니다.");
+                return null;
+            }
+
+            UserDTO currentUser = userService.getUserById(Long.parseLong(userId));
+            if (currentUser == null || !isAdmin(currentUser)) {
+                response.put("success", false);
+                response.put("message", "관리자 권한이 필요합니다.");
+                return null;
+            }
+
+            return currentUser;
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "토큰 검증 중 오류가 발생했습니다.");
+            return null;
+        }
+    }
+
+    // 관리자 권한 확인 헬퍼 메소드
+    private boolean isAdmin(UserDTO user) {
+        return user.getRole() != null &&
+                (user.getRole().equals(com.project.entity.User.Role.SUPERVISOR) ||
+                        "SUPERVISOR".equals(user.getRole().toString()));
     }
 }
