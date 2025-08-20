@@ -342,8 +342,7 @@ public class UserController {
         System.out.println("=== 사용자 삭제 요청 시작 ===");
         System.out.println("요청 본문: " + request);
         System.out.println("요청 본문 타입: " + (request != null ? request.getClass().getSimpleName() : "null"));
-        System.out
-                .println("토큰: " + (token != null ? token.substring(0, Math.min(20, token.length())) + "..." : "null"));
+        System.out.println("토큰: " + (token != null ? token.substring(0, Math.min(20, token.length())) + "..." : "null"));
 
         try {
             // 관리자 권한 확인
