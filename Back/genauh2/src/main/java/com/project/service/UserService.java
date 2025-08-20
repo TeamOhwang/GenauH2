@@ -5,6 +5,9 @@ import com.project.entity.User;
 import com.project.entity.Organization;
 import com.project.repository.OrganizationRepository;
 import com.project.repository.UserRepository;
+
+import jakarta.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -72,14 +75,16 @@ public class UserService {
 
     // 사용자 ID로 조회
     public UserDTO getUserById(Long userId) {
-        Optional<User> userOpt = userRepository.findById(userId);
-        return userOpt.map(this::convertToDTO).orElse(null);
+        return userRepository.findById(userId)
+                .map(this::convertToDTO)
+                .orElse(null);
     }
 
     // 이메일로 사용자 조회
     public UserDTO getUserByEmail(String email) {
-        Optional<User> userOpt = userRepository.findByEmailAndStatus(email, User.Status.ACTIVE);
-        return userOpt.map(this::convertToDTO).orElse(null);
+        return userRepository.findByEmailAndStatus(email, User.Status.ACTIVE)
+                .map(this::convertToDTO)
+                .orElse(null);
     }
 
     // 사용자 생성
@@ -102,32 +107,21 @@ public class UserService {
         return convertToDTO(savedUser);
     }
 
+
     // 사용자 역할 업데이트
     public UserDTO updateUserRole(Long userId, User.Role role) {
-        Optional<User> userOpt = userRepository.findById(userId);
-
-        if (userOpt.isPresent()) {
-            User user = userOpt.get();
+        return userRepository.findById(userId).map(user -> {
             user.setRole(role);
-            User updatedUser = userRepository.save(user);
-            return convertToDTO(updatedUser);
-        }
-
-        return null;
+            return convertToDTO(userRepository.save(user));
+        }).orElse(null);
     }
 
     // 사용자 상태 변경
     public UserDTO updateUserStatus(Long userId, User.Status status) {
-        Optional<User> userOpt = userRepository.findById(userId);
-
-        if (userOpt.isPresent()) {
-            User user = userOpt.get();
+        return userRepository.findById(userId).map(user -> {
             user.setStatus(status);
-            User updatedUser = userRepository.save(user);
-            return convertToDTO(updatedUser);
-        }
-
-        return null;
+            return convertToDTO(userRepository.save(user));
+        }).orElse(null);
     }
 
     // 사용자 비밀번호 변경
@@ -150,23 +144,18 @@ public class UserService {
 
     // 사용자 정지
     public boolean suspendUser(Long userId) {
-        Optional<User> userOpt = userRepository.findById(userId);
-
-        if (userOpt.isPresent()) {
-            User user = userOpt.get();
+        return userRepository.findById(userId).map(user -> {
             user.setStatus(User.Status.SUSPENDED);
             userRepository.save(user);
             return true;
-        }
-
-        return false;
+        }).orElse(false);
     }
 
     // 조직별 사용자 조회
     // orgId 대신 bizRegNo를 사용하도록 매개변수 및 로직 수정
     public List<UserDTO> getUsersByOrg(String bizRegNo) {
-        List<User> users = userRepository.findByBizRegNoAndStatus(bizRegNo, User.Status.ACTIVE);
-        return users.stream()
+        return userRepository.findByBizRegNoAndStatus(bizRegNo, User.Status.ACTIVE)
+                .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
@@ -175,7 +164,6 @@ public class UserService {
     private UserDTO convertToDTO(User user) {
         return new UserDTO(
                 user.getUserId(),
-                // orgId() 대신 bizRegNo()를 사용하도록 수정
                 user.getBizRegNo(),
                 user.getEmail(),
                 user.getRole(),
@@ -190,9 +178,9 @@ public class UserService {
     }
 
     // 조직 + 사용자 동시 등록 (관리자 전용)
-    @org.springframework.transaction.annotation.Transactional
+    @Transactional
     public UserDTO createOrganizationAndUser(
-            String orgname,
+            String orgName,
             String ownerName,
             String bizRegNo,
             String email,
@@ -201,7 +189,7 @@ public class UserService {
         if (!organizationRepository.existsByBizRegNo(bizRegNo)) {
             Organization organization = new Organization();
             organization.setBizRegNo(bizRegNo);
-            organization.setOrgname(orgname);
+            organization.setOrgName(orgName);
             organization.setName(ownerName);
             organizationRepository.save(organization);
         }

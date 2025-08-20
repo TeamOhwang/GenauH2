@@ -13,18 +13,22 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class Organization {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long orgId;
+
     @Column(nullable = false, unique = true)
-    private String bizRegNo; // 사업자등록번호 (PK)
+    private String bizRegNo;
 
     @Column(nullable = false)
-    private String orgname; // 회사이름
+    private String orgName;
 
     @Column(nullable = false)
-    private String name; // 사업자명
+    private String name;
 
-    @Column(nullable = false)
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(nullable = false)
     private LocalDateTime updatedAt;
 
     @PrePersist
