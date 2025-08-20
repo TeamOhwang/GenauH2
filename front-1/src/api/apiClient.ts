@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig, AxiosHeaders, AxiosRequestConfig } from "axios";
-import { authToken } from "@/Stores/authStorage";
+import { authToken } from "@/stores/authStorage";
 
 export const API_BASE_URL: string = (import.meta as any)?.env?.VITE_API_BASE_URL || "/gh";
 const EXP_MARGIN_SEC = 30;

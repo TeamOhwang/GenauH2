@@ -1,5 +1,5 @@
 import { loginApi, logoutApi, fetchProfile } from "@/api/authApi";
-import { authToken } from "@/Stores/authStorage"; 
+import { authToken } from "@/stores/authStorage"; 
 
 const mapServerRole = (serverRole?: string): "ADMIN" | "USER" | null =>
   !serverRole ? null : serverRole.toUpperCase() === "SUPERVISOR" ? "ADMIN" : "USER";

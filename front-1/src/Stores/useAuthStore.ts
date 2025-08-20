@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { jwtDecode } from "jwt-decode";
-import { authToken, ACCESS_TOKEN_KEY } from "@/Stores/authStorage";
+import { authToken, ACCESS_TOKEN_KEY } from "@/stores/authStorage";
 import * as authService from "@/api//authService";
 
 type Role = "USER" | "ADMIN" | null;

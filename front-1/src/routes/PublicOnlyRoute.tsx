@@ -1,6 +1,6 @@
 import { JSX } from "react";
 import { Navigate } from "react-router-dom";
-import { useAuthStore } from "@/Stores/useAuthStore";
+import { useAuthStore } from "@/stores/useAuthStore";
 import { PATHS } from "./paths";
 
 

@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useAuthStore } from "@/Stores/useAuthStore";
+import { useAuthStore } from "@/stores/useAuthStore";
 import AppRoutes from "@/routes/AppRoutes";
 
 

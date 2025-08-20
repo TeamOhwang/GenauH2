@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { loginAndSyncRole } from "@/api/authService";
-import { useAuthStore } from "@/Stores/useAuthStore";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 
 export type LoginValues = { email: string; password: string };
