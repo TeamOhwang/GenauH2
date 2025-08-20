@@ -1,12 +1,19 @@
+import Modal from "@/components/ui/Modal";
+import { useState } from "react";
+
 export default function Admin() {
 
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <div className="h-full p-6">
       <p className="text-2xl font-bold mb-6">관리자 페이지</p>
       <div className="flex justify-between mb-3 items-center bg-white h-10 rounded-xl shadow">
         <div className="ml-3 w-1/3 h-2/3 bg-gray-200 rounded-3xl">검색</div>
-        <div className="mr-6">회원 추가</div>
+        <button className="mr-6 bg-blue-500 text-white px-4 rounded-lg h-2/3" onClick={() => setIsOpen(true)}>회원 추가</button>
+        <Modal isOpen={isOpen} onClose={() => setIsOpen(false)}>
+          <h1>테스트</h1>
+        </Modal>
       </div>
       <div className="flex flex-col h-2/3 w-full bg-white rounded-2xl shadow">
         회원정보

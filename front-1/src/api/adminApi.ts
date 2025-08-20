@@ -1,4 +1,4 @@
-import { postD, getD, putD, delD } from "./apiClient";
+import { postD, getD, putD, deleteD } from "./apiClient";
 
 export interface UserInfo {
     affiliation: string;
@@ -71,7 +71,7 @@ export async function userInquiry(): Promise<UserList> {
 // 회원 삭제
 
 export async function userDelete(userId: number): Promise<boolean> {
-    const res = await delD<DelRes>(`/admin/users/${userId}`);
+    const res = await deleteD<DelRes>(`/admin/users/${userId}`);
     // if (!res?.success) {
     //     throw new Error(res?.message || "회원 삭제 실패");
     // }
