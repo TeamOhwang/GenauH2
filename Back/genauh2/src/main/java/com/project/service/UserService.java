@@ -46,9 +46,25 @@ public class UserService {
         return null; // 로그인 실패
     }
 
-    // 모든 활성 사용자 조회
+    // 모든 사용자 조회 (상태와 관계없이)
     public List<UserDTO> getAllUsers() {
+        List<User> users = userRepository.findAll();
+        return users.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    // 활성 사용자만 조회
+    public List<UserDTO> getActiveUsers() {
         List<User> users = userRepository.findByStatus(User.Status.ACTIVE);
+        return users.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    // 정지된 사용자만 조회
+    public List<UserDTO> getSuspendedUsers() {
+        List<User> users = userRepository.findByStatus(User.Status.SUSPENDED);
         return users.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -112,6 +128,24 @@ public class UserService {
         }
 
         return null;
+    }
+
+    // 사용자 비밀번호 변경
+    public boolean updateUserPassword(Long userId, String newPassword) {
+        Optional<User> userOpt = userRepository.findById(userId);
+
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            
+            // 새 비밀번호를 해싱하여 저장
+            user.setPasswordHash(passwordEncoder.encode(newPassword));
+            user.setUpdatedAt(LocalDateTime.now());
+            
+            userRepository.save(user);
+            return true;
+        }
+
+        return false;
     }
 
     // 사용자 정지
@@ -187,5 +221,89 @@ public class UserService {
 
         User saved = userRepository.save(user);
         return convertToDTO(saved);
+    }
+
+    // 사용자 삭제 (관리자 전용)
+    @org.springframework.transaction.annotation.Transactional
+    public boolean deleteUsers(List<?> userIds) {
+        System.out.println("=== UserService.deleteUsers 시작 ===");
+        System.out.println("입력받은 userIds: " + userIds);
+        System.out.println("userIds 크기: " + (userIds != null ? userIds.size() : "null"));
+
+        try {
+            System.out.println("삭제 요청된 사용자 ID 목록: " + userIds);
+
+            for (Object userIdObj : userIds) {
+                try {
+                    System.out.println("--- 사용자 ID " + userIdObj + " 처리 시작 ---");
+                    System.out.println("userIdObj 타입: " + userIdObj.getClass().getSimpleName());
+
+                    Long userId;
+                    if (userIdObj instanceof Integer) {
+                        userId = ((Integer) userIdObj).longValue();
+                    } else if (userIdObj instanceof String) {
+                        userId = Long.parseLong((String) userIdObj);
+                    } else {
+                        userId = Long.parseLong(userIdObj.toString());
+                    }
+
+                    System.out.println("변환된 userId: " + userId + " (타입: " + userId.getClass().getSimpleName() + ")");
+                    System.out.println("사용자 ID " + userId + " 처리 중...");
+
+                    Optional<User> userOpt = userRepository.findById(userId);
+                    System.out.println("사용자 조회 결과: " + (userOpt.isPresent() ? "찾음" : "못찾음"));
+
+                    if (userOpt.isPresent()) {
+                        User user = userOpt.get();
+                        System.out.println("사용자 찾음: " + user.getEmail() + ", 현재 상태: " + user.getStatus());
+
+                        // 실제 삭제 대신 상태를 SUSPENDED로 변경 (소프트 삭제)
+                        try {
+                            System.out.println("사용자 상태 변경 전: " + user.getStatus());
+                            user.setStatus(User.Status.SUSPENDED);
+                            System.out.println("상태 변경 완료: " + user.getStatus());
+
+                            System.out.println("userRepository.save 호출 전...");
+                            User savedUser = userRepository.save(user);
+                            System.out.println("userRepository.save 호출 완료");
+                            System.out.println("사용자 상태 업데이트 완료: " + savedUser.getStatus());
+                        } catch (Exception saveException) {
+                            System.err.println("사용자 저장 중 오류: " + saveException.getMessage());
+                            System.err.println("저장 오류 타입: " + saveException.getClass().getSimpleName());
+                            System.err.println("저장 오류 상세:");
+                            saveException.printStackTrace();
+
+                            // 더 구체적인 오류 정보 로깅
+                            if (saveException.getCause() != null) {
+                                System.err.println("원인 예외: " + saveException.getCause().getMessage());
+                                System.err.println("원인 예외 타입: " + saveException.getCause().getClass().getSimpleName());
+                            }
+
+                            throw saveException;
+                        }
+                    } else {
+                        System.out.println("사용자 ID " + userId + "를 찾을 수 없음");
+                    }
+                    System.out.println("--- 사용자 ID " + userIdObj + " 처리 완료 ---");
+                } catch (NumberFormatException e) {
+                    System.err.println("잘못된 사용자 ID 형식: " + userIdObj);
+                    e.printStackTrace();
+                    throw e;
+                } catch (Exception e) {
+                    System.err.println("사용자 ID " + userIdObj + " 처리 중 오류: " + e.getMessage());
+                    System.err.println("오류 타입: " + e.getClass().getSimpleName());
+                    e.printStackTrace();
+                    throw e;
+                }
+            }
+            System.out.println("=== UserService.deleteUsers 성공 완료 ===");
+            return true;
+        } catch (Exception e) {
+            System.err.println("deleteUsers 메서드에서 예외 발생: " + e.getMessage());
+            System.err.println("예외 타입: " + e.getClass().getSimpleName());
+            System.err.println("예외 스택 트레이스:");
+            e.printStackTrace();
+            return false;
+        }
     }
 }
