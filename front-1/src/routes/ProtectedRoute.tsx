@@ -1,9 +1,7 @@
-// src/routes/ProtectedRoute.tsx
-// (동작 동일, UI→Store 의존만)
-// =============================
+
 import { JSX } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuthStore } from "@/Stores/useAuthStore";
+import { useAuthStore } from "@/stores/useAuthStore";
 import { PATHS } from "./paths";
 
 

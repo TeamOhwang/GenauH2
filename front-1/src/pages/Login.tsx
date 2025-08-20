@@ -1,7 +1,7 @@
 import { useLogin } from "@/hooks/useLogin";
 import LoginForm from "@/components/LoginForm";
 import { useNavigate, useLocation, type Location } from "react-router-dom";
-import { useAuthStore } from "@/Stores/useAuthStore";
+import { useAuthStore } from "@/stores/useAuthStore";
 import { PATHS } from "@/routes/paths";
 
 
