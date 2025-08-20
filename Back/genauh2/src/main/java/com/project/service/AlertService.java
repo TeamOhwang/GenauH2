@@ -32,7 +32,7 @@ public class AlertService {
         for (AlertRule rule : rules) {
             boolean triggered = false;
             if ("generationKw".equals(rule.getMetric())) {
-                if ("<".equals(rule.getOperator()) && latestData.getGenerationKw() < rule.getThreshold()) {
+                if ("<".equals(rule.getOperator()) && latestData.getGeneration_Kw() < rule.getThreshold()) {
                     triggered = true;
                 }
                 // (필요에 따라 ">", "=" 등 다른 연산자 조건 추가)
@@ -43,7 +43,7 @@ public class AlertService {
                 notification.setUserId(rule.getUserId());
                 notification.setMessage(String.format(
                     "경고: %s 값이 %.2f%s 임계치(%.2f)를 벗어났습니다.",
-                    rule.getMetric(), latestData.getGenerationKw(), rule.getOperator(), rule.getThreshold()
+                    rule.getMetric(), latestData.getGeneration_Kw(), rule.getOperator(), rule.getThreshold()
                 ));
                 notificationRepository.save(notification);
             }

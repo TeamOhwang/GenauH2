@@ -1,29 +1,51 @@
-
 import { useLogin } from "@/hooks/useLogin";
 import LoginForm from "@/components/LoginForm";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, type Location } from "react-router-dom";
 import { useAuthStore } from "@/Stores/useAuthStore";
 import { PATHS } from "@/routes/paths";
 
-type LocationState = { from?: string };
-const roleHome = (r: "USER" | "ADMIN") => (r === "ADMIN" ? PATHS.admin : PATHS.home);
+
+type Role = "USER" | "ADMIN";
+const roleHome = (r: Role) => (r === "ADMIN" ? PATHS.admin : PATHS.home);
+
 
 export default function Login() {
-  const { submit, loading, error } = useLogin();
-  const navigate  = useNavigate();
-  const location  = useLocation();
-  const from = (location.state as LocationState)?.from;
+const { submit, loading, error } = useLogin();
+const navigate = useNavigate();
+const location = useLocation();
 
-  const handleSubmit = async (v: { email: string; password: string }) => {
-    const ok = await submit(v);
-    if (!ok) return;
 
-    // 최신 역할 재조회 (동일 tick에서 role 변수를 쓰면 stale 가능)
-    const latestRole = useAuthStore.getState().role;
+const fromState = location.state as { from?: Location | string } | undefined;
 
-    if (from) return navigate(from, { replace: true });
-    if (latestRole) return navigate(roleHome(latestRole), { replace: true });
-  };
 
-  return <LoginForm loading={loading} error={error} onSubmit={handleSubmit} />;
+const handleSubmit = async (v: { email: string; password: string }): Promise<boolean> => {
+const ok = await submit(v);
+if (!ok) return false;
+
+
+const latestRole = useAuthStore.getState().role;
+
+
+if (fromState?.from) {
+if (typeof fromState.from === "string") {
+navigate(fromState.from || "/", { replace: true });
+} else {
+const loc = fromState.from as Location;
+const path = `${loc.pathname ?? ""}${loc.search ?? ""}${loc.hash ?? ""}`;
+navigate(path || "/", { replace: true });
+}
+return true;
+}
+
+
+if (latestRole) {
+navigate(roleHome(latestRole as Role), { replace: true });
+} else {
+navigate(PATHS.home, { replace: true });
+}
+return true;
+};
+
+
+return <LoginForm loading={loading} error={error} onSubmit={handleSubmit} />;
 }

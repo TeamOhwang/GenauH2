@@ -25,13 +25,13 @@ public class PlantGeneration {
     private Integer hour; // 0~23
 
     @Column(nullable=false)
-    private Double generationKw;
+    private Double generation_Kw;
 
     @Column(nullable=false)
-    private Double forecastKwh;
+    private Double forecast_Kwh;
 
     @Column(nullable=false)
-    private Integer capacityKw;
+    private Integer capacity_Kw;
 
     // 읽기 전용이라 세터 없음 (필요 시 추가)
 }

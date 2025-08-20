@@ -1,40 +1,24 @@
-import { postD } from "@/api/apiClient";
-import { useAuthStore } from "@/Stores/useAuthStore";
+import apiClient, { AUTH_ENDPOINTS } from "@/api/apiClient";
 
-export interface LoginReq {
-  email: string;
-  password: string;
+export type LoginReq = { email: string; password: string };
+
+// 서버 로그인 호출 → 토큰 문자열만 반환
+export async function loginApi(body: LoginReq): Promise<string> {
+  const res = await apiClient.post(AUTH_ENDPOINTS.login, body);
+  const token: unknown =
+    (res as any)?.data?.data?.accessToken ??
+    (res as any)?.data?.accessToken ??
+    (res as any)?.data?.token;
+  if (typeof token !== "string" || !token) throw new Error("토큰이 없습니다.");
+  return token;
 }
 
-export interface Me {
-  id: number;
-  email: string;
-  name: string;
-  role: "USER" | "ADMIN";
+export async function logoutApi(): Promise<void> {
+  await apiClient.post(AUTH_ENDPOINTS.logout, {}, { withCredentials: true });
 }
 
-// 백엔드 응답: { success, token, user?, message? }
-type LoginRes = {
-  success: boolean;
-  token?: string;
-  user?: Me;
-  message?: string;
-};
-
-export async function login(body: LoginReq): Promise<string> {
-  const res = await postD<LoginRes>("/user/login", body); 
-  if (!res?.success || !res.token) {
-    throw new Error(res?.message || "로그인 실패");
-  }
-  useAuthStore.getState().loginWithToken(res.token);
-  // (선택) user.role을 스토어에 직접 반영하고 싶다면 setRole 추가해서 여기서 반영
-  return res.token;
-}
-
-export async function logout(): Promise<void> {
-  try {
-    await postD<void>("/user/logout"); 
-  } finally {
-    useAuthStore.getState().logout(); 
-  }
+// 사용자 프로필(역할) 조회
+export async function fetchProfile(): Promise<{ role?: string }> {
+  const res = await apiClient.get("/user/profile");
+  return (res as any)?.data?.data ?? (res as any)?.data ?? {};
 }
