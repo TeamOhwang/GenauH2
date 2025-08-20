@@ -11,7 +11,7 @@ import lombok.Getter;
 @Entity
 @AllArgsConstructor
 @Table(name = "region_avg_price")
-public class reg_avg_price {
+public class Reg_avg_price {
 	@Id
 	private String region;
 	

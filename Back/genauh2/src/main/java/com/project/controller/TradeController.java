@@ -9,23 +9,23 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.project.entity.reg_avg_price;
-import com.project.service.tradeService;
+import com.project.entity.Reg_avg_price;
+import com.project.service.TradeService;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
 @RequestMapping("/trade")
-public class tradeController {
+public class TradeController {
 	
 	@Autowired
-	private tradeService tradeservice;
+	private TradeService tradeservice;
 	
 	@GetMapping("/list")
-	public ResponseEntity<List<reg_avg_price>> tradeList(){
+	public ResponseEntity<List<Reg_avg_price>> tradeList(){
 		try {
-			List<reg_avg_price> result = tradeservice.tradeList();
+			List<Reg_avg_price> result = tradeservice.tradeList();
 			return ResponseEntity.ok(result);
 			
 		} catch (Exception e) {

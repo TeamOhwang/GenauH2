@@ -21,7 +21,7 @@ import com.project.service.PlantGenerationQueryService;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/generation")
+@RequestMapping("/generation")
 @RequiredArgsConstructor
 public class PlantGenerationQueryController {
 
