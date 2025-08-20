@@ -5,15 +5,15 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.project.entity.reg_avg_price;
-import com.project.repository.tradeRepository;
+import com.project.entity.Reg_avg_price;
+import com.project.repository.TradeRepository;
 
 @Service
-public class tradeService {
+public class TradeService {
 	@Autowired
-	private tradeRepository tradeRepo;
+	private TradeRepository tradeRepo;
 	
-	public List<reg_avg_price> tradeList(){
+	public List<Reg_avg_price> tradeList(){
 		
 		return tradeRepo.findAll();
 	}
