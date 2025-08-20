@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig, AxiosHeaders, AxiosRequestConfig } from "axios";
+import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig, AxiosHeaders } from "axios";
 import { authToken } from "@/stores/authStorage";
 
 /* ======================== 상수 ======================== */
@@ -15,7 +15,7 @@ type JwtPayload = { exp?: number };
 type HeaderLike = AxiosHeaders | Record<string, any> | undefined;
 
 /* ======================== 인증 관련 엔드포인트 ======================== */
-const AUTH_ENDPOINTS = { login: "/user/login", logout: "/user/logout", reissue: "/reissue" } as const;
+const AUTH_ENDPOINTS = { login: "/user/login", logout: "/user/logout", reissue: "/reissue" ,profile: "/user/profile"} as const;
 
 /* ======================== 헤더 유틸 함수 ======================== */
 // 요청 헤더에 값 설정/삭제
@@ -129,10 +129,17 @@ apiClient.interceptors.request.use(async (config: InternalAxiosRequestConfig) =>
 apiClient.interceptors.response.use(
   (res) => res,
   async (error: AxiosError & { _redirect?: string }) => {
+    const st = error.response?.status;
+
+    //  403 권한부족: 전역 라우팅 힌트 부여
+    if (st === 403) {
+      return Promise.reject(Object.assign(error, { _redirect: "/403" }));
+    }
+
     const original = error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
 
-    // 401 응답 시 → 재발급 후 재요청
-    if (ENABLE_REFRESH && error.response?.status === 401 && original && !original._retry && !shouldSkipAuth(original.url)) {
+    //  401: 리프레시 후 원요청 재시도
+    if (ENABLE_REFRESH && st === 401 && original && !original._retry && !shouldSkipAuth(original.url)) {
       original._retry = true;
       try {
         if (!isRefreshing) {
@@ -158,8 +165,10 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
 /* ======================== export ======================== */
+export function unwrap<T = unknown>(res: any): T {
+  return (res?.data?.data ?? res?.data) as T;
+}
 export default apiClient;
 export { AUTH_ENDPOINTS };
 export type { ApiEnvelope };

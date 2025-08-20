@@ -38,7 +38,6 @@ public class User {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
     
-    @Column(insertable = false)
     private LocalDateTime updatedAt;
     
     public enum Role {

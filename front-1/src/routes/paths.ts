@@ -14,8 +14,6 @@ forbidden: "/403",
 notFound: "*",
 } as const;
 
+export type Role = "USER" | "ADMIN";
+export const roleHome = (r: Role) => (r === "ADMIN" ? PATHS.admin : PATHS.daily);
 
-export const ROLE_HOME: Record<"USER" | "ADMIN", string> = {
-USER: PATHS.home,
-ADMIN: PATHS.admin,
-};
