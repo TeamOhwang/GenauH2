@@ -1,24 +1,28 @@
-// src/components/Header.tsx
+
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { PATHS } from "@/routes/paths";
+import { PATHS, roleHome, type Role } from "@/routes/paths";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { authToken } from "@/stores/authStorage";
 
 export default function Header() {
+  const role = useAuthStore((s) => s.role) as Role | null;
   const logout = useAuthStore((s) => s.logout);
+
+  // 토큰과 역할로 로고 목적지 계산
+  const token = authToken.get();
+  const to = token && role ? roleHome(role) : PATHS.login;
+
   const [pending, setPending] = useState(false);
 
   const handleLogout = async () => {
     if (pending) return;
-
-    // 확인/취소 다이얼로그
     const ok = window.confirm("로그아웃하시겠습니까?");
     if (!ok) return;
 
     setPending(true);
     try {
-      await Promise.resolve(logout());
-      // logout 내부에서 /login으로 이동 처리됨
+      await Promise.resolve(logout()); 
     } finally {
       setPending(false);
     }
@@ -26,14 +30,16 @@ export default function Header() {
 
   return (
     <header className="flex flex-row justify-between items-center bg-white p-3">
+      {/*  역할별 홈 또는 로그인으로 이동 */}
       <NavLink
-        to={PATHS.home}
+        to={to}
         className="ml-6 text-2xl font-bold text-blue-600 hover:opacity-80"
         aria-label="메인으로 이동"
       >
         GenauH2
       </NavLink>
 
+      {/* 우측: 이메일(임시) + 로그아웃 */}
       <div className="ml-auto mr-4 flex items-center gap-3">
         <span className="font-semibold text-gray-600">UserEmail@test.com</span>
         <button

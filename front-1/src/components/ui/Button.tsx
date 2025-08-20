@@ -2,7 +2,7 @@ import  {forwardRef, ReactNode } from "react";
 
 type OwnProps = {
   children: ReactNode;
-  style?: React.CSSProperties; // 인라인만 허용
+  style?: React.CSSProperties; 
 };
 
 type ButtonProps = Omit<

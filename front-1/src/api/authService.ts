@@ -1,8 +1,14 @@
 import { loginApi, logoutApi, fetchProfile } from "@/api/authApi";
 import { authToken } from "@/stores/authStorage"; 
 
-const mapServerRole = (serverRole?: string): "ADMIN" | "USER" | null =>
-  !serverRole ? null : serverRole.toUpperCase() === "SUPERVISOR" ? "ADMIN" : "USER";
+const mapServerRole = (serverRole?: string): "ADMIN" | "USER" | null => {
+  const r = (serverRole ?? "").toUpperCase();
+  if (r === "ADMIN" || r === "SUPERVISOR") return "ADMIN";
+  if (r === "USER") return "USER";
+  return null; 
+};
+
+
 
 export async function loginAndSyncRole(v: { email: string; password: string }) {
   const raw = await loginApi(v);
