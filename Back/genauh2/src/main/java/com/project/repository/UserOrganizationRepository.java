@@ -11,26 +11,29 @@ import java.util.Optional;
 
 public interface UserOrganizationRepository extends JpaRepository<User, Long> {
 
-    @Query("SELECT new com.project.dto.UserOrganizationDTO(" +
-           "u.userId, u.email, u.role, u.status, u.bizRegNo, " +
-           "o.orgName, o.name, u.createdAt, u.updatedAt, o.createdAt, o.updatedAt) " +
-           "FROM User u " +
-           "LEFT JOIN Organization o ON u.bizRegNo = o.bizRegNo " +
-           "WHERE u.userId = :userId")
-    Optional<UserOrganizationDTO> findUserWithOrganization(@Param("userId") Long userId);
+	@Query("SELECT new com.project.dto.UserOrganizationDTO(" +
+		       "u.userId, u.email, u.role, u.status, u.bizRegNo, " +
+		       "o.orgId, o.orgName, o.name, " +                    // ✅ orgId 추가 및 뒤 파라미터 순서 맞춤
+		       "u.createdAt, u.updatedAt, o.createdAt, o.updatedAt) " +
+		       "FROM User u " +
+		       "LEFT JOIN Organization o ON u.bizRegNo = o.bizRegNo " +
+		       "WHERE u.userId = :userId")
+		Optional<UserOrganizationDTO> findUserWithOrganization(@Param("userId") Long userId);
 
-    @Query("SELECT new com.project.dto.UserOrganizationDTO(" +
-           "u.userId, u.email, u.role, u.status, u.bizRegNo, " +
-           "o.orgName, o.name, u.createdAt, u.updatedAt, o.createdAt, o.updatedAt) " +
-           "FROM User u " +
-           "LEFT JOIN Organization o ON u.bizRegNo = o.bizRegNo " +
-           "WHERE u.bizRegNo = :bizRegNo")
-    List<UserOrganizationDTO> findUsersByBizRegNo(@Param("bizRegNo") String bizRegNo);
+		@Query("SELECT new com.project.dto.UserOrganizationDTO(" +
+		       "u.userId, u.email, u.role, u.status, u.bizRegNo, " +
+		       "o.orgId, o.orgName, o.name, " +
+		       "u.createdAt, u.updatedAt, o.createdAt, o.updatedAt) " +
+		       "FROM User u " +
+		       "LEFT JOIN Organization o ON u.bizRegNo = o.bizRegNo " +
+		       "WHERE u.bizRegNo = :bizRegNo")
+		List<UserOrganizationDTO> findUsersByBizRegNo(@Param("bizRegNo") String bizRegNo);
 
-    @Query("SELECT new com.project.dto.UserOrganizationDTO(" +
-           "u.userId, u.email, u.role, u.status, u.bizRegNo, " +
-           "o.orgName, o.name, u.createdAt, u.updatedAt, o.createdAt, o.updatedAt) " +
-           "FROM User u " +
-           "LEFT JOIN Organization o ON u.bizRegNo = o.bizRegNo")
-    List<UserOrganizationDTO> findAllUsersWithOrganizations();
+		@Query("SELECT new com.project.dto.UserOrganizationDTO(" +
+		       "u.userId, u.email, u.role, u.status, u.bizRegNo, " +
+		       "o.orgId, o.orgName, o.name, " +
+		       "u.createdAt, u.updatedAt, o.createdAt, o.updatedAt) " +
+		       "FROM User u " +
+		       "LEFT JOIN Organization o ON u.bizRegNo = o.bizRegNo")
+		List<UserOrganizationDTO> findAllUsersWithOrganizations();
 }

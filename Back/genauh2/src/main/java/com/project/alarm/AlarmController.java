@@ -1,4 +1,4 @@
-package com.project.controller;
+package com.project.alarm;
 
 import com.project.entity.Alarms;
 import com.project.service.AlarmService;
