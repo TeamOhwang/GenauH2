@@ -1,3 +1,4 @@
+import { updateUserStatus } from "@/api/adminService";
 import Button from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,34 +12,146 @@ import { useEffect, useState } from "react";
 export default function Admin() {
 
   const [isOpen, setIsOpen] = useState(false);
+  const [statusChangeModal, setStatusChangeModal] = useState<{
+    isOpen: boolean;
+    userId: string;
+    currentStatus: string;
+    newStatus: string;
+    userName: string;
+  }>({
+    isOpen: false,
+    userId: "",
+    currentStatus: "",
+    newStatus: "",
+    userName: ""
+  });
 
-  const { getUsers, loading, error } = useAdmin();
+  const { getUsers, updateUserStatus: updateUserStatusAction, getFacilities, loading, error } = useAdmin();
   const [users, setUsers] = useState<any[]>([]);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"활성화" | "비활성화" | "전체">("전체");
+  const [statusFilter, setStatusFilter] = useState<"ACTIVE" | "SUSPENDED" | "ALL">("ALL");
+  const [openFacilityUserId, setOpenFacilityUserId] = useState<string | null>(null);
+  const [facilities, setFacilities] = useState<any[]>([]);
+  const [facilityLoading, setFacilityLoading] = useState<{ [key: string]: boolean }>({});
 
   useEffect(() => {
     getUsers().then(setUsers);
   }, [getUsers])
 
-  if (loading) return <p>로딩 중...</p>;
-  if (error) return <p>오류: {error}</p>;
+  if (loading) return <div className="h-full p-6"><p className="text-center text-lg">로딩 중...</p></div>;
+  if (error) return <div className="h-full p-6"><p className="text-center text-lg text-red-600">오류: {error}</p></div>;
 
-  // const filteredUsers = users.filter(u =>
-  // (statusFilter === "전체" || u.status === statusFilter) 
-  // // (u.email.includes(search) || u.group.includes(search))
-  // )
+  const filteredUsers = users.filter(u => {
+    // 상태 필터링
+    const statusMatch = statusFilter === "ALL" || u.status === statusFilter;
+
+    // 검색어가 없으면 상태만 확인
+    if (!search.trim()) return statusMatch;
+
+    // 검색어가 있으면 다음 필드들에서 검색
+    const searchLower = search.toLowerCase();
+    const emailMatch = u.email?.toLowerCase().includes(searchLower) || false;
+    const orgNameMatch = u.orgname?.toLowerCase().includes(searchLower) || false;
+    const organizationNameMatch = u.organizationName?.toLowerCase().includes(searchLower) || false;
+    const bizRegNoMatch = u.bizRegNo?.toLowerCase().includes(searchLower) || false;
+
+    return statusMatch && (emailMatch || orgNameMatch || organizationNameMatch || bizRegNoMatch);
+  });
+
+  // 상태 변경 핸들러
+  const handleStatusChange = (userId: string, currentStatus: string, userName: string) => {
+    const newStatus = currentStatus === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
+    setStatusChangeModal({
+      isOpen: true,
+      userId,
+      currentStatus,
+      newStatus,
+      userName
+    });
+  };
+
+  // 상태 변경 확인
+  const confirmStatusChange = async () => {
+    const { userId, newStatus } = statusChangeModal;
+    const result = await updateUserStatusAction(userId, newStatus);
+
+    if (result) {
+      // 사용자 목록 새로고침
+      const updatedUsers = await getUsers();
+      setUsers(updatedUsers);
+      setStatusChangeModal({ ...statusChangeModal, isOpen: false });
+      alert("사용자 상태가 변경되었습니다.");
+    } else {
+      alert("상태 변경에 실패했습니다.");
+    }
+  };
+
+  const handleFacilityOpen = async (userId: string, bizRegNo: string) => {
+    if (openFacilityUserId === userId) {
+      setOpenFacilityUserId(null);
+      return;
+    }
+
+    setOpenFacilityUserId(userId);
+    setFacilityLoading(prev => ({ ...prev, [userId]: true }));
+
+    try {
+      const facilityList = await getFacilities(parseInt(bizRegNo));
+      setFacilities(facilityList);
+    } catch (error) {
+      console.error('시설 목록 조회 실패:', error);
+    } finally {
+      setFacilityLoading(prev => ({ ...prev, [userId]: false }));
+    }
+  };
 
   return (
     <div className="h-full p-6">
       <div className="flex ">
         <p className="text-2xl font-bold mb-6">관리자 페이지</p>
-        <Button onClick={() => setIsOpen(true)} className="mx-3 bg-blue-600">회원 추가</Button>
+        <button onClick={() => setIsOpen(true)} className="bg-blue-500 text-white px-3 py-2 rounded-md w-24 h-10 mx-3">회원 추가</button>
         <Modal isOpen={isOpen} onClose={() => setIsOpen(false)}>
           회원 등록
           <RegiFrom />
         </Modal>
+
+        {/* 상태 변경 확인 모달 */}
+        <Modal isOpen={statusChangeModal.isOpen} onClose={() => setStatusChangeModal({ ...statusChangeModal, isOpen: false })}>
+          <div className="p-6">
+            <h3 className="text-lg font-semibold mb-4">사용자 상태 변경 확인</h3>
+            <p className="mb-4">
+              <strong>{statusChangeModal.userName}</strong> 사용자의 상태를<br />
+              <span className="font-semibold" 
+              style={{
+                color: statusChangeModal.currentStatus === "ACTIVE" ? "rgb(16, 185, 53)" : "rgb(236, 45, 45)",
+              }}>
+                {statusChangeModal.currentStatus === "ACTIVE" ? "활성화" : "비활성화"}
+              </span>에서
+              <span className="font-semibold" 
+              style={{
+                color: statusChangeModal.newStatus === "ACTIVE" ? "rgb(16, 185, 53)" : "rgb(236, 45, 45)",
+              }}>
+                {statusChangeModal.newStatus === "ACTIVE" ? "활성화" : "비활성화"}
+              </span>로 변경하시겠습니까?
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setStatusChangeModal({ ...statusChangeModal, isOpen: false })}
+                className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                취소
+              </button>
+              <button
+                onClick={confirmStatusChange}
+                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        </Modal>
       </div>
+
       {/* 요약 통계 */}
       <div className="flex gap-6 mb-6">
         <Card className="flex-1 text-center">
@@ -61,23 +174,21 @@ export default function Admin() {
         </Card>
       </div>
 
-
-
-      <div className="flex flex-col h-2/3 w-full bg-white rounded-2xl shadow overflow-y-scroll p-3">
+      <div className="flex flex-col h-2/3 w-full bg-white rounded-2xl shadow overflow-y-scroll">
         {/* 검색  + 필터 */}
-        <div className="flex mb-4">
+        <div className="flex mb-4 sticky top-0 bg-white z-10 pb-4 mb-4 border-b pt-3 px-3">
           <Input
-            placeholder="검색..."
+            placeholder="소속, 이메일, 이름, 사업자번호로 검색..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="w-1/3 rounded-3xl bg-gray-200"
           />
-          <Select onValueChange={(val) => setStatusFilter(val as any)} defaultValue="전체">
+          <Select onValueChange={(val) => setStatusFilter(val as any)} defaultValue="ALL">
             <SelectTrigger className="w-[120px] rounded-3xl mx-3">
               <SelectValue placeholder="계정 상태" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="전체">전체</SelectItem>
+              <SelectItem value="ALL">전체</SelectItem>
               <SelectItem value="ACTIVE">활성화</SelectItem>
               <SelectItem value="SUSPENDED">비활성화</SelectItem>
             </SelectContent>
@@ -85,34 +196,109 @@ export default function Admin() {
         </div>
 
         {/* 테이블 */}
-        <table className="w-full">
-          <thead>
-            <tr>
-              <th className="text-left">소속</th>
-              <th className="text-left">이메일(ID)</th>
-              <th className="text-left">이름</th>
-              <th className="text-left">최근 로그인</th>
-              <th className="text-center">역할</th>
-              <th className="text-center">계정 상태</th>
-              <th className="text-center">작업</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u) => (
-              <>
-                <tr key={u.userId}>
-                  <td>{u.orgname}</td>
-                  <td>{u.email}</td>
-                  <td>{u.organizationName}</td>
-                  <td>{u.userUpdatedAt.split("T")[0]}</td>
-                  <td className="text-center">{u.role}</td>
-                  <td className="text-center"><Button>{u.status}</Button></td>
-                  <td className="text-center"><Button>시설 관리</Button></td>
-                </tr>
-              </>
-            ))}
-          </tbody>
-        </table>
+        {filteredUsers.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            {search.trim() ? `"${search}"에 대한 검색 결과가 없습니다.` : "사용자가 없습니다."}
+          </div>
+        ) : (
+          <table className="m-5">
+            <thead>
+              <tr className="border-b border-gray-300" >
+                <th className="text-center py-2">소속</th>
+                <th className="text-center py-2">이메일(ID)</th>
+                <th className="text-center py-2">이름</th>
+                <th className="text-center py-2">사업자 등록번호</th>
+                <th className="text-center py-2">최근 로그인</th>
+                <th className="text-center py-2">계정 상태</th>
+                <th className="text-center py-2">작업</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredUsers.map((u) => (
+                <>
+                  <tr key={u.userId}>
+                    <td>{u.orgname}</td>
+                    <td>{u.email}</td>
+                    <td>{u.organizationName}</td>
+                    <td className="text-left">{u.bizRegNo}</td>
+                    <td className="text-center">{u.userUpdatedAt.split("T")[0]}</td>
+                    <td className="text-center">
+                      <div className="w-20 mx-auto">
+                        <Button
+                          onClick={() => handleStatusChange(u.userId, u.status, u.organizationName || u.email)}
+                          style={{
+                            backgroundColor: "white",
+                            color: u.status === "ACTIVE" ? "rgb(16, 185, 53)" : "rgb(236, 45, 45)",
+                            border: u.status === "ACTIVE" ? "1px solid rgb(16, 185, 53)" : "1px solid rgb(214, 15, 15)",
+                            fontWeight: "bold",
+                            width: "100px",
+                            textAlign: "center"
+                          }}
+                        >
+                          {u.status === "ACTIVE" ? "활성화" : "비활성화"}
+                        </Button>
+                      </div>
+                    </td>
+                    <td className="text-center">
+                      <Button onClick={() => handleFacilityOpen(u.userId, u.bizRegNo)}>시설 관리</Button>
+                    </td>
+                  </tr>
+                  {openFacilityUserId === u.userId && (
+                    <tr>
+                      <td colSpan={7} className="bg-blue-50 p-4">
+                        <div className="text-center bg-white rounded-2xl shadow p-4">
+                          <h4 className="font-semibold mb-3 text-lg">[ 시설 정보 ]</h4>
+                          {facilityLoading[u.userId] ? (
+                            <div className="text-center py-4">
+                              <p>시설 정보를 불러오는 중...</p>
+                            </div>
+                          ) : facilities.length > 0 ? (
+                            <table className="w-full">
+                              <thead>
+                                <tr className="border-b">
+                                  <th className="px-4 py-2 text-center">시설명</th>
+                                  <th className="px-4 py-2 text-center">위치</th>
+                                  <th className="px-4 py-2 text-center">시설 상태</th>
+                                  <th className="px-4 py-2 text-center">모델번호</th>
+                                  <th className="px-4 py-2 text-center">셀 개수</th>
+                                  <th className="px-4 py-2 text-center">정격 전력(kW)</th>
+                                  <th className="px-4 py-2 text-center">정격 출력(kg/h)</th>
+                                  <th className="px-4 py-2 text-center">작업</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {facilities.map((facility, index) => (
+                                  <tr key={facility.facilityId || index} className="border-b">
+                                    <td className="px-4 py-2">{facility.name || 'N/A'}</td>
+                                    <td className="px-4 py-2">{facility.location || 'N/A'}</td>
+                                    <td className="px-4 py-2">{facility.status || 'N/A'}</td>
+                                    <td className="px-4 py-2">{facility.modelNo || 'N/A'}</td>
+                                    <td className="px-4 py-2">{facility.cellCount || 'N/A'}</td>
+                                    <td className="px-4 py-2">{facility.ratedPowerKw || 'N/A'}</td>
+                                    <td className="px-4 py-2">{facility.ratedOutputKgH || 'N/A'}</td>
+                                    <td className="px-4 py-2 text-center">
+                                      <Button style={{ backgroundColor: "#3b82f6", color: "white", fontSize: "12px", padding: "4px 8px" }}>
+                                        편집
+                                      </Button>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          ) : (
+                            <div className="text-center py-4 text-gray-500">
+                              <p>등록된 시설이 없습니다.</p>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

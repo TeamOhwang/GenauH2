@@ -5,7 +5,7 @@ type RegiFromProps = { onSuccess?: () => void };
 
 export default function RegiFrom({ onSuccess }: RegiFromProps) {
     const [form, setFrom] = useState({
-        orgname: "", // 회사 이름
+        orgName: "", // 회사 이름
         name: "", // 대표 이름
         bizRegNo: "", // 사업자 번호
         email: "", // 아이디
@@ -42,9 +42,9 @@ export default function RegiFrom({ onSuccess }: RegiFromProps) {
             />
             <input
                 type="text"
-                name="orgname"
+                name="orgName"
                 placeholder="조직명"
-                value={form.orgname}
+                value={form.orgName}
                 onChange={handleChange}
                 className="w-full border rounded px-3 py-2"
             />
