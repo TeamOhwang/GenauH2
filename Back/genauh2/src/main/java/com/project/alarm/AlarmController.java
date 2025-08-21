@@ -1,7 +1,5 @@
 package com.project.alarm;
 
-import com.project.entity.Alarms;
-import com.project.service.AlarmService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

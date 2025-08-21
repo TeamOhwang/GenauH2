@@ -1,7 +1,5 @@
-package com.project.service;
+package com.project.alarm;
 
-import com.project.entity.Alarms;
-import com.project.repository.AlarmsRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

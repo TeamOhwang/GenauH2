@@ -1,6 +1,5 @@
-package com.project.repository;
+package com.project.alarm;
 
-import com.project.entity.Alarms;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 

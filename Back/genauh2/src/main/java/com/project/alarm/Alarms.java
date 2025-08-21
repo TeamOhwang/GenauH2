@@ -1,5 +1,5 @@
 // 알림
-package com.project.entity;
+package com.project.alarm;
 
 import jakarta.persistence.*;
 import lombok.Data;
