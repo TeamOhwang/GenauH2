@@ -1,4 +1,5 @@
 import { updateUserStatus } from "@/api/adminService";
+import FacilitiesFrom from "@/components/FacilitiesFrom";
 import Button from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -26,13 +27,14 @@ export default function Admin() {
     userName: ""
   });
 
-  const { getUsers, updateUserStatus: updateUserStatusAction, getFacilities, loading, error } = useAdmin();
+  const { getUsers, updateUserStatusAction, getFacilities, loading, error } = useAdmin();
   const [users, setUsers] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ACTIVE" | "SUSPENDED" | "ALL">("ALL");
-  const [openFacilityUserId, setOpenFacilityUserId] = useState<string | null>(null);
-  const [facilities, setFacilities] = useState<any[]>([]);
-  const [facilityLoading, setFacilityLoading] = useState<{ [key: string]: boolean }>({});
+  const [openFacilityUserId, setOpenFacilityUserId] = useState<string | null>(null); // 유저 아이디 기준으로 시설 리스트 띄울 공간 띄우기
+  const [facilities, setFacilities] = useState<any>([]); // 시설 리스트
+  const [facilityLoading, setFacilityLoading] = useState<{ [key: string]: boolean }>({}); // 시설 로딩 상태
+  const [facilityOpen, setFacilityOpen] = useState(false); // 시설 추가 모달 열기/닫기
 
   useEffect(() => {
     getUsers().then(setUsers);
@@ -86,7 +88,8 @@ export default function Admin() {
     }
   };
 
-  const handleFacilityOpen = async (userId: string, bizRegNo: string) => {
+  // 시설 관리 열기/닫기 핸들러
+  const handleFacilityOpen = async (userId: string, orgId: number) => {
     if (openFacilityUserId === userId) {
       setOpenFacilityUserId(null);
       return;
@@ -96,10 +99,14 @@ export default function Admin() {
     setFacilityLoading(prev => ({ ...prev, [userId]: true }));
 
     try {
-      const facilityList = await getFacilities(parseInt(bizRegNo));
+      const facilityList = await getFacilities(orgId);
+      console.log('시설 목록 조회 결과:', facilityList);
+      console.log('시설 목록 타입:', typeof facilityList);
+      console.log('시설 목록 길이:', facilityList?.length);
       setFacilities(facilityList);
     } catch (error) {
       console.error('시설 목록 조회 실패:', error);
+      setFacilities([]);
     } finally {
       setFacilityLoading(prev => ({ ...prev, [userId]: false }));
     }
@@ -121,16 +128,16 @@ export default function Admin() {
             <h3 className="text-lg font-semibold mb-4">사용자 상태 변경 확인</h3>
             <p className="mb-4">
               <strong>{statusChangeModal.userName}</strong> 사용자의 상태를<br />
-              <span className="font-semibold" 
-              style={{
-                color: statusChangeModal.currentStatus === "ACTIVE" ? "rgb(16, 185, 53)" : "rgb(236, 45, 45)",
-              }}>
+              <span className="font-semibold"
+                style={{
+                  color: statusChangeModal.currentStatus === "ACTIVE" ? "rgb(16, 185, 53)" : "rgb(236, 45, 45)",
+                }}>
                 {statusChangeModal.currentStatus === "ACTIVE" ? "활성화" : "비활성화"}
               </span>에서
-              <span className="font-semibold" 
-              style={{
-                color: statusChangeModal.newStatus === "ACTIVE" ? "rgb(16, 185, 53)" : "rgb(236, 45, 45)",
-              }}>
+              <span className="font-semibold"
+                style={{
+                  color: statusChangeModal.newStatus === "ACTIVE" ? "rgb(16, 185, 53)" : "rgb(236, 45, 45)",
+                }}>
                 {statusChangeModal.newStatus === "ACTIVE" ? "활성화" : "비활성화"}
               </span>로 변경하시겠습니까?
             </p>
@@ -240,54 +247,85 @@ export default function Admin() {
                       </div>
                     </td>
                     <td className="text-center">
-                      <Button onClick={() => handleFacilityOpen(u.userId, u.bizRegNo)}>시설 관리</Button>
+                      <Button onClick={() => handleFacilityOpen(u.userId, parseInt(u.orgId))}>시설 관리</Button>
                     </td>
                   </tr>
                   {openFacilityUserId === u.userId && (
                     <tr>
                       <td colSpan={7} className="bg-blue-50 p-4">
                         <div className="text-center bg-white rounded-2xl shadow p-4">
-                          <h4 className="font-semibold mb-3 text-lg">[ 시설 정보 ]</h4>
+                          <div className="flex items-center w-full">
+                            <div className="flex-1"></div>
+                            <div className="flex-1 text-center">
+                              <h4 className="font-semibold mb-3 text-lg">[ 시설 정보 ]</h4>
+                            </div>
+                            <div className="flex flex-1 justify-end">
+                              <button onClick={() => setFacilityOpen(true)} className="py-2 rounded-md w-24 mx-3 border">시설 추가</button>
+                            </div>
+                          </div>
+                          <Modal isOpen={facilityOpen} onClose={() => setFacilityOpen(false)}>
+                            <FacilitiesFrom
+                              orgId={u.orgId}
+                              onSuccess={async () => {
+                                setFacilityOpen(false);
+                                // 시설 등록 후 목록 새로고침
+                                const facilityList = await getFacilities(parseInt(u.orgId));
+                                setFacilities(facilityList);
+                              }}
+                            />
+                          </Modal>
                           {facilityLoading[u.userId] ? (
                             <div className="text-center py-4">
                               <p>시설 정보를 불러오는 중...</p>
                             </div>
-                          ) : facilities.length > 0 ? (
-                            <table className="w-full">
-                              <thead>
-                                <tr className="border-b">
-                                  <th className="px-4 py-2 text-center">시설명</th>
-                                  <th className="px-4 py-2 text-center">위치</th>
-                                  <th className="px-4 py-2 text-center">시설 상태</th>
-                                  <th className="px-4 py-2 text-center">모델번호</th>
-                                  <th className="px-4 py-2 text-center">셀 개수</th>
-                                  <th className="px-4 py-2 text-center">정격 전력(kW)</th>
-                                  <th className="px-4 py-2 text-center">정격 출력(kg/h)</th>
-                                  <th className="px-4 py-2 text-center">작업</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {facilities.map((facility, index) => (
-                                  <tr key={facility.facilityId || index} className="border-b">
-                                    <td className="px-4 py-2">{facility.name || 'N/A'}</td>
-                                    <td className="px-4 py-2">{facility.location || 'N/A'}</td>
-                                    <td className="px-4 py-2">{facility.status || 'N/A'}</td>
-                                    <td className="px-4 py-2">{facility.modelNo || 'N/A'}</td>
-                                    <td className="px-4 py-2">{facility.cellCount || 'N/A'}</td>
-                                    <td className="px-4 py-2">{facility.ratedPowerKw || 'N/A'}</td>
-                                    <td className="px-4 py-2">{facility.ratedOutputKgH || 'N/A'}</td>
-                                    <td className="px-4 py-2 text-center">
-                                      <Button style={{ backgroundColor: "#3b82f6", color: "white", fontSize: "12px", padding: "4px 8px" }}>
-                                        편집
-                                      </Button>
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
                           ) : (
-                            <div className="text-center py-4 text-gray-500">
-                              <p>등록된 시설이 없습니다.</p>
+                            <div>
+                              {/* <p className="text-sm text-gray-500 mb-2">디버그: facilities.length = {facilities?.data?.length || facilities?.length || 0}</p>
+                              <p className="text-sm text-gray-500 mb-2">디버그: facilities 데이터 = {JSON.stringify(facilities)}</p> */}
+                              {(facilities?.data?.length > 0 || facilities?.length > 0) ? (
+                                <table className="w-full">
+                                  <thead>
+                                    <tr className="border-b">
+                                      <th className="px-4 py-2 text-center">시설명</th>
+                                      <th className="px-4 py-2 text-center">위치</th>
+                                      {/* <th className="px-4 py-2 text-center">시설 상태</th> */}
+                                      <th className="px-4 py-2 text-center">모델번호</th>
+                                      <th className="px-4 py-2 text-center">셀 개수</th>
+                                      <th className="px-4 py-2 text-center">정격 전력(kW)</th>
+                                      <th className="px-4 py-2 text-center">정격 출력(kg/h)</th>
+                                      <th className="px-4 py-2 text-center">기준 SEC(kWh/kg)</th>
+                                      <th className="px-4 py-2 text-center">촉매 설치일</th>
+                                      <th className="px-4 py-2 text-center">생성 일시</th>
+                                      <th className="px-4 py-2 text-center">작업</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {(facilities?.data || facilities || []).map((facility: any, index: number) => (
+                                      <tr key={facility.facilityId || index} className="border-b">
+                                        <td className="px-4 py-2">{facility.name || 'N/A'}</td>
+                                        <td className="px-4 py-2">{facility.location || 'N/A'}</td>
+                                        {/* <td className="px-4 py-2">{facility.status || 'N/A'}</td> */}
+                                        <td className="px-4 py-2">{facility.modelNo || 'N/A'}</td>
+                                        <td className="px-4 py-2">{facility.cellCount || 'N/A'}</td>
+                                        <td className="px-4 py-2">{facility.ratedPowerKw || 'N/A'}</td>
+                                        <td className="px-4 py-2">{facility.ratedOutputKgH || 'N/A'}</td>
+                                        <td className="px-4 py-2">{facility.secNominalKwhPerKg || 'N/A'}</td>
+                                        <td className="px-4 py-2">{facility.catalystInstallDate || 'N/A'}</td>
+                                        <td className="px-4 py-2">{facility.createdAt || 'N/A'}</td>
+                                        <td className="px-4 py-2 text-center">
+                                          <Button style={{ backgroundColor: "#3b82f6", color: "white", fontSize: "12px", padding: "4px 8px" }}>
+                                            편집
+                                          </Button>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              ) : (
+                                <div className="text-center py-4 text-gray-500">
+                                  <p>등록된 시설이 없습니다.</p>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>

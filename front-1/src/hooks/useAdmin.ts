@@ -1,4 +1,4 @@
-import { createUser, fetchAllFacilities, fetchAllUsers, updateUserStatus } from "@/api/adminService";
+import { createUser, fetchAllFacilities, fetchAllUsers, updateUserStatus, addFacility } from "@/api/adminService";
 import { useCallback, useState } from "react";
 
 type user = {
@@ -7,6 +7,19 @@ type user = {
     bizRegNo: string;
     email: string;
     password: string;
+}
+
+type facility = {
+    orgId: string;
+    name: string;
+    location: string;
+    modelNo: string;
+    cellCount: string;
+    ratedPowerKw: string;
+    ratedOutputKgH: string;
+    secNominalKwhPerKg: string;
+    catalystInstallDate: string;
+    catalystLifeHours: string;
 }
 
 export function useAdmin() {
@@ -56,19 +69,62 @@ export function useAdmin() {
         }
     }, [])
 
-    const getFacilities = useCallback(async (ordId?: number) => {
+    const getFacilities = useCallback(async (orgId?: number) => {
+        console.log('=== useAdmin.getFacilities 시작 ===');
+        console.log('받은 orgId:', orgId);
+        console.log('orgId 타입:', typeof orgId);
+        
         setLoading(true);
         setError(null);
         try {
-            const facilities = await fetchAllFacilities(ordId);
+            console.log('fetchAllFacilities 호출 시작...');
+            const facilities = await fetchAllFacilities(orgId);
+            console.log('fetchAllFacilities 응답:', facilities);
+            console.log('응답 타입:', typeof facilities);
+            console.log('=== useAdmin.getFacilities 종료 ===');
             return facilities;
         } catch (e: any) {
+            console.error('useAdmin.getFacilities에서 예외 발생:', e);
+            console.error('에러 타입:', typeof e);
+            console.error('에러 메시지:', e?.message);
             setError(e?.message ?? "시설 목록 조회 실패");
+            console.log('=== useAdmin.getFacilities 종료 (에러) ===');
             return [];
         } finally {
             setLoading(false);
         }
     }, [])
 
-    return { loading, error, addUser, getUsers, updateUserStatus: updateUserStatusAction, getFacilities}
+    const createFacility = useCallback(async (params:facility) => {
+        setLoading(true);
+        setError(null);
+        try {
+            console.log('addFacility API 호출 시작...');
+            const result = await addFacility(params);
+            console.log('addFacility API 응답:', result);
+            console.log('응답 타입:', typeof result);
+            
+            if (result) {
+                console.log('시설 등록 성공 - 결과 반환');
+                return result;
+            } else {
+                console.error('시설 등록 실패 - API 응답이 null/undefined');
+                setError("API 응답이 없습니다");
+                return null;
+            }
+        } catch (e: any) {
+            console.error('시설 등록 중 예외 발생:', e);
+            console.error('에러 타입:', typeof e);
+            console.error('에러 메시지:', e?.message);
+            console.error('전체 에러 객체:', e);
+            
+            const errorMessage = e?.message ?? "시설 등록 실패";
+            setError(errorMessage);
+            return null;
+        } finally {
+            setLoading(false);
+        }
+    }, [])
+
+    return { loading, error, addUser, getUsers, updateUserStatusAction, getFacilities, createFacility}
 }
