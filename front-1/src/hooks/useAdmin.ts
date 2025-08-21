@@ -1,8 +1,8 @@
-import { createUser, fetchAllUsers } from "@/api/adminService";
+import { createUser, fetchAllFacilities, fetchAllUsers, updateUserStatus } from "@/api/adminService";
 import { useCallback, useState } from "react";
 
 type user = {
-    orgname: string;
+    orgName: string;
     name: string;
     bizRegNo: string;
     email: string;
@@ -42,5 +42,33 @@ export function useAdmin() {
         }
     }, [])
 
-    return { loading, error, addUser, getUsers}
+    const updateUserStatusAction = useCallback(async (userId: string, status: string) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const result = await updateUserStatus(userId, status);
+            return result;
+        } catch (e: any) {
+            setError(e?.message ?? "사용자 상태 변경 실패");
+            return null;
+        } finally {
+            setLoading(false);
+        }
+    }, [])
+
+    const getFacilities = useCallback(async (ordId?: number) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const facilities = await fetchAllFacilities(ordId);
+            return facilities;
+        } catch (e: any) {
+            setError(e?.message ?? "시설 목록 조회 실패");
+            return [];
+        } finally {
+            setLoading(false);
+        }
+    }, [])
+
+    return { loading, error, addUser, getUsers, updateUserStatus: updateUserStatusAction, getFacilities}
 }

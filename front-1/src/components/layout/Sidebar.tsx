@@ -19,7 +19,7 @@ export default function Sidebar() {
     { label: "먼슬리 모니터링", to: PATHS.monthly },
     { label: "상세 데이터", to: PATHS.detailed },
     { label: "수소 가격 정보", to: PATHS.price },
-    { label: "알림 설정", to: PATHS.setting },
+    { label: "설정", to: PATHS.setting },
   ];
 
   // ADMIN 전용 메뉴 (필요시 추가)

@@ -1,7 +1,7 @@
-import { getUserListApi, registerApi } from "@/api/adminApi";
+import { getFacilityListApi, getUserListApi, registerApi, updateUserStatusApi } from "@/api/adminApi";
 
 export async function createUser(params:{
-    orgname: string;
+    orgName: string;
     name: string;
     bizRegNo: string;
     email: string;
@@ -17,4 +17,13 @@ export async function fetchAllUsers() {
         ...u,
         role: u.role === "SUPERVISOR" ? "ADMIN" : "USER",
     }))
+}
+
+export async function fetchAllFacilities(ordId?: number) {
+    const facilities = await getFacilityListApi(ordId);
+    return facilities;
+}
+
+export async function updateUserStatus(userId: string, status: string) {
+    return await updateUserStatusApi(userId, status);
 }
