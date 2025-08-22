@@ -1,5 +1,5 @@
-import { updateUserStatus } from "@/api/adminService";
 import FacilitiesFrom from "@/components/FacilitiesFrom";
+import UpdateFaForm from "@/components/UpdateFaForm";
 import Button from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -35,6 +35,8 @@ export default function Admin() {
   const [facilities, setFacilities] = useState<any>([]); // 시설 리스트
   const [facilityLoading, setFacilityLoading] = useState<{ [key: string]: boolean }>({}); // 시설 로딩 상태
   const [facilityOpen, setFacilityOpen] = useState(false); // 시설 추가 모달 열기/닫기
+  const [editFacilityOpen, setEditFacilityOpen] = useState(false); // 시설 수정 모달 열기/닫기
+  const [selectedFacility, setSelectedFacility] = useState<any>(null); // 선택된 시설 정보
 
   useEffect(() => {
     getUsers().then(setUsers);
@@ -274,6 +276,20 @@ export default function Admin() {
                               }}
                             />
                           </Modal>
+                          
+                          {/* 시설 수정 모달 */}
+                          <Modal isOpen={editFacilityOpen} onClose={() => setEditFacilityOpen(false)}>
+                            <UpdateFaForm
+                              facility={selectedFacility}
+                              onSuccess={async () => {
+                                setEditFacilityOpen(false);
+                                // 시설 수정 후 목록 새로고침
+                                const facilityList = await getFacilities(parseInt(u.orgId));
+                                setFacilities(facilityList);
+                              }}
+                              onClose={() => setEditFacilityOpen(false)}
+                            />
+                          </Modal>
                           {facilityLoading[u.userId] ? (
                             <div className="text-center py-4">
                               <p>시설 정보를 불러오는 중...</p>
@@ -295,7 +311,6 @@ export default function Admin() {
                                       <th className="px-4 py-2 text-center">정격 출력(kg/h)</th>
                                       <th className="px-4 py-2 text-center">기준 SEC(kWh/kg)</th>
                                       <th className="px-4 py-2 text-center">촉매 설치일</th>
-                                      <th className="px-4 py-2 text-center">생성 일시</th>
                                       <th className="px-4 py-2 text-center">작업</th>
                                     </tr>
                                   </thead>
@@ -311,10 +326,18 @@ export default function Admin() {
                                         <td className="px-4 py-2">{facility.ratedOutputKgH || 'N/A'}</td>
                                         <td className="px-4 py-2">{facility.secNominalKwhPerKg || 'N/A'}</td>
                                         <td className="px-4 py-2">{facility.catalystInstallDate || 'N/A'}</td>
-                                        <td className="px-4 py-2">{facility.createdAt || 'N/A'}</td>
                                         <td className="px-4 py-2 text-center">
-                                          <Button style={{ backgroundColor: "#3b82f6", color: "white", fontSize: "12px", padding: "4px 8px" }}>
+                                          <Button 
+                                            onClick={() => {
+                                              setSelectedFacility(facility);
+                                              setEditFacilityOpen(true);
+                                            }}
+                                            style={{ backgroundColor: "#3b82f6", color: "white", fontSize: "12px", padding: "4px 8px", marginRight: "8px" }}
+                                          >
                                             편집
+                                          </Button>
+                                          <Button style={{ backgroundColor: "#ef4444", color: "white", fontSize: "12px", padding: "4px 8px" }}>
+                                            삭제
                                           </Button>
                                         </td>
                                       </tr>

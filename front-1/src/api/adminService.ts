@@ -1,4 +1,4 @@
-import { addFacilityApi, getFacilityListApi, getUserListApi, registerApi, updateUserStatusApi } from "@/api/adminApi";
+import { addFacilityApi, deleteFacilityApi, getFacilityListApi, getUserListApi, registerApi, updateFacilityApi, updateUserStatusApi } from "@/api/adminApi";
 
 export async function createUser(params:{
     orgName: string;
@@ -64,4 +64,23 @@ export async function addFacility(params: {
     } finally {
         console.log('=== adminService.addFacility 종료 ===');
     }
+}
+
+export async function updateFacility(params: {
+    facilityId: string;
+    name: string;
+    location: string;
+    modelNo: string;
+    cellCount: string;
+    ratedPowerKw: string;
+    ratedOutputKgH: string;
+    secNominalKwhPerKg: string;
+    catalystInstallDate: string;
+    catalystLifeHours: string;
+}) {
+    return await updateFacilityApi(params);
+}
+
+export async function deleteFacility(facilityId: string) {
+    return await deleteFacilityApi(facilityId);
 }

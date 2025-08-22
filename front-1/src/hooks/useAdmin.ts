@@ -1,4 +1,4 @@
-import { createUser, fetchAllFacilities, fetchAllUsers, updateUserStatus, addFacility } from "@/api/adminService";
+import { createUser, fetchAllFacilities, fetchAllUsers, updateUserStatus, addFacility, updateFacility, deleteFacility } from "@/api/adminService";
 import { useCallback, useState } from "react";
 
 type user = {
@@ -114,5 +114,44 @@ export function useAdmin() {
         }
     }, [])
 
-    return { loading, error, addUser, getUsers, updateUserStatusAction, getFacilities, createFacility}
+    const updateFacilityAction = useCallback(async (params:{
+        facilityId: string;
+        name: string;
+        location: string;
+        modelNo: string;
+        cellCount: string;
+        ratedPowerKw: string;
+        ratedOutputKgH: string;
+        secNominalKwhPerKg: string;
+        catalystInstallDate: string;
+        catalystLifeHours: string;
+    }) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const result = await updateFacility(params);
+            return result;
+        } catch (e: any) {
+            setError(e?.message ?? "시설 수정 실패");
+            return null;
+        } finally {
+            setLoading(false);
+        }
+    }, [])
+
+    const deleteFacilityAction = useCallback(async (facilityId: string) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const result = await deleteFacility(facilityId);
+            return result;
+        } catch (e: any) {
+            setError(e?.message ?? "시설 삭제 실패");
+            return null;
+        } finally {
+            setLoading(false);
+        }
+    }, [])
+
+    return { loading, error, addUser, getUsers, updateUserStatusAction, getFacilities, createFacility, updateFacilityAction, deleteFacilityAction}
 }

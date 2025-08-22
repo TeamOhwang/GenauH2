@@ -34,8 +34,8 @@ export default function Dashboard() {
                     backgroundColor: "rgba(75,192,192,0.2)",
                 },
                 {
-                    label: "시설 최대 발전량",
-                    data: plant1.map((item: any) => item.capacity_Kw),
+                    label: "유휴 전력 기준선",
+                    data: plant1.map((item: any) => 100),
                     borderColor: "rgba(255,99,132,1)",
                     backgroundColor: "rgba(255,99,132,0.2)",
                     borderDash: [5, 5],
@@ -53,8 +53,8 @@ export default function Dashboard() {
                     backgroundColor: "rgba(75,192,192,0.2)",
                 },
                 {
-                    label: "시설 최대 발전량",
-                    data: plant2.map((item: any) => item.capacity_Kw),
+                    label: "유휴 전력 기준선",
+                    data: plant2.map((item: any) => 100),
                     borderColor: "rgba(255,99,132,1)",
                     backgroundColor: "rgba(255,99,132,0.2)",
                     borderDash: [5, 5],
@@ -72,8 +72,8 @@ export default function Dashboard() {
                     backgroundColor: "rgba(75,192,192,0.2)",
                 },
                 {
-                    label: "시설 최대 발전량",
-                    data: plant3.map((item: any) => item.capacity_Kw),
+                    label: "유휴 전력 기준선",
+                    data: plant3.map((item: any) => 100),
                     borderColor: "rgba(255,99,132,1)",
                     backgroundColor: "rgba(255,99,132,0.2)",
                     borderDash: [5, 5],
