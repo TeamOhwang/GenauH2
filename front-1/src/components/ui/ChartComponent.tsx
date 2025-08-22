@@ -27,7 +27,7 @@ ChartJs.register(
 
 
 interface LineChartProps {
-    data : {
+    data: {
         labels: string[];
         datasets: {
             label: string;
@@ -39,6 +39,6 @@ interface LineChartProps {
     options?: any
 }
 
-export default function LineChart({data, options}: LineChartProps) {
-  return <Line data={data} options={options} />;
+export default function LineChart({ data, options }: LineChartProps) {
+    return <Line data={data} options={options} />;
 }

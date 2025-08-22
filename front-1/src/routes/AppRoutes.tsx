@@ -6,9 +6,7 @@ import PublicOnlyRoute from "./PublicOnlyRoute";
 import { PATHS, roleHome, type Role } from "./paths";
 
 import Login from "@/pages/Login";
-import Daily from "@/pages/Daily";
-import Weekly from "@/pages/Weekly";
-import Monthly from "@/pages/Monthly";
+import Dashboard from "@/pages/Dashboard";
 import Price from "@/pages/Price";
 import Detailed from "@/pages/Detailed";
 import Setting from "@/pages/Setting";
@@ -59,9 +57,7 @@ export default function AppRoutes() {
 
         {/* USER 전용 */}
         <Route element={<ProtectedRoute require="USER"><Outlet /></ProtectedRoute>}>
-          <Route path={PATHS.daily} element={<Daily />} />
-          <Route path={PATHS.weekly} element={<Weekly />} />
-          <Route path={PATHS.monthly} element={<Monthly />} />
+          <Route path={PATHS.dashboard} element={<Dashboard />} />
           <Route path={PATHS.price} element={<Price />} />
           <Route path={PATHS.detailed} element={<Detailed />} />
           <Route path={PATHS.setting} element={<Setting />} />

@@ -4,7 +4,7 @@ import { PATHS } from "@/routes/paths";
 import { useAuthStore } from "@/stores/useAuthStore"; 
 
 type Role = "USER" | "ADMIN" | null;
-const roleHome = (r: Role) => (r === "ADMIN" ? PATHS.admin : PATHS.home);
+const roleHome = (r: Role) => (r === "ADMIN" ? PATHS.admin : PATHS.dashboard);
 
 export default function Sidebar() {
   const role = useAuthStore((s) => s.role);
@@ -14,9 +14,6 @@ export default function Sidebar() {
 
   // USER 전용 메뉴
   const userMenu = [
-    { label: "데일리 모니터링", to: PATHS.daily },
-    { label: "위클리 모니터링", to: PATHS.weekly },
-    { label: "먼슬리 모니터링", to: PATHS.monthly },
     { label: "상세 데이터", to: PATHS.detailed },
     { label: "수소 가격 정보", to: PATHS.price },
     { label: "설정", to: PATHS.setting },
@@ -25,7 +22,6 @@ export default function Sidebar() {
   // ADMIN 전용 메뉴 (필요시 추가)
   const adminMenu = [
     { label: "관리자 홈", to: PATHS.admin },
- 
   ];
 
   const menu = role === "ADMIN" ? [...commonTop, ...adminMenu] : [...commonTop, ...userMenu];

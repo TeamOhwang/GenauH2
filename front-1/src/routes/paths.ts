@@ -4,9 +4,7 @@ admin: "/admin",
 about: "/about",
 login: "/login",
 user: "/user",
-daily: "/daily",
-weekly: "/weekly",
-monthly: "/monthly",
+dashboard: "/dashboard",
 detailed: "/detailed",
 price: "/price",
 setting: "/setting",
@@ -15,5 +13,5 @@ notFound: "*",
 } as const;
 
 export type Role = "USER" | "ADMIN";
-export const roleHome = (r: Role) => (r === "ADMIN" ? PATHS.admin : PATHS.daily);
+export const roleHome = (r: Role) => (r === "ADMIN" ? PATHS.admin : PATHS.dashboard);
 
