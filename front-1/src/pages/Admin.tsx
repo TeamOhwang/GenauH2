@@ -27,7 +27,7 @@ export default function Admin() {
     userName: ""
   });
 
-  const { getUsers, updateUserStatusAction, getFacilities, loading, error } = useAdmin();
+  const { getUsers, updateUserStatusAction, getFacilities, deleteFacilityAction, loading, error } = useAdmin();
   const [users, setUsers] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ACTIVE" | "SUSPENDED" | "ALL">("ALL");
@@ -37,6 +37,17 @@ export default function Admin() {
   const [facilityOpen, setFacilityOpen] = useState(false); // 시설 추가 모달 열기/닫기
   const [editFacilityOpen, setEditFacilityOpen] = useState(false); // 시설 수정 모달 열기/닫기
   const [selectedFacility, setSelectedFacility] = useState<any>(null); // 선택된 시설 정보
+  const [deleteFacilityModal, setDeleteFacilityModal] = useState<{
+    isOpen: boolean;
+    facility: any;
+    userId: string;
+    orgId: number;
+  }>({
+    isOpen: false,
+    facility: null,
+    userId: "",
+    orgId: 0
+  });
 
   useEffect(() => {
     getUsers().then(setUsers);
@@ -87,6 +98,39 @@ export default function Admin() {
       alert("사용자 상태가 변경되었습니다.");
     } else {
       alert("상태 변경에 실패했습니다.");
+    }
+  };
+
+  // 시설 삭제 핸들러
+  const handleDeleteFacility = (facility: any, userId: string, orgId: number) => {
+    setDeleteFacilityModal({
+      isOpen: true,
+      facility,
+      userId,
+      orgId
+    });
+  };
+
+  // 시설 삭제 확인
+  const confirmDeleteFacility = async () => {
+    const { facility, userId, orgId } = deleteFacilityModal;
+
+    try {
+      const result = await deleteFacilityAction(facility.facilityId);
+
+      if (result) {
+        alert("시설이 삭제되었습니다.");
+        // 시설 목록 새로고침
+        const facilityList = await getFacilities(orgId);
+        setFacilities(facilityList);
+      } else {
+        alert("시설 삭제에 실패했습니다.");
+      }
+    } catch (error) {
+      console.error('시설 삭제 중 오류 발생:', error);
+      alert("시설 삭제 중 오류가 발생했습니다.");
+    } finally {
+      setDeleteFacilityModal({ ...deleteFacilityModal, isOpen: false });
     }
   };
 
@@ -155,6 +199,31 @@ export default function Admin() {
                 className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
               >
                 확인
+              </button>
+            </div>
+          </div>
+        </Modal>
+
+        {/* 시설 삭제 확인 모달 */}
+        <Modal isOpen={deleteFacilityModal.isOpen} onClose={() => setDeleteFacilityModal({ ...deleteFacilityModal, isOpen: false })}>
+          <div className="p-6">
+            <h3 className="text-lg font-semibold mb-4">시설 삭제 확인</h3>
+            <p className="mb-4">
+              <strong>{deleteFacilityModal.facility?.name || 'N/A'}</strong> 시설을 삭제하시겠습니까?<br />
+              <span className="text-red-600 font-semibold">이 작업은 되돌릴 수 없습니다.</span>
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setDeleteFacilityModal({ ...deleteFacilityModal, isOpen: false })}
+                className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                취소
+              </button>
+              <button
+                onClick={confirmDeleteFacility}
+                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+              >
+                삭제
               </button>
             </div>
           </div>
@@ -276,7 +345,7 @@ export default function Admin() {
                               }}
                             />
                           </Modal>
-                          
+
                           {/* 시설 수정 모달 */}
                           <Modal isOpen={editFacilityOpen} onClose={() => setEditFacilityOpen(false)}>
                             <UpdateFaForm
@@ -327,7 +396,7 @@ export default function Admin() {
                                         <td className="px-4 py-2">{facility.secNominalKwhPerKg || 'N/A'}</td>
                                         <td className="px-4 py-2">{facility.catalystInstallDate || 'N/A'}</td>
                                         <td className="px-4 py-2 text-center">
-                                          <Button 
+                                          <Button
                                             onClick={() => {
                                               setSelectedFacility(facility);
                                               setEditFacilityOpen(true);
@@ -336,7 +405,10 @@ export default function Admin() {
                                           >
                                             편집
                                           </Button>
-                                          <Button style={{ backgroundColor: "#ef4444", color: "white", fontSize: "12px", padding: "4px 8px" }}>
+                                          <Button
+                                            onClick={() => handleDeleteFacility(facility, u.userId, parseInt(u.orgId))}
+                                            style={{ backgroundColor: "#ef4444", color: "white", fontSize: "12px", padding: "4px 8px" }}
+                                          >
                                             삭제
                                           </Button>
                                         </td>
