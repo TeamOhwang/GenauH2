@@ -70,25 +70,13 @@ export function useAdmin() {
     }, [])
 
     const getFacilities = useCallback(async (orgId?: number) => {
-        console.log('=== useAdmin.getFacilities 시작 ===');
-        console.log('받은 orgId:', orgId);
-        console.log('orgId 타입:', typeof orgId);
-        
         setLoading(true);
         setError(null);
         try {
-            console.log('fetchAllFacilities 호출 시작...');
             const facilities = await fetchAllFacilities(orgId);
-            console.log('fetchAllFacilities 응답:', facilities);
-            console.log('응답 타입:', typeof facilities);
-            console.log('=== useAdmin.getFacilities 종료 ===');
             return facilities;
         } catch (e: any) {
-            console.error('useAdmin.getFacilities에서 예외 발생:', e);
-            console.error('에러 타입:', typeof e);
-            console.error('에러 메시지:', e?.message);
             setError(e?.message ?? "시설 목록 조회 실패");
-            console.log('=== useAdmin.getFacilities 종료 (에러) ===');
             return [];
         } finally {
             setLoading(false);
@@ -99,24 +87,24 @@ export function useAdmin() {
         setLoading(true);
         setError(null);
         try {
-            console.log('addFacility API 호출 시작...');
+            // console.log('addFacility API 호출 시작...');
             const result = await addFacility(params);
-            console.log('addFacility API 응답:', result);
-            console.log('응답 타입:', typeof result);
+            // console.log('addFacility API 응답:', result);
+            // console.log('응답 타입:', typeof result);
             
             if (result) {
-                console.log('시설 등록 성공 - 결과 반환');
+                // console.log('시설 등록 성공 - 결과 반환');
                 return result;
             } else {
-                console.error('시설 등록 실패 - API 응답이 null/undefined');
+                // console.error('시설 등록 실패 - API 응답이 null/undefined');
                 setError("API 응답이 없습니다");
                 return null;
             }
         } catch (e: any) {
-            console.error('시설 등록 중 예외 발생:', e);
-            console.error('에러 타입:', typeof e);
-            console.error('에러 메시지:', e?.message);
-            console.error('전체 에러 객체:', e);
+            // console.error('시설 등록 중 예외 발생:', e);
+            // console.error('에러 타입:', typeof e);
+            // console.error('에러 메시지:', e?.message);
+            // console.error('전체 에러 객체:', e);
             
             const errorMessage = e?.message ?? "시설 등록 실패";
             setError(errorMessage);
