@@ -23,3 +23,6 @@
 //    @Column(name = "additional_info", length = 500)
 //    private String additionalInfo;
 //}
+package dummy;
+
+
