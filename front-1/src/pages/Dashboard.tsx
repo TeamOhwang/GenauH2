@@ -10,18 +10,22 @@ export default function Dashboard() {
     const [activeTimeFrame, setActiveTimeFrame] = useState<TimeFrame>("daily");
     const [selectedPlant, setSelectedPlant] = useState<Plant>("plant1");
     const [data, setData] = useState<any>([]);
+    const now = new Date();
+    const currentHour = now.getHours();
+
+    console.log(currentHour)
 
     useEffect(() => {
-        getRawGeneration().then(setData);
+        getRawGeneration("2025-08-20", "2025-08-22").then(setData);
     }, [getRawGeneration]);
-    console.log(data);
 
     const plant1 = data.filter((item: any) => item.capacity_Kw === 1200);
-    console.log(plant1);
+    console.log("plant1 data:", plant1.filter((item: any) => item.hour < currentHour));
     const plant2 = data.filter((item: any) => item.capacity_Kw === 800);
-    console.log(plant2);
+    console.log("plant2 data:", plant2);
     const plant3 = data.filter((item: any) => item.capacity_Kw === 500);
-    console.log(plant3);
+    console.log("plant3 data:", plant3);
+
 
     const solaData = {
         plant1: {
@@ -29,15 +33,24 @@ export default function Dashboard() {
             datasets: [
                 {
                     label: "시간별 태양광 발전량",
-                    data: plant1.map((item: any) => item.generation_Kw),
+                    data: plant1.filter((item: any) => item.hour < currentHour - 1).map((item: any) => item.generation_Kw),
                     borderColor: "rgba(75,192,192,1)",
                     backgroundColor: "rgba(75,192,192,0.2)",
+                    pointRadius: 0,
                 },
                 {
                     label: "유휴 전력 기준선",
                     data: plant1.map((item: any) => 100),
                     borderColor: "rgba(255,99,132,1)",
                     backgroundColor: "rgba(255,99,132,0.2)",
+                    borderDash: [5, 5],
+                    pointRadius: 0,
+                },
+                {
+                    label: "예측 발전량",
+                    data: plant1.map((item: any) => item.forecast_Kwh),
+                    borderColor: "rgba(255,206,86,1)",
+                    backgroundColor: "rgba(255,206,86,0.2)",
                     borderDash: [5, 5],
                     pointRadius: 0,
                 }

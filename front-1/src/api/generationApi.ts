@@ -10,9 +10,8 @@ export const GENERATION_ENDPOINTS = {
 }
 
 // 원시 데이터 조회
-
-export async function getRawGenerationApi() {
-    const res = await apiClient.get(GENERATION_ENDPOINTS.getRaw);
+export async function getRawGenerationApi(startDate: string, endDate: string) {
+    const res = await apiClient.get(GENERATION_ENDPOINTS.getRaw, { params: { start: startDate, end: endDate, limit:2000 } });
     return res.data ?? [];
 }
 
