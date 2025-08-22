@@ -24,59 +24,71 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/generation")
 @RequiredArgsConstructor
 public class PlantGenerationQueryController {
-
+    
     private final PlantGenerationQueryService service;
-
+    
     /** 원시 시계열(엔티티 그대로 반환) */
     @GetMapping("/raw")
     public ResponseEntity<List<PlantGeneration>> getRaw(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(value = "start", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(value = "end", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(defaultValue = "2000") int limit) {
+        
+        System.out.println("=== RAW CONTROLLER ===");
+        System.out.println("Received startDate: " + startDate);
+        System.out.println("Received endDate: " + endDate);
+        
         List<PlantGeneration> result = service.getRawSeries(startDate, endDate, limit);
         return ResponseEntity.ok(result);
     }
-
+    
     /** 최신 1건(엔티티) */
     @GetMapping("/latest")
     public ResponseEntity<PlantGeneration> getLatest() {
         PlantGeneration latest = service.getLatestEntity();
         return ResponseEntity.ok(latest);
     }
-
+    
     /** 일별 합계(집계 DTO) */
     @GetMapping("/daily")
     public ResponseEntity<List<DailyTotal>> getDaily(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+            @RequestParam(value = "start", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(value = "end", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        
+        System.out.println("=== DAILY CONTROLLER ===");
+        System.out.println("Received startDate: " + startDate);
+        System.out.println("Received endDate: " + endDate);
+        System.out.println("========================");
+        
         List<DailyTotal> result = service.getDaily(startDate, endDate);
         return ResponseEntity.ok(result);
     }
-
+    
     /** 시간대 평균(집계 DTO) */
     @GetMapping("/hourly-avg")
     public ResponseEntity<List<HourlyAvg>> getHourlyAvg(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+            @RequestParam(value = "start", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(value = "end", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        
         List<HourlyAvg> result = service.getHourlyAvg(startDate, endDate);
         return ResponseEntity.ok(result);
     }
-
+    
     @GetMapping("/summary")
     public ResponseEntity<DashboardSummaryDTO> getSummary() {
         DashboardSummaryDTO result = service.getDashboardSummary();
         return ResponseEntity.ok(result);
     }
-
+    
     /* 상세 데이터 (페이징 적용) */
     @GetMapping("/detailed")
     public ResponseEntity<Page<PlantGeneration>> getDetailed(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(value = "start", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(value = "end", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
+        
         Page<PlantGeneration> result = service.getDetailedData(startDate, endDate, page, size);
         return ResponseEntity.ok(result);
     }
-
 }
