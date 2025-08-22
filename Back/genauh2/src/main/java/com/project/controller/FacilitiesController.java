@@ -40,4 +40,39 @@ public class FacilitiesController {
         
         return ResponseEntity.ok(Map.of("success", true, "data", facilities));
     }
+    
+    @GetMapping("/detail")
+    public ResponseEntity<Map<String, Object>> facDetail(@RequestParam Long facilityId) {
+        try {
+            Facility facility = facilityService.getFacilityById(facilityId);
+            return ResponseEntity.ok(Map.of("success", true, "data", facility));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+    
+    @PostMapping("/update")
+    public ResponseEntity<Map<String, Object>> facUpdate(@RequestBody Facility facility) {
+        try {
+            Long facilityId = facility.getFacilityId();
+            if (facilityId == null) {
+                return ResponseEntity.badRequest().body(Map.of("message", "facilityId는 필수입니다."));
+            }
+            Facility updatedFacility = facilityService.updateFacility(facilityId, facility);
+            return ResponseEntity.ok(Map.of("success", true, "data", updatedFacility));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+    
+    @PostMapping("/delete")
+    public ResponseEntity<Map<String, Object>> facDelete(@RequestBody Map<String, Object> request) {
+        try {
+            Long facilityId = Long.valueOf(request.get("facilityId").toString());
+            facilityService.deleteFacility(facilityId);
+            return ResponseEntity.ok(Map.of("success", true, "message", "설비가 성공적으로 삭제되었습니다."));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
 }
