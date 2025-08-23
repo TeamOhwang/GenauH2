@@ -1,12 +1,13 @@
 // src/types/KoreaMap.tsx
-import { memo, useMemo, useState, useCallback } from "react";
+import { memo, useMemo, useCallback, useState, useEffect } from "react";
 import { ComposableMap, Geographies, Geography } from "react-simple-maps";
 import { geoCentroid } from "d3-geo";
+import { useFloating, offset, flip, shift, FloatingPortal } from "@floating-ui/react";
 import type { Feature, Geometry, GeoJsonProperties } from "geojson";
 import type { RegionSummary, RegionCode } from "../domain/maps/MapPriceTypes";
 import { toRegionCode, REGION_LABEL, stripSidoSuffix } from "../domain/maps/MapPriceTypes";
 
-/** 더 가벼운 시·도 경계 GeoJSON (GitHub Raw) */
+/** 더 가벼운 시·도 경계 GeoJSON */
 const geoUrl =
   "https://raw.githubusercontent.com/southkorea/southkorea-maps/master/kostat/2018/json/skorea-provinces-2018-geo.json";
 
@@ -17,32 +18,14 @@ type GeoFeature = Feature<Geometry, GeoJsonProperties> & {
 
 /** GeoJSON properties → { code, label } (다양한 키 케이스 대응) */
 function pickRegionFromProps(props: Record<string, unknown>): { code: RegionCode | null; label: string } {
-  // 1) 코드 우선: SIDO_CD / CTPRVN_CD / SIG_CD(앞 2자리)
-  const rawCode =
-    String(props["SIDO_CD"] ?? props["CTPRVN_CD"] ?? props["SIG_CD"] ?? "")
-      .trim();
-
+  const rawCode = String(props["SIDO_CD"] ?? props["CTPRVN_CD"] ?? props["SIG_CD"] ?? "").trim();
   const codeFromId = rawCode ? (rawCode.slice(0, 2) as RegionCode) : null;
+  if (codeFromId) return { code: codeFromId, label: REGION_LABEL[codeFromId] };
 
-  if (codeFromId) {
-    return { code: codeFromId, label: REGION_LABEL[codeFromId] };
-  }
-
-  // 2) 이름 기반 보정: SIDO_NM / CTPRVN_NM / CTP_KOR_NM / name …
-  const rawName = (props["SIDO_NM"] ??
-    props["CTPRVN_NM"] ??
-    props["CTP_KOR_NM"] ??
-    props["SIG_KOR_NM"] ??
-    props["name"] ??
-    "") as string;
-
+  const rawName = (props["SIDO_NM"] ?? props["CTPRVN_NM"] ?? props["CTP_KOR_NM"] ?? props["SIG_KOR_NM"] ?? props["name"] ?? "") as string;
   const norm = stripSidoSuffix(String(rawName));
   const codeFromName = toRegionCode(norm);
-
-  return {
-    code: codeFromName,
-    label: codeFromName ? REGION_LABEL[codeFromName] : (norm || " "),
-  };
+  return { code: codeFromName, label: codeFromName ? REGION_LABEL[codeFromName] : (norm || " ") };
 }
 
 /** 색상 함수 */
@@ -57,24 +40,27 @@ const createColorFunction = (max: number) => {
   };
 };
 
-export const KoreaMap = memo(function KoreaMap(props: {
+type KoreaMapProps = {
   summary: RegionSummary[];
   max?: number;
   selectedRegion?: RegionCode | null;
   onRegionSelect?: (r?: RegionCode) => void;
-}) {
-  const { summary, max = 15000, selectedRegion, onRegionSelect } = props;
-  const [hoverName, setHoverName] = useState<string | null>(null);
+};
 
-  /** ✅ 코드 기준 평균가 맵 */
+export const KoreaMap = memo(function KoreaMap({
+  summary,
+  max = 15000,
+  selectedRegion,
+  onRegionSelect,
+}: KoreaMapProps) {
+  /** 코드 기준 평균가 맵 */
   const avgByCode = useMemo(() => {
     const m: Record<string, number> = {};
     for (const s of summary) {
       const code = s.regionCode ?? toRegionCode(s.regionName);
       if (code) m[code] = s.avgPrice;
     }
-
-    // (옵션) 테스트용 기본값: 실제 데이터 없을 때만
+    // (옵션) 테스트 기본값: 실제 데이터 없을 때만
     if (Object.keys(m).length === 0) {
       Object.assign(m, {
         "11": 12000, "26": 8000, "27": 6000, "28": 9000, "29": 5000,
@@ -87,10 +73,39 @@ export const KoreaMap = memo(function KoreaMap(props: {
   }, [summary]);
 
   const colorize = useMemo(() => createColorFunction(max), [max]);
-
-  const handleMouseEnter = useCallback((name: string) => setHoverName(name), []);
-  const handleMouseLeave = useCallback(() => setHoverName(null), []);
   const handleClick = useCallback((code?: RegionCode) => onRegionSelect?.(code), [onRegionSelect]);
+
+  /** 커서 툴팁 상태 */
+  const [hover, setHover] = useState<{ label: string; avg?: number } | null>(null);
+  const [coords, setCoords] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [open, setOpen] = useState(false);
+
+  // 마우스 좌표를 참조로 쓰는 '가상 reference'
+  const virtualEl = useMemo(
+    () => ({
+      getBoundingClientRect: () => ({
+        x: coords.x,
+        y: coords.y,
+        left: coords.x,
+        top: coords.y,
+        right: coords.x,
+        bottom: coords.y,
+        width: 0,
+        height: 0,
+      }),
+    }),
+    [coords]
+  );
+
+  const { x, y, refs, strategy } = useFloating({
+    open,
+    placement: "top",
+    middleware: [offset(12), flip(), shift({ padding: 8 })],
+  });
+
+  useEffect(() => {
+    refs.setReference(virtualEl as any);
+  }, [virtualEl, refs]);
 
   return (
     <div className="w-full h-full">
@@ -99,6 +114,7 @@ export const KoreaMap = memo(function KoreaMap(props: {
         projectionConfig={{ center: [127.5, 36.5], scale: 4500 }}
         width={800}
         height={600}
+        style={{ width: "100%", height: "100%" }}
       >
         <Geographies geography={geoUrl}>
           {({ geographies }: { geographies: GeoFeature[] }) =>
@@ -108,46 +124,54 @@ export const KoreaMap = memo(function KoreaMap(props: {
               const isSelected = !!selectedRegion && code === selectedRegion;
 
               const [cx, cy] = geoCentroid(geo as any);
-              const hasValidCenter = Number.isFinite(cx) && Number.isFinite(cy);
+              void cx; void cy;
 
               return (
-                <g key={geo.rsmKey ?? (geo.id as string) ?? JSON.stringify(geo.properties)}>
+                // 커서 스타일은 <g>에 부여 (Geography의 style 타입 이슈 회피)
+                <g
+                  key={geo.rsmKey ?? (geo.id as string) ?? JSON.stringify(geo.properties)}
+                  style={{ cursor: code ? "pointer" : "default" }}
+                >
                   <Geography
                     geography={geo}
                     fill={colorize(avg, isSelected)}
                     stroke="#777"
                     strokeWidth={0.6}
-                    onMouseEnter={() => handleMouseEnter(label)}
-                    onMouseLeave={handleMouseLeave}
                     onClick={() => handleClick(code ?? undefined)}
-                    style={{ cursor: code ? "pointer" : "default" }}
+                    // 툴팁 이벤트
+                    onMouseEnter={(e: any) => {
+                      setHover({ label, avg });
+                      setCoords({ x: e.clientX, y: e.clientY });
+                      setOpen(true);
+                    }}
+                    onMouseMove={(e: any) => setCoords({ x: e.clientX, y: e.clientY })}
+                    onMouseLeave={() => {
+                      setOpen(false);
+                      setHover(null);
+                    }}
                   />
-
-
-                  {/* {hasValidCenter && (
-                    <>
-                      <text x={cx} y={cy} textAnchor="middle" fontSize={10} fill="#111827">
-                        {label.slice(0, 2)}
-                      </text>
-
-                      {typeof avg === "number" && (
-                        <text x={cx} y={cy + 12} textAnchor="middle" fontSize={9} fill="#e11d48">
-                          {avg.toLocaleString()}원
-                        </text>
-                      )}
-
-                      {hoverName === label && <circle cx={cx} cy={cy} r={2} fill="#111827" />}
-                    </>
-                  )} */}
-
-
-
                 </g>
               );
             })
           }
         </Geographies>
       </ComposableMap>
+
+      {/* 툴팁 (포털 사용) */}
+      <FloatingPortal>
+        {open && hover && (
+          <div
+            ref={refs.setFloating}
+            style={{ position: strategy, left: x ?? 0, top: y ?? 0 }}
+            className="z-50 pointer-events-none bg-white/95 backdrop-blur text-xs shadow-md border rounded px-2 py-1"
+          >
+            <div className="font-medium">{hover.label}</div>
+            <div className="text-gray-600">
+              {typeof hover.avg === "number" ? `${hover.avg.toLocaleString()} 원` : "데이터 없음"}
+            </div>
+          </div>
+        )}
+      </FloatingPortal>
     </div>
   );
 });

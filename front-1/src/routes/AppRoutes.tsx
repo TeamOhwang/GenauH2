@@ -1,8 +1,6 @@
-
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import RootLayout from "@/layouts/RootLayout";
-import ProtectedRoute from "./ProtectedRoute";
-import PublicOnlyRoute from "./PublicOnlyRoute";
+import { PublicOnlyRoute, ProtectedRoute } from "./ProtectedRoute";
 import { PATHS, roleHome, type Role } from "./paths";
 
 import Login from "@/pages/Login";
@@ -14,21 +12,20 @@ import Admin from "@/pages/Admin";
 import About from "@/pages/About";
 import NotFound from "@/pages/NotFound";
 
-
-//home에 접근하면 현재 역할에 맞는 홈으로 보내는 컴포넌트
 import { useAuthStore } from "@/stores/useAuthStore";
 import { authToken } from "@/stores/authStorage";
+
 function RoleHomeRedirect() {
   const role = useAuthStore((s) => s.role) as Role | null;
-  // 토큰 없거나 역할을 아직 못 정했으면 로그인으로
   if (!authToken.get() || !role) return <Navigate to={PATHS.login} replace />;
   return <Navigate to={roleHome(role)} replace />;
 }
 
-export default function AppRoutes() {
+
+export default function AppRouter() {
   return (
     <Routes>
-      {/* 로그인(메인) - 로그인되어 있으면 홈으로 */}
+      {/* 공용 메인 = 로그인, 로그인 상태면 홈으로 */}
       <Route
         path="/"
         element={
@@ -50,7 +47,7 @@ export default function AppRoutes() {
         {/* 공개 */}
         <Route path={PATHS.about} element={<About />} />
 
-        {/*  로그인만 필요(역할 무관) 그룹: /home 역할별 리다이렉트 */}
+        {/* 로그인만 필요(역할 무관) → /home 에서 역할별 리다이렉트 */}
         <Route element={<ProtectedRoute><Outlet /></ProtectedRoute>}>
           <Route path={PATHS.home} element={<RoleHomeRedirect />} />
         </Route>
