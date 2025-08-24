@@ -16,16 +16,18 @@ type GeoFeature = Feature<Geometry, GeoJsonProperties> & {
   properties: Record<string, unknown>;
 };
 
-/** GeoJSON properties → { code, label } (다양한 키 케이스 대응) */
+/** GeoJSON properties → { code, label } (안전판) */
 function pickRegionFromProps(props: Record<string, unknown>): { code: RegionCode | null; label: string } {
-  const rawCode = String(props["SIDO_CD"] ?? props["CTPRVN_CD"] ?? props["SIG_CD"] ?? "").trim();
-  const codeFromId = rawCode ? (rawCode.slice(0, 2) as RegionCode) : null;
-  if (codeFromId) return { code: codeFromId, label: REGION_LABEL[codeFromId] };
+  const raw = String(props["CTPRVN_CD"] ?? props["SIDO_CD"] ?? props["SIG_CD"] ?? "").trim();
+  const two = raw.length >= 2 ? raw.slice(0, 2) : "";
+  const codeFromCd = (two in REGION_LABEL ? (two as RegionCode) : null);
 
-  const rawName = (props["SIDO_NM"] ?? props["CTPRVN_NM"] ?? props["CTP_KOR_NM"] ?? props["SIG_KOR_NM"] ?? props["name"] ?? "") as string;
-  const norm = stripSidoSuffix(String(rawName));
-  const codeFromName = toRegionCode(norm);
-  return { code: codeFromName, label: codeFromName ? REGION_LABEL[codeFromName] : (norm || " ") };
+  const nameRaw = String(props["CTPRVN_NM"] ?? props["SIDO_NM"] ?? props["SIG_KOR_NM"] ?? props["name"] ?? "");
+  const codeFromName = toRegionCode(stripSidoSuffix(nameRaw));
+
+  const code = codeFromCd ?? codeFromName;
+  const label = code ? REGION_LABEL[code] : "알수없음";
+  return { code, label };
 }
 
 /** 색상 함수 */
@@ -60,7 +62,6 @@ export const KoreaMap = memo(function KoreaMap({
       const code = s.regionCode ?? toRegionCode(s.regionName);
       if (code) m[code] = s.avgPrice;
     }
-    // (옵션) 테스트 기본값: 실제 데이터 없을 때만
     if (Object.keys(m).length === 0) {
       Object.assign(m, {
         "11": 12000, "26": 8000, "27": 6000, "28": 9000, "29": 5000,
@@ -101,6 +102,7 @@ export const KoreaMap = memo(function KoreaMap({
     open,
     placement: "top",
     middleware: [offset(12), flip(), shift({ padding: 8 })],
+    strategy: "fixed",
   });
 
   useEffect(() => {
@@ -127,7 +129,6 @@ export const KoreaMap = memo(function KoreaMap({
               void cx; void cy;
 
               return (
-                // 커서 스타일은 <g>에 부여 (Geography의 style 타입 이슈 회피)
                 <g
                   key={geo.rsmKey ?? (geo.id as string) ?? JSON.stringify(geo.properties)}
                   style={{ cursor: code ? "pointer" : "default" }}
@@ -137,8 +138,14 @@ export const KoreaMap = memo(function KoreaMap({
                     fill={colorize(avg, isSelected)}
                     stroke="#777"
                     strokeWidth={0.6}
+                    tabIndex={-1} // 포커스 자체 방지
+                    /** 포커스/클릭 시 생기는 검은 아웃라인 제거 */
+                    style={{
+                      default: { outline: "none" },
+                      hover:   { outline: "none" },
+                      pressed: { outline: "none" },
+                    } as any}
                     onClick={() => handleClick(code ?? undefined)}
-                    // 툴팁 이벤트
                     onMouseEnter={(e: any) => {
                       setHover({ label, avg });
                       setCoords({ x: e.clientX, y: e.clientY });

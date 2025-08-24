@@ -1,3 +1,4 @@
+
 import type { RegionSummary, RegionCode } from "@/domain/maps/MapPriceTypes";
 
 export default function TradeInfo(props: {
@@ -20,7 +21,7 @@ export default function TradeInfo(props: {
         card ? (
           <div className="text-sm">
             <div>지역: <b>{card.regionName}</b></div>
-            <div>평균 단가: <b>{card.avgPrice.toLocaleString()} 원</b></div>
+            <div>1kg 평균 매입가: <b>{card.avgPrice.toLocaleString()} 원/kg</b></div>
           </div>
         ) : (
           <div className="text-sm text-gray-500">지역을 선택하세요.</div>
