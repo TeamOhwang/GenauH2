@@ -1,3 +1,4 @@
+// src/types/react-simple-maps.d.ts
 declare module "react-simple-maps" {
   import * as React from "react";
   import type { FeatureCollection } from "geojson";
