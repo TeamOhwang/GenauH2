@@ -1,5 +1,5 @@
 // src/types/KoreaMap.tsx
-import { memo, useMemo, useCallback, useState, useEffect } from "react";
+import { memo, useMemo, useCallback, useState, useEffect, useRef } from "react";
 import { ComposableMap, Geographies, Geography } from "react-simple-maps";
 import { geoCentroid } from "d3-geo";
 import { useFloating, offset, flip, shift, FloatingPortal } from "@floating-ui/react";
@@ -7,7 +7,6 @@ import type { Feature, Geometry, GeoJsonProperties } from "geojson";
 import type { RegionSummary, RegionCode } from "../domain/maps/MapPriceTypes";
 import { toRegionCode, REGION_LABEL, stripSidoSuffix } from "../domain/maps/MapPriceTypes";
 
-/** 더 가벼운 시·도 경계 GeoJSON */
 const geoUrl =
   "https://raw.githubusercontent.com/southkorea/southkorea-maps/master/kostat/2018/json/skorea-provinces-2018-geo.json";
 
@@ -16,7 +15,6 @@ type GeoFeature = Feature<Geometry, GeoJsonProperties> & {
   properties: Record<string, unknown>;
 };
 
-/** GeoJSON properties → { code, label } (안전판) */
 function pickRegionFromProps(props: Record<string, unknown>): { code: RegionCode | null; label: string } {
   const raw = String(props["CTPRVN_CD"] ?? props["SIDO_CD"] ?? props["SIG_CD"] ?? "").trim();
   const two = raw.length >= 2 ? raw.slice(0, 2) : "";
@@ -30,7 +28,6 @@ function pickRegionFromProps(props: Record<string, unknown>): { code: RegionCode
   return { code, label };
 }
 
-/** 색상 함수 */
 const createColorFunction = (max: number) => {
   return (v?: number, selected?: boolean) => {
     if (selected) return "#60A5FA";
@@ -55,7 +52,6 @@ export const KoreaMap = memo(function KoreaMap({
   selectedRegion,
   onRegionSelect,
 }: KoreaMapProps) {
-  /** 코드 기준 평균가 맵 */
   const avgByCode = useMemo(() => {
     const m: Record<string, number> = {};
     for (const s of summary) {
@@ -76,12 +72,25 @@ export const KoreaMap = memo(function KoreaMap({
   const colorize = useMemo(() => createColorFunction(max), [max]);
   const handleClick = useCallback((code?: RegionCode) => onRegionSelect?.(code), [onRegionSelect]);
 
-  /** 커서 툴팁 상태 */
+  // 툴팁 상태
   const [hover, setHover] = useState<{ label: string; avg?: number } | null>(null);
   const [coords, setCoords] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [open, setOpen] = useState(false);
 
-  // 마우스 좌표를 참조로 쓰는 '가상 reference'
+  // 스로틀용 ref 
+  const moveRaf = useRef<number | null>(null);
+  const scheduleMove = useCallback((e: React.MouseEvent) => {
+    if (moveRaf.current) cancelAnimationFrame(moveRaf.current);
+    const { clientX, clientY } = e;
+    moveRaf.current = requestAnimationFrame(() => {
+      setCoords({ x: clientX, y: clientY });
+    });
+  }, []);
+  useEffect(() => () => {
+    if (moveRaf.current) cancelAnimationFrame(moveRaf.current);
+  }, []);
+ 
+  // 가상 reference
   const virtualEl = useMemo(
     () => ({
       getBoundingClientRect: () => ({
@@ -138,24 +147,25 @@ export const KoreaMap = memo(function KoreaMap({
                     fill={colorize(avg, isSelected)}
                     stroke="#777"
                     strokeWidth={0.6}
-                    tabIndex={-1} // 포커스 자체 방지
-                    /** 포커스/클릭 시 생기는 검은 아웃라인 제거 */
+                    tabIndex={-1}
                     style={{
                       default: { outline: "none" },
                       hover:   { outline: "none" },
                       pressed: { outline: "none" },
                     } as any}
                     onClick={() => handleClick(code ?? undefined)}
+                    // ⬇⬇⬇ (2) 여기서부터 scheduleMove 사용
                     onMouseEnter={(e: any) => {
                       setHover({ label, avg });
-                      setCoords({ x: e.clientX, y: e.clientY });
+                      scheduleMove(e);
                       setOpen(true);
                     }}
-                    onMouseMove={(e: any) => setCoords({ x: e.clientX, y: e.clientY })}
+                    onMouseMove={scheduleMove}
                     onMouseLeave={() => {
                       setOpen(false);
                       setHover(null);
                     }}
+                    // ⬆⬆⬆
                   />
                 </g>
               );
@@ -164,13 +174,14 @@ export const KoreaMap = memo(function KoreaMap({
         </Geographies>
       </ComposableMap>
 
-      {/* 툴팁 (포털 사용) */}
       <FloatingPortal>
         {open && hover && (
           <div
             ref={refs.setFloating}
             style={{ position: strategy, left: x ?? 0, top: y ?? 0 }}
             className="z-50 pointer-events-none bg-white/95 backdrop-blur text-xs shadow-md border rounded px-2 py-1"
+            role="tooltip"
+            aria-live="polite"
           >
             <div className="font-medium">{hover.label}</div>
             <div className="text-gray-600">

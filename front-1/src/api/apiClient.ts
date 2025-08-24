@@ -1,40 +1,27 @@
-
-import axios, {
-  AxiosInstance,
-  AxiosError,
-  InternalAxiosRequestConfig,
-  AxiosHeaders,
-} from "axios";
+import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig, AxiosHeaders } from "axios";
 import { authToken } from "@/stores/authStorage";
 
 /* ======================== 상수 ======================== */
 // API 기본 주소
-export const API_BASE_URL: string =
-  (import.meta as any)?.env?.VITE_API_BASE_URL || "/gh";
+export const API_BASE_URL: string = (import.meta as any)?.env?.VITE_API_BASE_URL || "/gh";
 // JWT 만료 임계 시간(초)
 const EXP_MARGIN_SEC = 30;
 // 리프레시 토큰 사용 여부
-const ENABLE_REFRESH =
-  ((import.meta as any)?.env?.VITE_ENABLE_REFRESH ?? "false") === "true";
+const ENABLE_REFRESH = ((import.meta as any)?.env?.VITE_ENABLE_REFRESH ?? "false") === "true";
 
-/* ======================== 타입 ======================== */
+/* ======================== 타입 정의 ======================== */
 type ApiEnvelope<T> = { data: T };
 type JwtPayload = { exp?: number };
 type HeaderLike = AxiosHeaders | Record<string, any> | undefined;
 
-/* ======================== 인증 엔드포인트 ======================== */
-const AUTH_ENDPOINTS = {
-  login: "/user/login",
-  logout: "/user/logout",
-  reissue: "/reissue",
-  profile: "/user/profile",
-} as const;
+/* ======================== 인증 관련 엔드포인트 ======================== */
+const AUTH_ENDPOINTS = { login: "/user/login", logout: "/user/logout", reissue: "/reissue" ,profile: "/user/profile"} as const;
 
-/* ======================== 소형 유틸 ======================== */
-// 헤더 편의
+/* ======================== 헤더 유틸 함수 ======================== */
+// 요청 헤더에 값 설정/삭제
 const setHeader = (h: HeaderLike, key: string, value?: string) => {
   if (!h) return;
-  if (value === undefined) {
+  if (value === undefined) { // 값 없으면 삭제
     if (typeof (h as any).delete === "function") (h as any).delete(key);
     else delete (h as any)[key];
     return;
@@ -43,11 +30,11 @@ const setHeader = (h: HeaderLike, key: string, value?: string) => {
   else (h as any)[key] = value;
 };
 
-// base64url → base64
-const base64UrlToBase64 = (s: string) =>
-  s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4);
+/* ======================== JWT 유틸 함수 ======================== */
+// base64url → base64 변환
+const base64UrlToBase64 = (s: string) => s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4);
 
-// JWT exp 디코드
+// JWT 디코딩 (payload 추출)
 const decodeJwt = (token?: string | null): JwtPayload | null => {
   if (!token) return null;
   try {
@@ -58,64 +45,38 @@ const decodeJwt = (token?: string | null): JwtPayload | null => {
   }
 };
 
-// 만료(임박) 판단
-const isExpiredOrClose = (t: string | null, marginSec = EXP_MARGIN_SEC) => {
+// 만료 여부 검사 (임박 포함)
+const isExpiredOrClose = (t: string | null, m = EXP_MARGIN_SEC) => {
   if (!t) return true;
   const exp = decodeJwt(t)?.exp;
   if (!exp || !Number.isFinite(exp)) return true;
-  const now = Math.floor(Date.now() / 1000);
-  return exp <= now + marginSec;
+  const now = Math.floor(Date.now()/1000);
+  return exp <= now + m;
 };
 
-// Bearer 정규화
-const stripBearer = (t: string) => t.replace(/^Bearer\s+/i, "");
-const withBearer = (t: string) =>
-  t.toLowerCase().startsWith("bearer ") ? t : `Bearer ${t}`;
+// 인증 필요 없는 요청 필터링
+const shouldSkipAuth = (url?: string | null) =>
+  !!url && [AUTH_ENDPOINTS.login, AUTH_ENDPOINTS.logout, AUTH_ENDPOINTS.reissue].some(p => url.toLowerCase().includes(p));
 
-// url → pathname 소문자
-const getPathLower = (url?: string | null): string => {
-  if (!url) return "";
-  try {
-    const u = new URL(url, API_BASE_URL);
-    return u.pathname.toLowerCase();
-  } catch {
-    return String(url).toLowerCase();
-  }
-};
-
-// 인증 제외 요청
-const shouldSkipAuth = (url?: string | null) => {
-  const p = getPathLower(url);
-  return [AUTH_ENDPOINTS.login, AUTH_ENDPOINTS.logout, AUTH_ENDPOINTS.reissue].some(
-    (ep) => p.includes(ep)
-  );
-};
-
-/* ======================== 토큰 재발급 ======================== */
+/* ======================== 토큰 재발급 요청 ======================== */
 async function requestNewAccessToken(): Promise<string> {
   if (!ENABLE_REFRESH) throw new Error("Token refresh disabled");
   const res = await axios.post<{ data?: { accessToken?: string }; accessToken?: string }>(
-    `${API_BASE_URL}${AUTH_ENDPOINTS.reissue}`,
-    {},
-    { withCredentials: true }
+    `${API_BASE_URL}${AUTH_ENDPOINTS.reissue}`, {}, { withCredentials: true }
   );
-  const newToken =
-    (res as any)?.data?.data?.accessToken ?? (res as any)?.data?.accessToken;
-  if (!newToken || typeof newToken !== "string") {
-    throw new Error("Reissue response missing accessToken");
-  }
+  const newToken = (res as any)?.data?.data?.accessToken ?? (res as any)?.data?.accessToken;
+  if (!newToken || typeof newToken !== "string") throw new Error("Reissue response missing accessToken");
   authToken.set(newToken);
   return newToken;
 }
 
-/* ======================== 동시 리프레시 제어 ======================== */
-let isRefreshing = false;
+/* ======================== 동시 갱신 제어(Queue) ======================== */
+let isRefreshing = false; // 현재 재발급 진행 여부
 type Waiter = { resolve: (t: string) => void; reject: (e: unknown) => void };
 let waitQueue: Waiter[] = [];
+// 재발급 완료 시 대기중인 요청에 알림
 const notifyQueue = (error: unknown | null, token?: string) => {
-  waitQueue.forEach(({ resolve, reject }) =>
-    error || !token ? reject(error ?? new Error("Refresh failed")) : resolve(token)
-  );
+  waitQueue.forEach(({ resolve, reject }) => error || !token ? reject(error ?? new Error("Refresh failed")) : resolve(token));
   waitQueue = [];
 };
 
@@ -128,15 +89,14 @@ const apiClient: AxiosInstance = axios.create({
 
 /* ======================== 요청 인터셉터 ======================== */
 apiClient.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
-  // FormData면 Content-Type 제거(브라우저가 경계 자동 세팅)
+  // FormData 요청 시 Content-Type 자동 제거
   if (config.data instanceof FormData) setHeader(config.headers as any, "Content-Type");
-
-  // 로그인/로그아웃/재발급은 토큰 제외
+  // 로그인/로그아웃/재발급 요청은 토큰 제외
   if (shouldSkipAuth(config.url)) return config;
 
   let token = authToken.get();
 
-  // 만료 임박 시 리프레시
+  // 만료 임박 시 리프레시 처리
   if (ENABLE_REFRESH && token && isExpiredOrClose(token)) {
     if (!isRefreshing) {
       isRefreshing = true;
@@ -152,16 +112,15 @@ apiClient.interceptors.request.use(async (config: InternalAxiosRequestConfig) =>
         isRefreshing = false;
       }
     } else {
-      token = await new Promise<string>((resolve, reject) => {
-        waitQueue.push({ resolve, reject });
-      });
+      // 이미 다른 요청이 리프레시 중 → 큐에 대기
+      token = await new Promise<string>((resolve, reject) => { waitQueue.push({ resolve, reject }); });
     }
   }
 
+  // Authorization 헤더 세팅
   if (token) {
-    const normalized = withBearer(stripBearer(token));
     config.headers = (config.headers ?? {}) as any;
-    setHeader(config.headers as any, "Authorization", normalized);
+    setHeader(config.headers as any, "Authorization", `Bearer ${token}`);
   }
   return config;
 });
@@ -172,25 +131,15 @@ apiClient.interceptors.response.use(
   async (error: AxiosError & { _redirect?: string }) => {
     const st = error.response?.status;
 
-    // 권한 부족 → 라우터에서 활용 가능한 힌트
+    //  403 권한부족: 전역 라우팅 힌트 부여
     if (st === 403) {
       return Promise.reject(Object.assign(error, { _redirect: "/403" }));
     }
 
-    // 일부 백엔드: 419(인증 만료) / 440(세션 만료) 사용
-    const isAuthExpired = st === 401 || st === 419 || st === 440;
+    const original = error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
 
-    const original = error.config as
-      | (InternalAxiosRequestConfig & { _retry?: boolean })
-      | undefined;
-
-    if (
-      ENABLE_REFRESH &&
-      isAuthExpired &&
-      original &&
-      !original._retry &&
-      !shouldSkipAuth(original.url)
-    ) {
+    //  401: 리프레시 후 원요청 재시도
+    if (ENABLE_REFRESH && st === 401 && original && !original._retry && !shouldSkipAuth(original.url)) {
       original._retry = true;
       try {
         if (!isRefreshing) {
@@ -198,18 +147,11 @@ apiClient.interceptors.response.use(
           await requestNewAccessToken();
           notifyQueue(null, authToken.get()!);
         } else {
-          await new Promise<string>((resolve, reject) => {
-            waitQueue.push({ resolve, reject });
-          });
+          await new Promise<string>((resolve, reject) => { waitQueue.push({ resolve, reject }); });
         }
         const latest = authToken.get();
         original.headers = (original.headers ?? {}) as any;
-        if (latest)
-          setHeader(
-            original.headers as any,
-            "Authorization",
-            withBearer(stripBearer(latest))
-          );
+        if (latest) setHeader(original.headers as any, "Authorization", `Bearer ${latest}`);
         return apiClient(original);
       } catch (e) {
         notifyQueue(e, undefined);
@@ -223,10 +165,8 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
 /* ======================== export ======================== */
 export function unwrap<T = unknown>(res: any): T {
-  // 서버가 { data: T } 또는 T 자체를 보낼 때 모두 대응
   return (res?.data?.data ?? res?.data) as T;
 }
 export default apiClient;

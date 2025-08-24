@@ -8,69 +8,95 @@ import StatBar from "@/components/maps/StatBar";
 import TradeInfo from "@/components/maps/TradeInfo";
 import ResultTable from "@/components/maps/ResultTable";
 import Pager from "@/components/maps/Pager";
+import SearchInput from "@/components/maps/SearchInput"; 
+
+// 문자열 정규화 유틸(한글 IME 안정)
+const norm = (s: string) => {
+  const n = typeof (s as any).normalize === "function" ? s.normalize("NFC") : s;
+  return n.toLowerCase().trim();
+};
 
 export default function PricePage() {
-  // URL 쿼리와 동기화되는 페이지/사이즈
   const [sp, setSp] = useSearchParams();
-  const page = Math.max(1, Number(sp.get("page") ?? 1));      // 1-base
-  const size = Math.max(1, Number(sp.get("size") ?? 20));     // 기본 20
 
-  // 지역 선택 상태
+  // URL 쿼리 동기화
+  const page = Math.max(1, Number(sp.get("page") ?? 1));  // 1-base
+  const size = Math.max(1, Number(sp.get("size") ?? 20)); // 기본 20개
+  const q = sp.get("q") ?? "";                            // 검색어
+
+  // 지도에서 선택된 지역
   const [selectedRegion, setSelectedRegion] = useState<RegionCode | null>(null);
 
-  // 데이터 훅(통신/매핑/파생값)
+  // 데이터 훅(지역 변경 시 목록 재조회 / 평균/전국평균 계산 포함)
   const { averages, stations, selectedAvg, nationAvg } = usePricePageData(selectedRegion);
 
-  // 지역 선택이 바뀌면 1페이지로 리셋 (UX)
+  // 지역 바뀌면 1페이지로 리셋
   useEffect(() => {
     const next = new URLSearchParams(sp);
     next.set("page", "1");
     setSp(next, { replace: true });
   }, [selectedRegion]);
 
-  // 페이지/사이즈가 바뀌면 상단으로 스크롤 (UX)
+  // page/size 변경 시 상단으로 스크롤
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [page, size]);
 
-  // 총 개수/총 페이지
-  const total = stations.data?.length ?? 0;
-  const totalPages = Math.max(1, Math.ceil(total / size));
+  // 1) 검색 필터 (이름 기준)
+  const filtered = useMemo(() => {
+    const list = stations.data ?? [];
+    const key = q.trim();
+    if (!key) return list; // 검색어 없으면 원본 유지
+    const k = norm(key);
+    return list.filter((s) => norm(s.name).includes(k));
+  }, [stations.data, q]);
 
-  // 현재 페이지 데이터만 slice
+  // 2) 페이지네이션은 filtered 기준
+  const total = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / size));
   const pagedItems = useMemo(() => {
-    const arr = stations.data ?? [];
     const start = (page - 1) * size;
-    return arr.slice(start, start + size);
-  }, [stations.data, page, size]);
+    return filtered.slice(start, start + size);
+  }, [filtered, page, size]);
 
   // 페이지 변경
   const onPageChange = (nextPage: number) => {
     const nextSp = new URLSearchParams(sp);
     nextSp.set("page", String(nextPage));
     nextSp.set("size", String(size));
+    if (q) nextSp.set("q", q); else nextSp.delete("q"); // 빈 문자열이면 q 제거
     setSp(nextSp, { replace: true });
   };
 
   // 페이지 크기 변경(20/50/100)
   const onChangeSize = (s: number) => {
     const nextSp = new URLSearchParams(sp);
-    nextSp.set("page", "1");           // 크기 바꾸면 1페이지로
+    nextSp.set("page", "1"); 
     nextSp.set("size", String(s));
+    if (q) nextSp.set("q", q); else nextSp.delete("q");
+    setSp(nextSp, { replace: true });
+  };
+
+  // 검색어 변경(디바운스/IME-세이프 SearchInput 사용)
+  const onChangeQuery = (value: string) => {
+    const nextSp = new URLSearchParams(sp);
+    nextSp.set("page", "1");
+    nextSp.set("size", String(size));
+    if (value) nextSp.set("q", value);
+    else nextSp.delete("q"); 
     setSp(nextSp, { replace: true });
   };
 
   return (
-    //  6:4 레이아웃 (데스크탑 기준), 모바일에서는 자동 1열
     <div className="grid grid-cols-5 gap-6 p-4">
-      {/* 좌측 6 (= 3/5) : 지도 영역 */}
+      {/* 좌측 3/5: 지도 */}
       <div className="col-span-5 lg:col-span-3 border rounded p-2 relative">
         {averages.loading && <div className="p-3 text-gray-500">지도를 불러오는 중…</div>}
         {averages.error && <div className="p-3 text-red-600">{averages.error}</div>}
 
         {averages.data?.length > 0 && (
           <div className="mx-auto w-full">
-            {/* 지도 비율: 4:3 예시 (원하면 1:1로 변경 가능: aspect-[1/1]) */}
+            {/* 지도 비율 4:3 (원하면 aspect-[1/1]로 정사각형) */}
             <div className="aspect-[4/3]">
               <div className="w-full h-full">
                 <KoreaMap
@@ -89,8 +115,27 @@ export default function PricePage() {
         </div>
       </div>
 
-      {/* 우측 4 (= 2/5) : 통계/목록/페이지네이션 */}
+      {/* 우측 2/5: 검색/통계/목록/페이지네이션 */}
       <div className="col-span-5 lg:col-span-2 flex flex-col gap-3">
+        {/* 검색 + 페이지 크기 */}
+        <div className="flex items-center gap-2">
+          <SearchInput
+            value={q}
+            onChange={onChangeQuery}
+            delay={250}
+            placeholder="이름으로 검색…"
+          />
+          <select
+            className="border rounded px-2 py-1 text-sm"
+            value={size}
+            onChange={(e) => onChangeSize(Number(e.target.value))}
+          >
+            <option value={20}>20개</option>
+            <option value={50}>50개</option>
+            <option value={100}>100개</option>
+          </select>
+        </div>
+
         <StatBar total={total} nationAvg={nationAvg} selectedAvg={selectedAvg} />
 
         <TradeInfo
@@ -101,33 +146,17 @@ export default function PricePage() {
         />
 
         <ResultTable
-          items={pagedItems}                 // slice된 데이터만 전달
+          items={pagedItems}       //  페이지 단위로 잘라서 전달
           loading={stations.loading}
           error={stations.error}
         />
 
-        {/* 페이지 크기 + 페이저 */}
-        <div className="flex items-center justify-between">
-          <div className="text-sm">
-            <label className="mr-2 text-gray-600">페이지 크기</label>
-            <select
-              className="border rounded px-2 py-1"
-              value={size}
-              onChange={(e) => onChangeSize(Number(e.target.value))}
-            >
-              <option value={20}>20</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-            </select>
-          </div>
-
-          <Pager
-            page={page}
-            totalPages={totalPages}
-            total={total}
-            onChange={onPageChange}
-          />
-        </div>
+        <Pager
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          onChange={onPageChange}
+        />
       </div>
     </div>
   );

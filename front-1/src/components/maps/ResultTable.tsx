@@ -28,7 +28,7 @@ export default function ResultTable(props: {
             <th className="text-left px-2 py-1">이름</th>
             <th className="text-left px-2 py-1">지역</th>
             <th className="text-right px-2 py-1">수소 1kg 매입가격</th>
-            <th className="text-right px-2 py-1">지역 1kg 평균매입가</th>
+            <th className="text-right px-2 py-1">지역 평균매입가</th>
           </tr>
         </thead>
 
