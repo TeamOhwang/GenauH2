@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import LineChart from "@/components/ui/ChartComponent";
 import { useGeneration } from "@/hooks/useGeneration";
+import { useHourlyUpdater } from "@/hooks/useHourlyUpdater";
+import { useRealTime } from "@/hooks/useRealTime";
 
 type TimeFrame = "daily" | "weekly" | "monthly";
 type Plant = "plant1" | "plant2" | "plant3";
@@ -10,14 +12,42 @@ export default function Dashboard() {
     const [activeTimeFrame, setActiveTimeFrame] = useState<TimeFrame>("daily");
     const [selectedPlant, setSelectedPlant] = useState<Plant>("plant1");
     const [data, setData] = useState<any>([]);
-    const now = new Date();
-    const currentHour = now.getHours();
+    const [currentHour, setCurrentHour] = useState(new Date().getHours());
+    const [currentDate, setCurrentDate] = useState(new Date().toISOString().split('T')[0]);
+    const [lastUpdateTime, setLastUpdateTime] = useState<Date | null>(null);
+    const [isUpdating, setIsUpdating] = useState(false);
+    
+    // 실시간 시간
+    const realTime = useRealTime();
 
-    console.log(currentHour)
+    // 데이터 갱신 함수
+    const refreshData = useCallback(async () => {
+        setIsUpdating(true);
+        const now = new Date();
+        setCurrentHour(now.getHours());
+        setCurrentDate(now.toISOString().split('T')[0]);
+        
+        try {
+            // 오늘 날짜 기준으로 데이터 조회
+            const today = now.toISOString().split('T')[0];
+            const result = await getRawGeneration(today, today);
+            if (result) {
+                setData(result);
+                setLastUpdateTime(now);
+            }
+        } catch (error) {
+            console.error('데이터 갱신 실패:', error);
+        } finally {
+            setIsUpdating(false);
+        }
+    }, [getRawGeneration]);
+
+    // 매시 정각 자동 갱신
+    useHourlyUpdater({ onUpdate: refreshData });
 
     useEffect(() => {
-        getRawGeneration("2025-08-20", "2025-08-22").then(setData);
-    }, [getRawGeneration]);
+        refreshData();
+    }, [refreshData]);
 
     const plant1 = data.filter((item: any) => item.capacity_Kw === 1200);
     console.log("plant1 data:", plant1.filter((item: any) => item.hour < currentHour));
@@ -33,7 +63,7 @@ export default function Dashboard() {
             datasets: [
                 {
                     label: "시간별 태양광 발전량",
-                    data: plant1.filter((item: any) => item.hour < currentHour - 1).map((item: any) => item.generation_Kw),
+                    data: plant1.filter((item: any) => item.hour < currentHour).map((item: any) => item.generation_Kw),
                     borderColor: "rgba(75,192,192,1)",
                     backgroundColor: "rgba(75,192,192,0.2)",
                     pointRadius: 0,
@@ -72,6 +102,14 @@ export default function Dashboard() {
                     backgroundColor: "rgba(255,99,132,0.2)",
                     borderDash: [5, 5],
                     pointRadius: 0,
+                },
+                {
+                    label: "예측 발전량",
+                    data: plant2.map((item: any) => item.forecast_Kwh),
+                    borderColor: "rgba(255,206,86,1)",
+                    backgroundColor: "rgba(255,206,86,0.2)",
+                    borderDash: [5, 5],
+                    pointRadius: 0,
                 }
             ],
         },
@@ -89,6 +127,14 @@ export default function Dashboard() {
                     data: plant3.map((item: any) => 100),
                     borderColor: "rgba(255,99,132,1)",
                     backgroundColor: "rgba(255,99,132,0.2)",
+                    borderDash: [5, 5],
+                    pointRadius: 0,
+                },
+                {
+                    label: "예측 발전량",
+                    data: plant3.map((item: any) => item.forecast_Kwh),
+                    borderColor: "rgba(255,206,86,1)",
+                    backgroundColor: "rgba(255,206,86,0.2)",
                     borderDash: [5, 5],
                     pointRadius: 0,
                 }
@@ -217,7 +263,47 @@ export default function Dashboard() {
     return (
         <div className="h-full overflow-auto scrollbar-hide">
             <div className="m-6">
-                <p className="font-bold text-2xl mb-4">{currentData.title}</p>
+                {/* 실시간 시간 및 갱신 상태 표시 */}
+                <div className="flex items-center justify-between mb-4">
+                    <p className="font-bold text-2xl">{currentData.title}</p>
+                    <div className="flex items-center space-x-4 text-sm text-gray-600">
+                        <div className="flex items-center space-x-2">
+                            <span>현재 시간:</span>
+                            <span className="font-mono font-semibold">
+                                {realTime.toLocaleTimeString('ko-KR', { 
+                                    hour: '2-digit', 
+                                    minute: '2-digit', 
+                                    second: '2-digit' 
+                                })}
+                            </span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <span>다음 갱신:</span>
+                            <span className="font-mono font-semibold text-blue-600">
+                                {new Date(Date.now() + (60 - new Date().getMinutes()) * 60 * 1000 - new Date().getSeconds() * 1000).toLocaleTimeString('ko-KR', { 
+                                    hour: '2-digit', 
+                                    minute: '2-digit' 
+                                })}
+                            </span>
+                        </div>
+                        <button
+                            onClick={refreshData}
+                            disabled={isUpdating}
+                            className={`px-3 py-1 text-xs rounded-lg transition-colors ${
+                                isUpdating 
+                                    ? 'bg-gray-400 cursor-not-allowed' 
+                                    : 'bg-blue-600 hover:bg-blue-700'
+                            } text-white`}
+                        >
+                            {isUpdating ? '갱신 중...' : '수동 갱신'}
+                        </button>
+                        {lastUpdateTime && (
+                            <div className="text-xs text-gray-500">
+                                마지막 갱신: {lastUpdateTime.toLocaleTimeString('ko-KR')}
+                            </div>
+                        )}
+                    </div>
+                </div>
 
                 {/* 탭 버튼들 */}
                 <div className="flex space-x-2 mb-6">
