@@ -3,18 +3,17 @@ package com.project.controller;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-// 페이징 기능
-import org.springframework.data.domain.Page;
 
 import com.project.dto.DailyTotal;
-import com.project.dto.HourlyAvg;
 import com.project.dto.DashboardSummaryDTO;
+import com.project.dto.HourlyAvg;
 import com.project.entity.PlantGeneration;
 import com.project.service.PlantGenerationQueryService;
 

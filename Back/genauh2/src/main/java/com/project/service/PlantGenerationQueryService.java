@@ -2,30 +2,26 @@ package com.project.service;
 
 
 import java.time.LocalDate;
+import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
-import org.springframework.stereotype.Service;
-//페이징 로직
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.domain.PageRequest;
-
-import com.project.dto.DailyTotal;
-import com.project.dto.MonthlyTotal;
-import com.project.dto.WeeklyTotal;
-import java.time.temporal.WeekFields;
 import java.util.Locale;
-//import java.util.Map;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.project.dto.HourlyAvg;
-import com.project.dto.DashboardSummaryDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
 
+import com.project.dto.DailyTotal;
+import com.project.dto.DashboardSummaryDTO;
+import com.project.dto.HourlyAvg;
+import com.project.dto.MonthlyTotal;
+import com.project.dto.WeeklyTotal;
 import com.project.entity.PlantGeneration;
 import com.project.repository.PlantGenerationRepository;
 
