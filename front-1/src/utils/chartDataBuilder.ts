@@ -144,6 +144,26 @@ function buildDailyPlantChartData(plantData: any[], currentHour: number, dailyAg
 // 주간 차트 데이터 생성 (요일별) - 막대 차트 + 라인
 function buildWeeklyPlantChartData(plantData: any[], aggregatedData: any[], label: string): ChartData {
     console.log('🔧 buildWeeklyPlantChartData 시작:', label);
+
+    const currentDate = new Date();
+    
+    const dateLabels = Array.from({ length: 14 }, (_, i) => `${i}`);
+
+    const generationData = dateLabels.map(date => {
+        const dateObj = new Date(date);
+
+        if (dateObj > currentDate) {
+            return null; // 현재 날짜 이후는 null로 설정하여 표시하지 않음
+        }
+        const dayData = plantData.find(item => item.date === date);
+        return dayData ? (dayData.generation_Kw - 300) : 0;
+    });
+
+    // 예측 발전량 데이터 (전체 14일)
+    const forecastData = dateLabels.map(date => {
+        const dayData = plantData.find(item => item.date === date);
+        return dayData ? (dayData.forecast_Kwh - 300) : 0;
+    });
     
     if (aggregatedData.length === 0) {
         console.log('⚠️ 주간 집계 데이터가 비어있어 빈 차트 반환');
@@ -151,36 +171,15 @@ function buildWeeklyPlantChartData(plantData: any[], aggregatedData: any[], labe
             labels: [],
             datasets: [
                 {
-                    label: "발전소 1 (1.2MW)",
-                    data: [],
-                    borderColor: "rgba(255, 193, 7, 1)",
-                    backgroundColor: "rgba(255, 193, 7, 0.2)",
-                    pointRadius: 4,
-                },
-                {
-                    label: "발전소 2 (800kW)",
-                    data: [],
-                    borderColor: "rgba(255, 99, 132, 1)",
-                    backgroundColor: "rgba(255, 99, 132, 0.2)",
-                    pointRadius: 4,
-                },
-                {
-                    label: "발전소 3 (500kW)",
-                    data: [],
-                    borderColor: "rgba(255, 206, 86, 1)",
-                    backgroundColor: "rgba(255, 206, 86, 0.2)",
-                    pointRadius: 4,
-                },
-                {
                     label: "총 발전량",
-                    data: [],
+                    data: generationData,
                     borderColor: "rgba(153,102,255,1)",
                     backgroundColor: "rgba(153,102,255,0.2)",
                     pointRadius: 4,
                 },
                 {
-                    label: "평균 발전량",
-                    data: [],
+                    label: "예측 발전량",
+                    data: forecastData,
                     borderColor: "rgba(76, 175, 80, 1)",
                     backgroundColor: "rgba(76, 175, 80, 0.1)",
                     pointRadius: 0,
