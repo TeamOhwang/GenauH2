@@ -21,15 +21,9 @@ import com.project.dto.WeeklyTotal;
 import com.project.dto.HourlyAvg;
 import com.project.dto.DashboardSummaryDTO;
 import com.project.dto.PeriodSummaryDTO;
-import java.time.temporal.WeekFields;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
-import com.project.dto.DailyTotal;
-import com.project.dto.DashboardSummaryDTO;
-import com.project.dto.HourlyAvg;
-import com.project.dto.MonthlyTotal;
-import com.project.dto.WeeklyTotal;
 import com.project.entity.PlantGeneration;
 import com.project.repository.PlantGenerationRepository;
 

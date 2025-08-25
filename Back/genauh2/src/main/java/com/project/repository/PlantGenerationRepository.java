@@ -11,6 +11,8 @@ import com.project.entity.PlantGeneration;
 import java.time.LocalDate;
 import java.util.List;
 
+import java.util.Optional;
+
 @Repository
 public interface PlantGenerationRepository extends JpaRepository<PlantGeneration, Long> {
     
@@ -34,4 +36,7 @@ public interface PlantGenerationRepository extends JpaRepository<PlantGeneration
 
     // 발전소 ID 목록 조회
     List<String> findDistinctPlantIdByOrderByPlantIdAsc();
+
+    // 특정 발전소의 특정 날짜와 시간 데이터 조회 (추가)
+    Optional<PlantGeneration> findByPlantIdAndDateAndHour(String plantId, LocalDate date, int hour);
 }
