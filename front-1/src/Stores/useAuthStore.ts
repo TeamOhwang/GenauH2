@@ -1,9 +1,10 @@
+
 import { create } from "zustand";
 import { jwtDecode } from "jwt-decode";
 import { authToken, ACCESS_TOKEN_KEY } from "@/stores/authStorage";
-import { AuthApi } from "@/api/authApi"; 
+import { AuthApi } from "@/api/authApi";
 
-type Role = "USER" | "ADMIN" | null;
+export type Role = "USER" | "ADMIN" | null;
 type JWTPayload = { role?: "USER" | "ADMIN"; roles?: string[]; exp?: number };
 
 const decodeRole = (t: string | null): Role => {
@@ -11,49 +12,49 @@ const decodeRole = (t: string | null): Role => {
   try {
     const p = jwtDecode<JWTPayload>(t);
     if (p.role === "ADMIN" || p.role === "USER") return p.role;
-    if (Array.isArray(p.roles))
-      return p.roles.includes("ADMIN")
-        ? "ADMIN"
-        : p.roles.includes("USER")
-        ? "USER"
-        : null;
+    if (Array.isArray(p.roles)) {
+      if (p.roles.includes("ADMIN")) return "ADMIN";
+      if (p.roles.includes("USER")) return "USER";
+    }
   } catch {}
   return null;
 };
 
+// BroadcastChannel 준비
 const hasBC =
   typeof window !== "undefined" &&
   typeof (window as any).BroadcastChannel !== "undefined";
-const AUTH_CH: BroadcastChannel | null = hasBC
-  ? new BroadcastChannel("auth")
-  : null;
+const AUTH_CH: BroadcastChannel | null = hasBC ? new BroadcastChannel("auth") : null;
 
-let __authListenersBound = false;
-let __initInFlight: Promise<void> | null = null;
+let listenersBound = false;
+let initInFlight: Promise<void> | null = null;
 
-export const useAuthStore = create<{
+type AuthState = {
   role: Role;
   isInit: boolean;
-  init: () => Promise<void>;
   setRole: (r: Role) => void;
+  init: () => Promise<void>;
   logout: () => void;
-}>()((set, get) => ({
+};
+
+export const useAuthStore = create<AuthState>()((set, get) => ({
   role: decodeRole(authToken.get()),
   isInit: false,
+
   setRole: (r) => set({ role: r }),
 
   init: async () => {
-    if (__initInFlight) {
-      await __initInFlight;
+    if (initInFlight) {
+      await initInFlight;
       return;
     }
 
-    if (!__authListenersBound) {
-      __authListenersBound = true;
+    // 리스너 1회성 바인딩
+    if (!listenersBound) {
+      listenersBound = true;
       if (typeof window !== "undefined") {
         window.addEventListener("storage", (e) => {
-          if (e.key === ACCESS_TOKEN_KEY)
-            set({ role: decodeRole(e.newValue) });
+          if (e.key === ACCESS_TOKEN_KEY) set({ role: decodeRole(e.newValue) });
         });
       }
       AUTH_CH?.addEventListener("message", (e: MessageEvent) => {
@@ -66,12 +67,12 @@ export const useAuthStore = create<{
       });
     }
 
-    __initInFlight = (async () => {
+    initInFlight = (async () => {
       const t = authToken.get();
       if (!get().role && t) {
         try {
-          //  AuthApi 사용
-          set({ role: await AuthApi.syncRole() });
+          const role = await AuthApi.syncRole();
+          set({ role });
         } catch {
           set({ role: null });
         }
@@ -80,14 +81,13 @@ export const useAuthStore = create<{
     })();
 
     try {
-      await __initInFlight;
+      await initInFlight;
     } finally {
-      __initInFlight = null;
+      initInFlight = null;
     }
   },
 
   logout: () => {
-    //  AuthApi 사용
     AuthApi.logoutAll().catch(() => {});
     set({ role: null, isInit: true });
   },

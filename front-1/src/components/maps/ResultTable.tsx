@@ -27,8 +27,8 @@ export default function ResultTable(props: {
           <tr>
             <th className="text-left px-2 py-1">이름</th>
             <th className="text-left px-2 py-1">지역</th>
-            <th className="text-right px-2 py-1">가격</th>
-            <th className="text-right px-2 py-1">지역 평균</th>
+            <th className="text-right px-2 py-1">수소 1kg 매입가격</th>
+            <th className="text-right px-2 py-1">지역 평균매입가</th>
           </tr>
         </thead>
 
@@ -45,10 +45,10 @@ export default function ResultTable(props: {
 
               {/* 숫자: 우측 정렬 + 줄바꿈 방지 */}
               <td className="px-2 py-1 text-right whitespace-nowrap align-middle">
-                {s.price.toLocaleString()} 원
+                {s.price.toLocaleString()} 원/kg
               </td>
               <td className="px-2 py-1 text-right whitespace-nowrap align-middle">
-                {s.avgPriceOfRegion != null ? `${s.avgPriceOfRegion.toLocaleString()} 원` : "-"}
+                {s.avgPriceOfRegion != null ? `${s.avgPriceOfRegion.toLocaleString()} 원/kg` : "-"}
               </td>
             </tr>
           ))}
