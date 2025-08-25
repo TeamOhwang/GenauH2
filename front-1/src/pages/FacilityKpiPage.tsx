@@ -1,67 +1,52 @@
-// src/pages/FacilityKpiPage.tsx
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useFacilities } from "@/hooks/useFacilities";
+import { useFacilityKpis } from "@/hooks/useFacilityKpis";
+import FacilityDropdown from "@/components/FacilityDropdown";
+import HydrogenDonut from "@/components/HydrogenDonut";
 import DateRangeBar from "@/components/DateRangeBar";
-import FacilityMultiSelect from "@/components/FacilityMultiSelect";
-import {KpiCard, AchievementBar} from "@/components/KpiCard";
-import PerPlantTable from "@/components/PerPlantTable";
-import { useUserFacilitiesKpi } from "@/hooks/usePlantKpis";
-
-const DAY = 86_400_000;
-const toLocalDateStr = (d: Date) => {
-  const z = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
-  return z.toISOString().slice(0, 10);
-};
-const today = new Date();
-const defaultStart = toLocalDateStr(new Date(today.getTime() - 6 * DAY));
-const defaultEnd = toLocalDateStr(today);
+import { useAuthStore } from "@/stores/useAuthStore";
 
 export default function FacilityKpiPage() {
-  const [inputStart, setInputStart] = useState(defaultStart);
-  const [inputEnd, setInputEnd] = useState(defaultEnd);
-  const [start, setStart] = useState(defaultStart);
-  const [end, setEnd] = useState(defaultEnd);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const userId = useAuthStore((s) => s.userId); 
 
-  const { facilities, totalProduction, totalPredicted, predictedPeak, perPlant, loading, error } =
-    useUserFacilitiesKpi({ start, end, selectedIds });
+  const { facilities } = useFacilities(userId ?? 0); // null일 때 대비해서 0 등 기본값 처리
 
-  const apply = () => {
-    setStart(inputStart);
-    setEnd(inputEnd);
-  };
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [startDate, setStartDate] = useState<string>("2025-08-01");
+  const [endDate, setEndDate] = useState<string>("2025-08-26");
+
+  /** 선택 안 하면 → 전체 설비 자동 적용 */
+  const effectiveIds = useMemo(
+    () => (selectedIds.length > 0 ? selectedIds : facilities.map((f) => f.id)),
+    [selectedIds, facilities]
+  );
+
+  const { kpis } = useFacilityKpis(effectiveIds, startDate, endDate);
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-xl font-semibold">설비별 수소 생산 KPI</h1>
+    <div>
+      <h2>설비 KPI 대시보드</h2>
 
-      <DateRangeBar start={inputStart} end={inputEnd} onStart={setInputStart} onEnd={setInputEnd} onApply={apply} />
+      <DateRangeBar
+        start={startDate}
+        end={endDate}
+        onChange={(s, e) => {
+          setStartDate(s);
+          setEndDate(e);
+        }}
+      />
 
-      <FacilityMultiSelect
+      <FacilityDropdown
         facilities={facilities}
-        selectedIds={selectedIds}
+        selected={selectedIds}
         onChange={setSelectedIds}
       />
 
-      {loading && <Info text="불러오는 중…" />}
-      {Boolean(error) && <Info text="오류가 발생했어요. 콘솔을 확인해주세요." tone="error" />}
-
-      <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <KpiCard label="총 생산량(kg)" value={totalProduction} />
-        <KpiCard label="총 예측량(kg)" value={totalPredicted} />
-        <KpiCard label="예측 피크(kg/일)" value={predictedPeak} />
-      </section>
-
-      <AchievementBar produced={totalProduction} predicted={totalPredicted} />
-
-      <PerPlantTable rows={perPlant} />
+      <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+        {kpis.map((kpi) => (
+          <HydrogenDonut key={kpi.facilityId} kpi={kpi} />
+        ))}
+      </div>
     </div>
   );
-}
-
-function Info({ text, tone = "info" }: { text: string; tone?: "info" | "error" }) {
-  const cls =
-    tone === "error"
-      ? "bg-red-50 text-red-700 border-red-200"
-      : "bg-gray-50 text-gray-700 border-gray-200";
-  return <div className={`text-sm rounded-xl border px-3 py-2 ${cls}`}>{text}</div>;
 }

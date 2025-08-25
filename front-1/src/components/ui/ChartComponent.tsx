@@ -1,22 +1,22 @@
-// src/components/common/ChartComponent.tsx
 import { Chart as ReactChart } from "react-chartjs-2";
 
 export type ChartTopType = "line" | "bar" | "mixed" | "doughnut";
 
 export interface ChartData {
-  labels: string[];
+  labels: (string | number)[];
   datasets: Array<{
     label?: string;
-    data: Array<number | null>;
+    // number[] 만 오거나 (number|null)[]가 오더라도 모두 허용
+    data: Array<number | null | undefined>;
     borderColor?: string;
-    backgroundColor?: string | string[]; // ← 도넛 팔레트 배열 지원
-    pointRadius?: number;
+    backgroundColor?: string | string[]; 
     borderDash?: number[];
     yAxisID?: string;
     fill?: boolean;
-    type?: "line" | "bar";               // ← 혼합차트 개별 타입
+    type?: string;
   }>;
 }
+
 
 interface ChartProps {
   data: ChartData;
