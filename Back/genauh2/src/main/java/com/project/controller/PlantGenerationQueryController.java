@@ -136,4 +136,28 @@ public class PlantGenerationQueryController {
         PeriodSummaryDTO result = service.getPeriodSummary(plantId, startDate, endDate);
         return ResponseEntity.ok(result);
     }
+    
+    /** 실시간 효율성 계산 */
+    @GetMapping("/real-time-efficiency")
+    public ResponseEntity<Double> getRealTimeEfficiency(
+            @RequestParam(value = "plantId", required = false) String plantId) {
+        
+        System.out.println("=== 실시간 효율성 계산 API 호출 ===");
+        System.out.println("plantId: " + plantId);
+        
+        Double result = service.calculateRealTimeEfficiency(plantId);
+        return ResponseEntity.ok(result);
+    }
+    
+    /** 실시간 수소 생산량 비교 */
+    @GetMapping("/real-time-hydrogen-comparison")
+    public ResponseEntity<Double> getRealTimeHydrogenComparison(
+            @RequestParam(value = "plantId", required = false) String plantId) {
+        
+        System.out.println("=== 실시간 수소 생산량 비교 API 호출 ===");
+        System.out.println("plantId: " + plantId);
+        
+        Double result = service.calculateRealTimeHydrogenComparison(plantId);
+        return ResponseEntity.ok(result);
+    }
 }

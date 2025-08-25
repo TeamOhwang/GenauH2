@@ -291,6 +291,124 @@ public class PlantGenerationQueryService {
         return result;
     }
 
+    /** 실시간 수소 생산량 비교 */
+    public Double calculateRealTimeHydrogenComparison(String plantId) {
+        LocalDate today = LocalDate.now();
+        int currentHour = LocalTime.now().getHour();
+        
+        System.out.println("=== 실시간 수소 생산량 비교 ===");
+        System.out.println("계산 날짜: " + today);
+        System.out.println("현재 시간: " + currentHour + "시");
+        
+        // 임시로 secNominalKwhPerKg = 50 설정
+        double secNominalKwhPerKg = 50.0;
+        System.out.println("secNominalKwhPerKg (임시값): " + secNominalKwhPerKg);
+        
+        // 오늘 데이터 중 0시부터 현재 시간까지 조회
+        List<PlantGeneration> rows;
+        if (plantId != null && !plantId.trim().isEmpty()) {
+            rows = repo.findByPlantIdAndDateBetween(plantId, today, today);
+        } else {
+            rows = repo.findByDateBetween(today, today);
+        }
+        
+        // 현재 시간까지만 필터링 (0~현재시간)
+        List<PlantGeneration> todayData = rows.stream()
+                .filter(r -> r.getHour() <= currentHour)
+                .collect(Collectors.toList());
+        
+        System.out.println("오늘 데이터 수: " + todayData.size());
+        
+        if (todayData.isEmpty()) {
+            System.out.println("❌ 오늘 데이터가 없습니다.");
+            return 0.0;
+        }
+        
+        // 총 예측량과 총 발전량 계산
+        double totalForecast = 0.0;
+        double totalGeneration = 0.0;
+        
+        for (PlantGeneration data : todayData) {
+            totalForecast += data.getForecast_Kwh();
+            totalGeneration += data.getGeneration_Kw();
+        }
+        
+        System.out.println("총 예측량: " + totalForecast);
+        System.out.println("총 발전량: " + totalGeneration);
+        
+        // 수소 생산량 계산
+        double forecastHydrogenProduction = totalForecast / secNominalKwhPerKg;
+        double actualHydrogenProduction = totalGeneration / secNominalKwhPerKg;
+        double hydrogenDifference = actualHydrogenProduction - forecastHydrogenProduction;
+        
+        System.out.println("예측 수소 생산량: " + forecastHydrogenProduction + " kg");
+        System.out.println("현재 수소 생산량: " + actualHydrogenProduction + " kg");
+        System.out.println("차이 (현재 - 예측): " + hydrogenDifference + " kg");
+        System.out.println("========================");
+        
+        return hydrogenDifference;
+    }
+
+    /** 실시간 효율성 계산 */
+    public Double calculateRealTimeEfficiency(String plantId) {
+        LocalDate today = LocalDate.now();
+        int currentHour = LocalTime.now().getHour();
+        
+        System.out.println("=== 실시간 효율성 계산 ===");
+        System.out.println("계산 날짜: " + today);
+        System.out.println("현재 시간: " + currentHour + "시");
+        
+        // 오늘 데이터 중 0시부터 현재 시간까지 조회
+        List<PlantGeneration> rows;
+        if (plantId != null && !plantId.trim().isEmpty()) {
+            rows = repo.findByPlantIdAndDateBetween(plantId, today, today);
+        } else {
+            rows = repo.findByDateBetween(today, today);
+        }
+        
+        // 현재 시간까지만 필터링 (0~현재시간)
+        List<PlantGeneration> todayData = rows.stream()
+                .filter(r -> r.getHour() <= currentHour)
+                .collect(Collectors.toList());
+        
+        System.out.println("오늘 데이터 수: " + todayData.size());
+        
+        if (todayData.isEmpty()) {
+            System.out.println("❌ 오늘 데이터가 없습니다.");
+            return 0.0;
+        }
+        
+        // 각 값들의 총합 계산
+        double totalCapacity = 0.0;
+        double totalForecast = 0.0;
+        double totalGeneration = 0.0;
+        int totalHours = 0;
+        
+        for (PlantGeneration data : todayData) {
+            totalCapacity += data.getCapacity_Kw();
+            totalForecast += data.getForecast_Kwh();
+            totalGeneration += data.getGeneration_Kw();
+            totalHours++;
+        }
+        
+        System.out.println("총 설비용량: " + totalCapacity);
+        System.out.println("총 예측량: " + totalForecast);
+        System.out.println("총 발전량: " + totalGeneration);
+        System.out.println("총 시간수: " + totalHours);
+        
+        // (capacity - forecast) - (capacity - (generation*시간))
+        double firstPart = totalCapacity - totalForecast;
+        double secondPart = totalCapacity - (totalGeneration * totalHours);
+        double result = firstPart - secondPart;
+        
+        System.out.println("첫 번째 부분 (capacity - forecast): " + firstPart);
+        System.out.println("두 번째 부분 (capacity - generation*시간): " + secondPart);
+        System.out.println("최종 결과: " + result);
+        System.out.println("========================");
+        
+        return result;
+    }
+
     /** 대시보드 요약 정보 */
     public DashboardSummaryDTO getDashboardSummary(String plantId) {
         PlantGeneration latest;
