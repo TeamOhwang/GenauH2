@@ -9,6 +9,7 @@ public class UserOrganizationDTO {
     private Long userId;
     private String email;
     private User.Role role;
+    private String phoneNum; // ✅ 추가
     private User.Status status;
     private String bizRegNo;
 
@@ -21,13 +22,14 @@ public class UserOrganizationDTO {
     private LocalDateTime orgCreatedAt;
     private LocalDateTime orgUpdatedAt;
 
-    public UserOrganizationDTO(Long userId, String email, User.Role role, User.Status status,
+    public UserOrganizationDTO(Long userId, String email, User.Role role, String phoneNum, User.Status status,
                                String bizRegNo, Long orgId, String orgname, String organizationName,
                                LocalDateTime userCreatedAt, LocalDateTime userUpdatedAt,
                                LocalDateTime orgCreatedAt, LocalDateTime orgUpdatedAt) {
         this.userId = userId;
         this.email = email;
         this.role = role;
+        this.phoneNum = phoneNum;      // ✅ 추가
         this.status = status;
         this.bizRegNo = bizRegNo;
         this.orgId = orgId;                 // ✅ 추가

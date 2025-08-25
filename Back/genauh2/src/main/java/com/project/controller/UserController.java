@@ -90,6 +90,7 @@ public class UserController {
             String bizRegNo = request.get("bizRegNo");
             String email = request.get("email");
             String password = request.get("password");
+            String phoneNum = request.get("phoneNum");
 
             if (orgName == null || name == null || bizRegNo == null || email == null || password == null) {
                 response.put("success", false);
@@ -97,7 +98,7 @@ public class UserController {
                 return ResponseEntity.badRequest().body(response);
             }
 
-            UserDTO created = userService.createOrganizationAndUser(orgName, name, bizRegNo, email, password);
+            UserDTO created = userService.createOrganizationAndUser(orgName, name, bizRegNo, email, password, phoneNum);
 
             response.put("success", true);
             response.put("data", created);

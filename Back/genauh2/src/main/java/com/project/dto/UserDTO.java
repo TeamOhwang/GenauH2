@@ -15,6 +15,7 @@ public class UserDTO {
     private String bizRegNo;
     private String email;
     private User.Role role;
+    private String phoneNum;
     private User.Status status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

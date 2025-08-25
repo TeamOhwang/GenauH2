@@ -89,7 +89,7 @@ public class UserService {
 
     // 사용자 생성
     // orgId 대신 bizRegNo를 사용하도록 매개변수 수정
-    public UserDTO createUser(String email, String password, User.Role role, String bizRegNo) {
+    public UserDTO createUser(String email, String password, User.Role role, String phoneNum, String bizRegNo) {
         // 이메일 중복 확인
         if (userRepository.existsByEmail(email)) {
             throw new RuntimeException("이미 존재하는 이메일입니다.");
@@ -99,6 +99,7 @@ public class UserService {
         user.setEmail(email);
         user.setPasswordHash(passwordEncoder.encode(password));
         user.setRole(role);
+        user.setPhoneNum(phoneNum);
         // orgId 대신 bizRegNo를 설정
         user.setBizRegNo(bizRegNo);
         user.setStatus(User.Status.ACTIVE);
@@ -167,6 +168,7 @@ public class UserService {
                 user.getBizRegNo(),
                 user.getEmail(),
                 user.getRole(),
+                user.getPhoneNum(),
                 user.getStatus(),
                 user.getCreatedAt(),
                 user.getUpdatedAt());
@@ -184,7 +186,9 @@ public class UserService {
             String ownerName,
             String bizRegNo,
             String email,
-            String rawPassword) {
+            String rawPassword,
+            String phoneNum
+            ) {
         // 조직 존재 여부 확인 후 없으면 생성
         if (!organizationRepository.existsByBizRegNo(bizRegNo)) {
             Organization organization = new Organization();
@@ -205,6 +209,7 @@ public class UserService {
         user.setEmail(email);
         user.setPasswordHash(passwordEncoder.encode(rawPassword));
         user.setRole(User.Role.USER);
+        user.setPhoneNum(phoneNum);
         user.setStatus(User.Status.ACTIVE);
 
         User saved = userRepository.save(user);
