@@ -45,11 +45,6 @@ interface ChartProps {
 }
 
 export default function ChartComponent({ data, options, chartType = "line" }: ChartProps) {
-    // 혼합 차트 타입인 경우 (막대 + 라인)
-    if (chartType === "mixed") {
-        return <Line data={data} options={options} />;
-    }
-    
     // 막대 차트인 경우
     if (chartType === "bar") {
         return <Bar data={data} options={options} />;

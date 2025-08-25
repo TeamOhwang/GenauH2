@@ -1,4 +1,5 @@
 import {
+    getDailyGenerationApi,
     // getDailyGenerationApi,
     // getDetailedGenerationApi,
     /* The line `// getDetailedGenerationApi,` is a commented-out import statement in the TypeScript
@@ -16,9 +17,9 @@ export async function fetchRawGeneration(startDate: string, endDate: string) {
 }
 
 // 일별 데이터
-// export async function fetchDailyGeneration(startDate: string, endDate: string) {
-//     return await getDailyGenerationApi(startDate, endDate);
-// }
+export async function fetchDailyGeneration(plantId: string, startDate: string, endDate: string) {
+    return await getDailyGenerationApi(plantId, startDate, endDate);
+}
 
 // 시간별 평균 데이터
 // export async function fetchHourlyAvgGeneration(startDate: string, endDate: string) {

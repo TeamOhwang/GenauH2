@@ -17,10 +17,10 @@ export async function getRawGenerationApi(startDate: string, endDate: string) {
 
 // 최신 데이터 조회
 // 일별 데이터 조회
-// export async function getDailyGenerationApi(startDate: string, endDate: string) {
-//     const res = await apiClient.get(GENERATION_ENDPOINTS.getDaily, { params: { start: startDate, end: endDate, limit:2000 } });
-//     return res.data ?? [];
-// }
+export async function getDailyGenerationApi(plantId: string, startDate: string, endDate: string) {
+    const res = await apiClient.get(GENERATION_ENDPOINTS.getDaily, { params: { plantId: plantId, start: startDate, end: endDate, limit:2000 } });
+    return res.data ?? [];
+}
 
 // 시간별 평균 데이터 조회
 // export async function getHourlyAvgGenerationApi(startDate: string, endDate: string) {

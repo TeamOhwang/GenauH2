@@ -73,42 +73,59 @@ export function buildSolaData(
     weeklyPlant1?: any[],
     weeklyPlant2?: any[],
     weeklyPlant3?: any[],
-    weeklyAggregatedData?: any[],
     dailyAggregated?: any[],
     monthlyAggregated?: any[]
 ): SolaDataStructure {
     return {
         daily: {
-            plant1: buildDailyPlantChartData(plant1, currentHour, dailyAggregated || [], "시간별 태양광 발전량"),
-            plant2: buildDailyPlantChartData(plant2, currentHour, dailyAggregated || [], "시간별 태양광 발전량"),
-            plant3: buildDailyPlantChartData(plant3, currentHour, dailyAggregated || [], "시간별 태양광 발전량"),
+            plant1: buildDailyPlantChartData(plant1, currentHour),
+            plant2: buildDailyPlantChartData(plant2, currentHour),
+            plant3: buildDailyPlantChartData(plant3, currentHour),
         },
         weekly: {
-            plant1: buildWeeklyPlantChartData(weeklyPlant1 || [], weeklyAggregatedData || [], "요일별 태양광 발전량"),
-            plant2: buildWeeklyPlantChartData(weeklyPlant2 || [], weeklyAggregatedData || [], "요일별 태양광 발전량"),
-            plant3: buildWeeklyPlantChartData(weeklyPlant3 || [], weeklyAggregatedData || [], "요일별 태양광 발전량"),
+            plant1: buildWeeklyPlantChartData(plant1),
+            plant2: buildWeeklyPlantChartData(plant2),
+            plant3: buildWeeklyPlantChartData(plant3),
         },
         monthly: {
-            plant1: buildMonthlyPlantChartData(plant1, monthlyAggregated || [], "일별 태양광 발전량"),
-            plant2: buildMonthlyPlantChartData(plant2, monthlyAggregated || [], "일별 태양광 발전량"),
-            plant3: buildMonthlyPlantChartData(plant3, monthlyAggregated || [], "일별 태양광 발전량"),
+            plant1: buildMonthlyPlantChartData(plant1),
+            plant2: buildMonthlyPlantChartData(plant2),
+            plant3: buildMonthlyPlantChartData(plant3),
         },
     };
 }
 
 // 일간 차트 데이터 생성 (시간별) - 발전량만 표시
-function buildDailyPlantChartData(plantData: any[], currentHour: number, dailyAggregated: any[], label: string): ChartData {
+function buildDailyPlantChartData(plantData: any[], currentHour: number): ChartData {
+    // 입력 데이터 검증
+    if (!plantData || !Array.isArray(plantData)) {
+        console.warn('🔧 buildDailyPlantChartData: plantData가 유효하지 않습니다.');
+        return {
+            labels: [],
+            datasets: [],
+        }
+    }
+
+    // currentHour 검증
+    if (currentHour < 0 || currentHour > 24) {
+        console.warn(`🔧 buildDailyPlantChartData: currentHour(${currentHour})가 유효하지 않습니다.`);
+        currentHour = Math.min(Math.max(currentHour, 0), 24);
+    }
+    
+    
     // 시간별 데이터 생성 (0~24시)
     const timeLabels = Array.from({ length: 25 }, (_, i) => `${i}시`);
     
-    // 실제 발전량 데이터 (현재 시간까지만) 현재 시간 이후는 null로 설정하여 표시하지 않음
+    // 실제 발전량 데이터 (현재 시간까지만)
     const generationData = timeLabels.map((_, index) => {
         if (index > currentHour) {
             return null; // 현재 시간 이후는 null로 설정하여 표시하지 않음
         }
-        const hourData = plantData.find(item => item.hour === index);
-        return hourData ? (hourData.generation_Kw - 300) : 0;
-    });
+        const hourData = plantData.find(item => item && item.hour === index);
+        if (!hourData || typeof hourData.generation_Kw !== 'number') {
+            return 0;
+        }
+        return hourData.generation_Kw - 300 });
     
     // 예측 발전량 데이터 (전체 24시간)
     const forecastData = timeLabels.map((_, index) => {
@@ -142,58 +159,13 @@ function buildDailyPlantChartData(plantData: any[], currentHour: number, dailyAg
 }
 
 // 주간 차트 데이터 생성 (요일별) - 막대 차트 + 라인
-function buildWeeklyPlantChartData(plantData: any[], aggregatedData: any[], label: string): ChartData {
-    console.log('🔧 buildWeeklyPlantChartData 시작:', label);
+function buildWeeklyPlantChartData(plantData: any[]): ChartData {
+    console.log('🔧 buildWeeklyPlantChartData 시작:');
 
     const currentDate = new Date();
-    
-    const dateLabels = Array.from({ length: 14 }, (_, i) => `${i}`);
 
-    const generationData = dateLabels.map(date => {
-        const dateObj = new Date(date);
-
-        if (dateObj > currentDate) {
-            return null; // 현재 날짜 이후는 null로 설정하여 표시하지 않음
-        }
-        const dayData = plantData.find(item => item.date === date);
-        return dayData ? (dayData.generation_Kw - 300) : 0;
-    });
-
-    // 예측 발전량 데이터 (전체 14일)
-    const forecastData = dateLabels.map(date => {
-        const dayData = plantData.find(item => item.date === date);
-        return dayData ? (dayData.forecast_Kwh - 300) : 0;
-    });
-    
-    if (aggregatedData.length === 0) {
-        console.log('⚠️ 주간 집계 데이터가 비어있어 빈 차트 반환');
-        return {
-            labels: [],
-            datasets: [
-                {
-                    label: "총 발전량",
-                    data: generationData,
-                    borderColor: "rgba(153,102,255,1)",
-                    backgroundColor: "rgba(153,102,255,0.2)",
-                    pointRadius: 4,
-                },
-                {
-                    label: "예측 발전량",
-                    data: forecastData,
-                    borderColor: "rgba(76, 175, 80, 1)",
-                    backgroundColor: "rgba(76, 175, 80, 0.1)",
-                    pointRadius: 0,
-                    borderDash: [5, 5],
-                }
-            ],
-        };
-    }
-    
-    // 날짜별로 정렬된 집계 데이터 사용
-    const sortedData = aggregatedData.sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    
     // 요일별 라벨 생성
-    const labels = sortedData.map((item: any) => {
+    const labels = plantData.map((item: any) => {
         if (!item.date) return '날짜 없음';
         
         const date = new Date(item.date);
@@ -206,49 +178,36 @@ function buildWeeklyPlantChartData(plantData: any[], aggregatedData: any[], labe
         return `${month}/${day} (${dayOfWeek})`;
     });
     
-    // 평균 발전량 계산
-    const totalValues = sortedData.map(item => item.total || 0);
-    const averageValue = totalValues.reduce((sum, val) => sum + val, 0) / totalValues.length;
-    const averageLine = Array(sortedData.length).fill(averageValue);
+
+    // 발전량 데이터
+    const generationData = plantData.map((item) => {
+        const dateObj = new Date(item.date);
+
+        if (dateObj > currentDate) {
+            return null; // 현재 날짜 이후는 null로 설정하여 표시하지 않음
+        }
+        return item ? (item.generation_Kw - 300) : 0;
+    });
+
+    // 예측 발전량 데이터 (전체 7일)
+    const forecastData = plantData.map((item) => {
+        return item ? (item.forecast_Kwh - 300) : 0;
+    });
     
     const result = {
         labels: labels,
         datasets: [
             {
-                label: "발전소 1 (1.2MW)",
-                data: sortedData.map((item: any) => item.plant1 || 0),
-                borderColor: "rgba(255, 193, 7, 1)",
-                backgroundColor: "rgba(255, 193, 7, 0.2)",
-                pointRadius: 4,
-                type: "bar"
-            },
-            {
-                label: "발전소 2 (800kW)",
-                data: sortedData.map((item: any) => item.plant2 || 0),
-                borderColor: "rgba(255, 99, 132, 1)",
-                backgroundColor: "rgba(255, 99, 132, 0.2)",
-                pointRadius: 4,
-                type: "bar"
-            },
-            {
-                label: "발전소 3 (500kW)",
-                data: sortedData.map((item: any) => item.plant3 || 0),
-                borderColor: "rgba(255, 206, 86, 1)",
-                backgroundColor: "rgba(255, 206, 86, 0.2)",
-                pointRadius: 4,
-                type: "bar"
-            },
-            {
                 label: "총 발전량",
-                data: sortedData.map((item: any) => item.total || 0),
+                data: generationData,
                 borderColor: "rgba(153,102,255,1)",
                 backgroundColor: "rgba(153,102,255,0.2)",
                 pointRadius: 4,
                 type: "bar"
             },
             {
-                label: "평균 발전량",
-                data: averageLine,
+                label: "예측 발전량",
+                data: forecastData,
                 borderColor: "rgba(76, 175, 80, 1)",
                 backgroundColor: "rgba(76, 175, 80, 0.1)",
                 pointRadius: 0,
@@ -444,9 +403,9 @@ export function buildWeeklyChartOptions(): Record<Plant, ChartOptions> {
                     display: true,
                     position: "left",
                     min: 0,
-                    max: 25000, // 하루 최대 발전량 (1.2MW * 24시간 = 28,800kWh, 여유있게 25,000)
+                    max: 2500, // 하루 최대 발전량 (1.2MW * 24시간 = 28,800kWh, 여유있게 25,000)
                     ticks: {
-                        stepSize: 2000,
+                        stepSize: 500,
                         callback: (value: number) => `${value}kWh`,
                     },
                     grid: {

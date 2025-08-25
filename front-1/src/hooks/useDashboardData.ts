@@ -40,14 +40,16 @@ export function useDashboardData() {
             // 주간 데이터도 함께 조회 (현재 주 + 지난 주)
             const startOfCurrentWeek = new Date(now);
             startOfCurrentWeek.setDate(now.getDate() - now.getDay()); // 이번 주 일요일
+            const endOfCurrentWeek = new Date(now);
+            endOfCurrentWeek.setDate(now.getDate() + (6 - now.getDay())); // 이번 주 토요일
             
             const startOfLastWeek = new Date(startOfCurrentWeek);
             startOfLastWeek.setDate(startOfCurrentWeek.getDate() - 7); // 지난 주 일요일
             
-            const endDate = today;
+            const endDate = endOfCurrentWeek.toISOString().split('T')[0];
             const startDate = startOfLastWeek.toISOString().split('T')[0];
             
-            const weeklyResult = await getRawGeneration(startDate, endDate);
+            const weeklyResult = await getDailyGeneration(selectedPlant, startDate, endDate);
             
             if (weeklyResult && weeklyResult.length > 0) {
                 setWeeklyData(weeklyResult);

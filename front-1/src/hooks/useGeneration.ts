@@ -19,34 +19,34 @@ export function useGeneration() {
         }
     }, [])
 
-    // const getDailyGeneration = useCallback(async (startDate: string, endDate: string) => {
-    //     console.log('🔧 useGeneration.getDailyGeneration 호출');
-    //     console.log('  - 시작일:', startDate);
-    //     console.log('  - 종료일:', endDate);
+    const getDailyGeneration = useCallback(async (plantId: string, startDate: string, endDate: string) => {
+        console.log('🔧 useGeneration.getDailyGeneration 호출');
+        console.log('  - 시작일:', startDate);
+        console.log('  - 종료일:', endDate);
         
-    //     setLoading(true);
-    //     setError(null);
-    //     try {
-    //         console.log('  - fetchDailyGeneration 호출 중...');
-    //         const data = await fetchDailyGeneration(startDate, endDate);
-    //         console.log('  - fetchDailyGeneration 결과:', data);
-    //         console.log('  - 데이터 타입:', typeof data);
-    //         console.log('  - 데이터 길이:', Array.isArray(data) ? data.length : '배열 아님');
+        setLoading(true);
+        setError(null);
+        try {
+            console.log('  - fetchDailyGeneration 호출 중...');
+            const data = await fetchDailyGeneration(plantId, startDate, endDate);
+            console.log('  - fetchDailyGeneration 결과:', data);
+            console.log('  - 데이터 타입:', typeof data);
+            console.log('  - 데이터 길이:', Array.isArray(data) ? data.length : '배열 아님');
             
-    //         if (Array.isArray(data) && data.length > 0) {
-    //             console.log('  - 첫 번째 데이터 샘플:', data[0]);
-    //         }
+            if (Array.isArray(data) && data.length > 0) {
+                console.log('  - 첫 번째 데이터 샘플:', data[0]);
+            }
             
-    //         return data;
-    //     } catch (e: any) {
-    //         console.error('❌ getDailyGeneration 오류:', e);
-    //         setError(e?.message ?? "일별 데이터 조회 실패");
-    //         return null;
-    //     } finally {
-    //         setLoading(false);
-    //         console.log('  - getDailyGeneration 완료');
-    //     }
-    // }, [])
+            return data;
+        } catch (e: any) {
+            console.error('❌ getDailyGeneration 오류:', e);
+            setError(e?.message ?? "일별 데이터 조회 실패");
+            return null;
+        } finally {
+            setLoading(false);
+            console.log('  - getDailyGeneration 완료');
+        }
+    }, [])
 
     // const getHourlyAvgGeneration = useCallback(async (startDate: string, endDate: string) => {
     //     setLoading(true);
@@ -90,5 +90,5 @@ export function useGeneration() {
     //     }
     // }, [])
 
-    return { loading, error, getRawGeneration, };
+    return { loading, error, getRawGeneration, getDailyGeneration };
 }

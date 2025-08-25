@@ -56,7 +56,7 @@ export default function DashboardCharts({
     const currentChartType = getChartType();
 
     return (
-        <>
+        <div className="grid grid-cols-2 gap-4">
             {/* 태양광 발전량 차트 */}
             <div className="m-0 bg-white rounded-2xl shadow p-4 mb-6">
                 <div className="flex items-center justify-between mb-3">
@@ -87,6 +87,6 @@ export default function DashboardCharts({
                     chartType={currentChartType}
                 />
             </div>
-        </>
+        </div>
     );
 }
