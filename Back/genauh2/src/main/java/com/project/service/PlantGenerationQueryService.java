@@ -1,7 +1,7 @@
 package com.project.service;
 
-
 import java.time.LocalDate;
+import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -18,14 +18,18 @@ import org.springframework.data.domain.PageRequest;
 import com.project.dto.DailyTotal;
 import com.project.dto.MonthlyTotal;
 import com.project.dto.WeeklyTotal;
-import java.time.temporal.WeekFields;
-import java.util.Locale;
-//import java.util.Map;
-import java.util.stream.Collectors;
-
 import com.project.dto.HourlyAvg;
 import com.project.dto.DashboardSummaryDTO;
+import com.project.dto.PeriodSummaryDTO;
+import java.time.temporal.WeekFields;
+import java.util.Locale;
+import java.util.stream.Collectors;
 
+import com.project.dto.DailyTotal;
+import com.project.dto.DashboardSummaryDTO;
+import com.project.dto.HourlyAvg;
+import com.project.dto.MonthlyTotal;
+import com.project.dto.WeeklyTotal;
 import com.project.entity.PlantGeneration;
 import com.project.repository.PlantGenerationRepository;
 
@@ -38,11 +42,17 @@ public class PlantGenerationQueryService {
     private final PlantGenerationRepository repo;
 
     /** 원시 시계열(엔티티 그대로) */
-    public List<PlantGeneration> getRawSeries(LocalDate start, LocalDate end, int limit) {
+    public List<PlantGeneration> getRawSeries(String plantId, LocalDate start, LocalDate end, int limit) {
         LocalDate s = (start != null) ? start : LocalDate.now().minusDays(30);
         LocalDate e = (end != null) ? end : LocalDate.now();
 
-        List<PlantGeneration> list = repo.findByDateBetweenOrderByDateAscHourAsc(s, e);
+        List<PlantGeneration> list;
+        if (plantId != null && !plantId.trim().isEmpty()) {
+            list = repo.findByPlantIdAndDateBetweenOrderByDateAscHourAsc(plantId, s, e);
+        } else {
+            list = repo.findByDateBetweenOrderByDateAscHourAsc(s, e);
+        }
+        
         if (limit > 0 && list.size() > limit) {
             return list.subList(0, limit);
         }
@@ -50,16 +60,26 @@ public class PlantGenerationQueryService {
     }
 
     /** 최신 1건(엔티티) */
-    public PlantGeneration getLatestEntity() {
-        return repo.findFirstByOrderByDateDescHourDesc();
+    public PlantGeneration getLatestEntity(String plantId) {
+        if (plantId != null && !plantId.trim().isEmpty()) {
+            return repo.findFirstByPlantIdOrderByDateDescHourDesc(plantId);
+        } else {
+            return repo.findFirstByOrderByDateDescHourDesc();
+        }
     }
 
     /** 일별 합계 (kW를 1시간 간격으로 kWh 합산 가정) */
-    public List<DailyTotal> getDaily(LocalDate start, LocalDate end) {
+    public List<DailyTotal> getDaily(String plantId, LocalDate start, LocalDate end) {
         LocalDate s = (start != null) ? start : LocalDate.now().minusDays(30);
         LocalDate e = (end != null) ? end : LocalDate.now();
 
-        List<PlantGeneration> rows = repo.findByDateBetween(s, e);
+        List<PlantGeneration> rows;
+        if (plantId != null && !plantId.trim().isEmpty()) {
+            rows = repo.findByPlantIdAndDateBetween(plantId, s, e);
+        } else {
+            rows = repo.findByDateBetween(s, e);
+        }
+        
         Map<LocalDate, double[]> acc = new HashMap<>(); // [0]=gen sum, [1]=pred sum
 
         for (PlantGeneration r : rows) {
@@ -81,17 +101,22 @@ public class PlantGenerationQueryService {
         return result;
     }
 
-    /* 주별 합계 (kW를 1시간 간격으로 kWh 합산 가정)  */
-    public List<WeeklyTotal> getWeekly(LocalDate start, LocalDate end) {
+    /** 주별 합계 (kW를 1시간 간격으로 kWh 합산 가정) */
+    public List<WeeklyTotal> getWeekly(String plantId, LocalDate start, LocalDate end) {
         LocalDate s = (start != null) ? start : LocalDate.now().minusDays(90);
         LocalDate e = (end != null) ? end : LocalDate.now();
-        List<PlantGeneration> rows = repo.findByDateBetween(s, e);
+        
+        List<PlantGeneration> rows;
+        if (plantId != null && !plantId.trim().isEmpty()) {
+            rows = repo.findByPlantIdAndDateBetween(plantId, s, e);
+        } else {
+            rows = repo.findByDateBetween(s, e);
+        }
 
         // 연도와 주차를 기준으로 데이터를 그룹화하고 합계를 계산합니다.
         Map<String, double[]> weeklySums = rows.stream()
                 .collect(Collectors.groupingBy(r -> {
                     int year = r.getDate().getYear();
-        
                     int week = r.getDate().get(WeekFields.of(Locale.getDefault()).weekOfWeekBasedYear());
                     return year + "-" + week;
                 }, Collectors.reducing(new double[2], r -> 
@@ -117,11 +142,17 @@ public class PlantGenerationQueryService {
                 .collect(Collectors.toList());
     }
 
-    /* 월별 합계 (kW를 1시간 간격으로 kWh 합산 가정) */
-    public List<MonthlyTotal> getMonthly(LocalDate start, LocalDate end) {
+    /** 월별 합계 (kW를 1시간 간격으로 kWh 합산 가정) */
+    public List<MonthlyTotal> getMonthly(String plantId, LocalDate start, LocalDate end) {
         LocalDate s = (start != null) ? start : LocalDate.now().minusDays(365);
         LocalDate e = (end != null) ? end : LocalDate.now();
-        List<PlantGeneration> rows = repo.findByDateBetween(s, e);
+        
+        List<PlantGeneration> rows;
+        if (plantId != null && !plantId.trim().isEmpty()) {
+            rows = repo.findByPlantIdAndDateBetween(plantId, s, e);
+        } else {
+            rows = repo.findByDateBetween(s, e);
+        }
 
         // 연도와 월을 기준으로 데이터를 그룹화하고 합계를 계산합니다.
         Map<String, double[]> monthlySums = rows.stream()
@@ -151,12 +182,18 @@ public class PlantGenerationQueryService {
                 .collect(Collectors.toList());
     }
 
-    /** 시간대 평균(0~23시) */
-    public List<HourlyAvg> getHourlyAvg(LocalDate start, LocalDate end) {
+    /** 시간대 평균 (0~23시) */
+    public List<HourlyAvg> getHourlyAvg(String plantId, LocalDate start, LocalDate end) {
         LocalDate s = (start != null) ? start : LocalDate.now().minusDays(30);
         LocalDate e = (end != null) ? end : LocalDate.now();
 
-        List<PlantGeneration> rows = repo.findByDateBetween(s, e);
+        List<PlantGeneration> rows;
+        if (plantId != null && !plantId.trim().isEmpty()) {
+            rows = repo.findByPlantIdAndDateBetween(plantId, s, e);
+        } else {
+            rows = repo.findByDateBetween(s, e);
+        }
+        
         double[][] bucket = new double[24][4]; // [genSum, genCnt, predSum, predCnt]
 
         for (PlantGeneration r : rows) {
@@ -180,10 +217,15 @@ public class PlantGenerationQueryService {
         return result;
     }
 
-     /* 대시보드 요약 정보  */
-    public DashboardSummaryDTO getDashboardSummary() {
+    /** 대시보드 요약 정보 */
+    public DashboardSummaryDTO getDashboardSummary(String plantId) {
         // DB에서 가장 최신 데이터 1건을 가져옵니다.
-        PlantGeneration latest = repo.findFirstByOrderByDateDescHourDesc();
+        PlantGeneration latest;
+        if (plantId != null && !plantId.trim().isEmpty()) {
+            latest = repo.findFirstByPlantIdOrderByDateDescHourDesc(plantId);
+        } else {
+            latest = repo.findFirstByOrderByDateDescHourDesc();
+        }
 
         if (latest == null) {
             // 데이터가 없는 경우 기본값 또는 예외 처리를 할 수 있습니다.
@@ -212,17 +254,73 @@ public class PlantGenerationQueryService {
                 .build();
     }
 
-    /* 상세 데이터 페이징 조회 */
-    public Page<PlantGeneration> getDetailedData(LocalDate start, LocalDate end, int page, int size) {
+    /** 상세 데이터 페이징 조회 */
+    public Page<PlantGeneration> getDetailedData(String plantId, LocalDate start, LocalDate end, int page, int size) {
         LocalDate s = (start != null) ? start : LocalDate.now().minusDays(30);
         LocalDate e = (end != null) ? end : LocalDate.now();
 
         // 페이지 번호, 페이지 크기, 정렬 기준을 포함하는 Pageable 객체 생성
         Pageable pageable = PageRequest.of(page, size, Sort.by("date").descending().and(Sort.by("hour").descending()));
 
-        return repo.findByDateBetween(s, e, pageable);
+        if (plantId != null && !plantId.trim().isEmpty()) {
+            return repo.findByPlantIdAndDateBetween(plantId, s, e, pageable);
+        } else {
+            return repo.findByDateBetween(s, e, pageable);
+        }
     }
 
+    /** 발전소 목록 조회 */
+    public List<String> getPlantList() {
+        return repo.findDistinctPlantIdByOrderByPlantIdAsc();
+    }
 
+    /** 특정 기간별 예측량/실제 발전량 합계 */
+    public PeriodSummaryDTO getPeriodSummary(String plantId, LocalDate start, LocalDate end) {
+        LocalDate s = (start != null) ? start : LocalDate.now().minusDays(30);
+        LocalDate e = (end != null) ? end : LocalDate.now();
 
+        List<PlantGeneration> rows;
+        if (plantId != null && !plantId.trim().isEmpty()) {
+            rows = repo.findByPlantIdAndDateBetween(plantId, s, e);
+        } else {
+            rows = repo.findByDateBetween(s, e);
+        }
+
+        if (rows.isEmpty()) {
+            return PeriodSummaryDTO.builder()
+                    .startDate(s)
+                    .endDate(e)
+                    .plantId(plantId)
+                    .totalGenerationKwh(0.0)
+                    .totalForecastKwh(0.0)
+                    .accuracyRate(0.0)
+                    .dataCount(0)
+                    .build();
+        }
+
+        // 합계 계산
+        double totalGeneration = rows.stream()
+                .mapToDouble(PlantGeneration::getGeneration_Kw)
+                .sum();
+        
+        double totalForecast = rows.stream()
+                .mapToDouble(PlantGeneration::getForecast_Kwh)
+                .sum();
+
+        // 예측 정확도 계산 (실제/예측 * 100)
+        double accuracyRate = 0.0;
+        if (totalForecast > 0) {
+            accuracyRate = (totalGeneration / totalForecast) * 100;
+        }
+
+        return PeriodSummaryDTO.builder()
+                .startDate(s)
+                .endDate(e)
+                .plantId(plantId)
+                .totalGenerationKwh(totalGeneration)
+                .totalForecastKwh(totalForecast)
+                .accuracyRate(accuracyRate)
+                .dataCount(rows.size())
+                .build();
+    }
 }

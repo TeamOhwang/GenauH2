@@ -31,6 +31,9 @@ public class User {
     @Column(nullable = false)
     private Role role;
 
+    @Column(name = "phoneNum", length = 20) // DB 컬럼명, 길이 지정
+    private String phoneNum;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Status status = Status.ACTIVE;
@@ -90,5 +93,13 @@ public class User {
 
     public String getBizRegNo() {
         return this.bizRegNo;
+    }
+
+    public void setPhoneNum(String phoneNum) {
+        this.phoneNum = phoneNum;
+    }
+
+    public String getPhoneNum() {
+        return this.phoneNum;
     }
 }
