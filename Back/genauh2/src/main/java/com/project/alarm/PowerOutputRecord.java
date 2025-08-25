@@ -5,12 +5,15 @@ import lombok.*;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "plant_generation") // 테이블은 그대로 사용
+@Table(name = "plant_generation")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class PowerOutputRecord {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "plant_id", nullable = false, length = 20)
+    private String plantId;          // plt001, plt002 등
 
     @Column(name = "date", nullable = false)
     private LocalDate date;          // YYYY-MM-DD
