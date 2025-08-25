@@ -11,4 +11,5 @@ public class DailyTotal {
     LocalDate date;
     double genKwhTotal;
     double predKwhTotal;
+    double utilizationRate; // 가동률
 }

@@ -16,6 +16,7 @@ import com.project.dto.DailyTotal;
 import com.project.dto.DashboardSummaryDTO;
 import com.project.dto.HourlyAvg;
 import com.project.dto.PeriodSummaryDTO;
+import com.project.dto.HourlyHydrogenProductionDTO;
 import com.project.entity.PlantGeneration;
 import com.project.service.PlantGenerationQueryService;
 
@@ -78,6 +79,16 @@ public class PlantGenerationQueryController {
             @RequestParam(value = "end", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         
         List<HourlyAvg> result = service.getHourlyAvg(plantId, startDate, endDate);
+        return ResponseEntity.ok(result);
+    }
+    
+    /** 시간대별 수소 생산량(집계 DTO) */
+    @GetMapping("/hourly-hydrogen")
+    public ResponseEntity<List<HourlyHydrogenProductionDTO>> getHourlyHydrogenProduction(
+            @RequestParam(value = "start", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(value = "end", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        
+        List<HourlyHydrogenProductionDTO> result = service.getHourlyHydrogenProduction(startDate, endDate);
         return ResponseEntity.ok(result);
     }
     
