@@ -1,5 +1,5 @@
 
-import "@/charts/register"; 
+
 import { memo, useMemo, useState } from "react";
 import type { GroupBy } from "@/lib/hydrogen"; 
 import type { HydrogenAggRequestDTO } from "@/domain/graph/hydrogenDTO";

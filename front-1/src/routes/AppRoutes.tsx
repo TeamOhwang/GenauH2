@@ -7,7 +7,6 @@ import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
 import Price from "@/pages/Price";
 import HydrogenPage from "@/pages/HydrogenPage";
-import Detailed from "@/pages/Detailed";
 import Setting from "@/pages/Setting";
 import Admin from "@/pages/Admin";
 import About from "@/pages/About";
@@ -66,7 +65,7 @@ export default function AppRouter() {
           <Route path={PATHS.admin} element={<Admin />} />
         </Route>
 
-        {/* 403  */}
+        {/* 404  */}
         <Route path={PATHS.notFound} element={<NotFound />} />
       </Route>
     </Routes>

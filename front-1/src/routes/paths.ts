@@ -1,4 +1,4 @@
-import HydrogenPage from "@/pages/HydrogenPage";
+
 
 export const PATHS = {
   home: "/home",
