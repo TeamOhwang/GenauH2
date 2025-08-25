@@ -1,6 +1,6 @@
 import ChartComponent from "@/components/ui/ChartComponent";
 import { Plant, TimeFrame, ChartData, ChartOptions } from "@/utils/chartDataBuilder";
-import { buildDailyChartOptions, buildWeeklyChartOptions, buildMonthlyChartOptions, buildMonthlyH2Data } from "@/utils/chartDataBuilder";
+import { buildDailyChartOptions, buildWeeklyChartOptions, buildMonthlyChartOptions } from "@/utils/chartDataBuilder";
 
 interface DashboardChartsProps {
     solaData: Record<string, Record<string, ChartData>>;
@@ -51,47 +51,9 @@ export default function DashboardCharts({
         }
     };
 
-    // 월간 탭일 때 수소 생산량 차트 데이터 생성
-    const getH2ChartData = () => {
-        if (activeTimeFrame === "monthly") {
-            // 월간 탭에서는 주차별 수소 생산량 데이터 사용
-            // solaData에서 monthly 데이터를 가져와서 수소 생산량 계산
-            const monthlyPlantData = solaData.monthly?.[selectedPlant];
-            if (monthlyPlantData && monthlyPlantData.labels.length > 0) {
-                // 주차별 라벨을 기반으로 수소 생산량 데이터 생성
-                const labels = monthlyPlantData.labels;
-                const productionData = labels.map((_, index) => {
-                    // 발전량 데이터가 있으면 그에 비례하여 수소 생산량 계산
-                    const generationValue = monthlyPlantData.datasets[0]?.data[index];
-                    if (generationValue !== null && generationValue !== undefined) {
-                        return generationValue * 0.1; // 발전량의 10%로 수소 생산량 계산
-                    }
-                    return null;
-                });
-                
-                return {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: "주차별 수소 생산량 (kg)",
-                            data: productionData,
-                            borderColor: "rgba(33, 150, 243, 1)",
-                            backgroundColor: "rgba(33, 150, 243, 0.2)",
-                            pointRadius: 4,
-                            fill: false,
-                            type: "line"
-                        }
-                    ]
-                };
-            }
-        }
-        // 기본 수소 생산량 데이터 반환
-        return h2Data;
-    };
 
     const currentChartOptions = getChartOptions();
     const currentChartType = getChartType();
-    const currentH2Data = getH2ChartData();
 
     return (
         <div className="grid grid-cols-2 gap-4">
@@ -112,47 +74,21 @@ export default function DashboardCharts({
                         <option value="plant3">발전소 3 (500kW)</option>
                     </select>
                 </div>
-                {activeTimeFrame === "monthly" ? (
-                    // 월간 탭일 때는 스크롤 가능한 컨테이너로 감싸기
-                    <div className="overflow-x-auto">
-                        <div className="min-w-max">
-                            <ChartComponent 
-                                data={solaData[activeTimeFrame][selectedPlant] as any} 
-                                options={currentChartOptions[selectedPlant]} 
-                                chartType={currentChartType}
-                            />
-                        </div>
-                    </div>
-                ) : (
-                    <ChartComponent 
-                        data={solaData[activeTimeFrame][selectedPlant] as any} 
-                        options={currentChartOptions[selectedPlant]} 
-                        chartType={currentChartType}
-                    />
-                )}
+                <ChartComponent 
+                    data={solaData[activeTimeFrame][selectedPlant]} 
+                    options={currentChartOptions[selectedPlant]} 
+                    chartType={currentChartType}
+                />
             </div>
 
             {/* 수소 생산량 차트 */}
             <div className="m-0 bg-white rounded-2xl shadow p-4 mb-6">
                 <p className="text-xl font-bold mb-3">{chart2Title}</p>
-                {activeTimeFrame === "monthly" ? (
-                    // 월간 탭일 때는 스크롤 가능한 컨테이너로 감싸기
-                    <div className="overflow-x-auto">
-                        <div className="min-w-max">
-                            <ChartComponent 
-                                data={currentH2Data as any} 
-                                options={currentChartOptions.plant1} 
-                                chartType={currentChartType}
-                            />
-                        </div>
-                    </div>
-                ) : (
-                    <ChartComponent 
-                        data={currentH2Data as any} 
-                        options={currentChartOptions.plant1} 
-                        chartType={currentChartType}
-                    />
-                )}
+                <ChartComponent 
+                    data={h2Data} 
+                    options={currentChartOptions.plant1} 
+                    chartType={currentChartType}
+                />
             </div>
         </div>
     );

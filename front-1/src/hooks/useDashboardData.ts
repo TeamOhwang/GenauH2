@@ -3,9 +3,6 @@ import { useGeneration } from './useGeneration';
 import { useHourlyUpdater } from './useHourlyUpdater';
 import { TimeFrame, Plant } from '@/types/dashboard';
 
-// 테스트 모드 설정 (true로 설정하면 항상 테스트 데이터 사용)
-const TEST_MODE = true;
-
 // 발전소별 capacity_Kw 값 상수 정의
 const PLANT_CAPACITIES = {
     plant1: 1200,
@@ -111,7 +108,7 @@ export function useDashboardData() {
                 setWeeklyData([]);
             }
 
-            // 월간 데이터도 함께 조회 (현재 월 + 지난 3개월)
+            // 월간 데이터도 함께 조회 (현재 월 + 지난 월)
             const startOfCurrentMonth = new Date(now);
             startOfCurrentMonth.setDate(1);
             console.log('  - 이번 월 1일:', startOfCurrentMonth);
@@ -119,8 +116,8 @@ export function useDashboardData() {
             endOfCurrentMonth.setMonth(now.getMonth() + 1, 0);
             console.log('  - 이번 월 말:', endOfCurrentMonth);
             const startOfLastMonth = new Date(startOfCurrentMonth);
-            startOfLastMonth.setMonth(startOfCurrentMonth.getMonth() - 3); // 지난 3개월 전부터
-            console.log('  - 지난 3개월 전 1일:', startOfLastMonth);
+            startOfLastMonth.setMonth(startOfCurrentMonth.getMonth() - 1);
+            console.log('  - 지난 월 1일:', startOfLastMonth);
             const endDateOfMonth = endOfCurrentMonth.toISOString().split('T')[0];
             const startDateOfMonth = startOfLastMonth.toISOString().split('T')[0];
 
@@ -139,17 +136,8 @@ export function useDashboardData() {
             if (Array.isArray(monthlyResult) && monthlyResult.length > 0) {
                 console.log('  - 첫 번째 데이터 샘플:', monthlyResult[0]);
                 console.log('  - 마지막 데이터 샘플:', monthlyResult[monthlyResult.length - 1]);
-                
-                if (TEST_MODE) {
-                    // 테스트 모드: 실제 데이터가 있어도 테스트 데이터 사용
-                    console.log('🧪 테스트 모드: 월간 데이터를 빈 배열로 설정하여 테스트 데이터 표시');
-                    setMonthlyData([]);
-                    console.log('✅ 테스트 데이터 모드 활성화');
-                } else {
-                    // 일반 모드: 실제 데이터 사용
-                    setMonthlyData(monthlyResult);
-                    console.log('✅ 월간 데이터 설정 완료');
-                }
+                setMonthlyData(monthlyResult);
+                console.log('✅ 월간 데이터 설정 완료');
             } else {
                 console.log('⚠️ 월간 데이터가 비어있거나 올바르지 않음');
                 setMonthlyData([]);

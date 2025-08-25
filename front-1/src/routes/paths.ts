@@ -1,17 +1,17 @@
 
 export const PATHS = {
-  home: "/home",
-  admin: "/admin",
-  about: "/about",
-  login: "/login",
-  user: "/user",
-  dashboard: "/dashboard",
-  detailed: "/detailed",
-  facilityKpiPage: "/facilitykpi", 
-  price: "/price",
-  setting: "/setting",
-  forbidden: "/403",
-  notFound: "*",
+    home: "/home",
+    admin: "/admin",
+    about: "/about",
+    login: "/login",
+    user: "/user",
+    dashboard: "/dashboard",
+    detailed: "/detailed",
+    facilityKpiPage: "/facilitykpi",
+    price: "/price",
+    setting: "/setting",
+    forbidden: "/403",
+    notFound: "*",
 } as const;
 
 

@@ -29,21 +29,7 @@ export interface SolaDataStructure {
 
 export interface ChartOptions {
     responsive: boolean;
-    maintainAspectRatio?: boolean;
     scales: {
-        x?: {
-            type: string;
-            display: boolean;
-            grid: {
-                display: boolean;
-            };
-            min?: number;
-            max?: number;
-            ticks?: {
-                maxRotation?: number;
-                minRotation?: number;
-            };
-        };
         y: {
             type: string;
             display: boolean;
@@ -95,7 +81,6 @@ export function buildSolaData(
     plant3: any[],
     currentHour: number,
     weeklyData: any[],
-    monthlyData: any[],
 ): SolaDataStructure {
     return {
         daily: {
@@ -110,9 +95,9 @@ export function buildSolaData(
             plant3: buildWeeklyPlantChartData(weeklyData),  
         },
         monthly: {
-            plant1: buildMonthlyPlantChartData(monthlyData),
-            plant2: buildMonthlyPlantChartData(monthlyData),
-            plant3: buildMonthlyPlantChartData(monthlyData),
+            plant1: buildMonthlyPlantChartData(weeklyData),
+            plant2: buildMonthlyPlantChartData(weeklyData),
+            plant3: buildMonthlyPlantChartData(weeklyData),
         },
     };
 }
@@ -266,11 +251,10 @@ function buildMonthlyPlantChartData(plantData: any[]): ChartData {
     
     if (plantData.length === 0) {
         console.warn('⚠️ 월간 데이터가 비어있음');
-        
-        // 테스트용 데이터 생성 (9월 18일 기준)
-        console.log('🧪 테스트 데이터 생성 중...');
-        const testData = generateTestData();
-        return testData;
+        return {
+            labels: [],
+            datasets: []
+        };
     }
 
     const currentDate = new Date();
@@ -306,61 +290,49 @@ function buildMonthlyPlantChartData(plantData: any[]): ChartData {
     const generationData: (number | null)[] = [];
     const forecastData: number[] = [];
 
-    // 과거 주차와 현재 주차를 분리하여 처리
-    const pastWeeks: string[] = [];
-    const pastGenerationData: (number | null)[] = [];
-    const pastForecastData: number[] = [];
-    let currentWeekLabel: string | null = null;
-    let currentWeekGenerationData: number | null = null;
-    let currentWeekForecastData: number | null = null;
+    // 현재 주 정보를 저장할 배열
+    const isCurrentWeekArray: boolean[] = [];
     
     sortedWeeks.forEach(weekKey => {
         const [year, month, weekNum] = weekKey.split('-');
         const weekData = weeklyGroups[weekKey];
         
+        // 주차 라벨 생성 (예: "8월 1주차", "8월 2주차")
         // 해당 주의 데이터가 현재 주인지 확인
         const isCurrentWeek = weekData.some((item: any) => {
             const itemDate = new Date(item.date);
             return itemDate >= currentWeekStart;
         });
         
+        // 현재 주 여부를 배열에 저장
+        isCurrentWeekArray.push(isCurrentWeek);
+        
+        // 현재 주에는 "(현재)" 표시 추가
         if (isCurrentWeek) {
-            // 현재 주는 나중에 처리
-            currentWeekLabel = `${month}월 ${weekNum}주차 (현재)`;
+            labels.push(`${month}월 ${weekNum}주차 (현재)`);
+        } else {
+            labels.push(`${month}월 ${weekNum}주차`);
+        }
+        
+        if (isCurrentWeek) {
+            // 현재 주는 예측값만 표시
             const weekForecastTotal = weekData.reduce((sum: number, item: any) => {
                 return sum + (item.predKwhTotal || 0);
             }, 0);
-            currentWeekGenerationData = null; // 실제값은 null로 설정
-            currentWeekForecastData = weekForecastTotal - (300 * weekData.length); // 유휴 전력량 계산
+            generationData.push(null); // 실제값은 null로 설정
+            forecastData.push(weekForecastTotal - (300 * weekData.length)); // 유휴 전력량 계산
         } else {
-            // 과거 주는 즉시 처리
-            pastWeeks.push(`${month}월 ${weekNum}주차`);
+            // 과거 주는 실제값과 예측값 모두 표시
             const weekGenerationTotal = weekData.reduce((sum: number, item: any) => {
                 return sum + (item.genKwhTotal || 0);
             }, 0);
             const weekForecastTotal = weekData.reduce((sum: number, item: any) => {
                 return sum + (item.predKwhTotal || 0);
             }, 0);
-            pastGenerationData.push(weekGenerationTotal - (300 * weekData.length)); // 유휴 전력량 계산
-            pastForecastData.push(weekForecastTotal - (300 * weekData.length)); // 예측 유휴 전력량 계산
+            generationData.push(weekGenerationTotal - (300 * weekData.length)); // 유휴 전력량 계산
+            forecastData.push(weekForecastTotal - (300 * weekData.length)); // 예측 유휴 전력량 계산
         }
     });
-    
-    // 과거 주차를 먼저 추가하고, 현재 주차를 마지막에 추가 (스크롤 시 가장 왼쪽에 보이도록)
-    labels.push(...pastWeeks);
-    if (currentWeekLabel) {
-        labels.push(currentWeekLabel);
-    }
-    
-    generationData.push(...pastGenerationData);
-    if (currentWeekGenerationData !== null) {
-        generationData.push(currentWeekGenerationData);
-    }
-    
-    forecastData.push(...pastForecastData);
-    if (currentWeekForecastData !== null) {
-        forecastData.push(currentWeekForecastData);
-    }
 
     console.log('  - 생성된 주차별 데이터:', {
         labels,
@@ -371,128 +343,30 @@ function buildMonthlyPlantChartData(plantData: any[]): ChartData {
     return {
         labels: labels,
         datasets: [
-                               {
-                       label: "주차별 유휴 전력 발생량 (kWh)",
-                       data: generationData,  // 모든 주차의 실제값을 하나의 데이터셋으로 통합
-                       borderColor: "rgba(255, 193, 7, 1)",        // 통일된 노란색
-                       backgroundColor: "rgba(255, 193, 7, 0.6)",   // 통일된 노란색
-                       pointRadius: 0,
-                       fill: false,
-                       type: "bar",
-                       barPercentage: 0.6,      // 바의 너비를 줄여서 적당한 폭 유지 (0.6 = 60%)
-                       categoryPercentage: 0.8, // 카테고리 간격 조정 (0.8 = 80%)
-                       borderWidth: 1           // 통일된 테두리
-                   },
-                   {
-                       label: "주차별 유휴 전력 발생 예측량 (kWh)",
-                       data: forecastData,  // 모든 주차의 예측값을 하나의 데이터셋으로 통합
-                       borderColor: "rgba(76, 175, 80, 0.8)",      // 통일된 초록색
-                       backgroundColor: "rgba(76, 175, 80, 0.3)",   // 통일된 초록색
-                       pointRadius: 0,
-                       borderDash: [0, 0], // 바 차트에서는 점선 효과 제거
-                       fill: false,
-                       type: "bar",
-                       barPercentage: 0.6,      // 바의 너비를 줄여서 적당한 폭 유지 (0.6 = 60%)
-                       categoryPercentage: 0.8, // 카테고리 간격 조정 (0.8 = 80%)
-                       borderWidth: 1       // 통일된 테두리
-                   }
-        ],
-    };
-}
-
-// 테스트용 데이터 생성 함수 (9월 18일 기준)
-function generateTestData(): ChartData {
-    console.log('🧪 9월 18일 기준 테스트 데이터 생성');
-    
-    // 9월 18일은 9월 3주차 (월요일)
-    const currentDate = new Date('2024-09-18');
-    const currentWeekStart = new Date(currentDate);
-    currentWeekStart.setDate(currentDate.getDate() - currentDate.getDay()); // 이번 주 월요일
-    
-    // 테스트용 주차별 데이터 생성 (7월 1주차부터 9월 3주차까지)
-    const pastLabels: string[] = [];
-    const pastGenerationData: (number | null)[] = [];
-    const pastForecastData: number[] = [];
-    let currentWeekLabel: string | null = null;
-    let currentWeekGenerationData: number | null = null;
-    let currentWeekForecastData: number | null = null;
-    
-    // 7월부터 9월까지의 주차별 데이터 생성
-    for (let month = 7; month <= 9; month++) {
-        const maxWeeks = month === 9 ? 3 : 5; // 9월은 3주차까지만
-        
-        for (let week = 1; week <= maxWeeks; week++) {
-            const weekKey = `${month}-${week}`;
-            const isCurrentWeek = month === 9 && week === 3;
-            
-            // 테스트용 발전량 데이터 생성 (랜덤 + 패턴)
-            if (isCurrentWeek) {
-                // 현재 주는 나중에 처리
-                currentWeekLabel = `${month}월 ${week}주차 (현재)`;
-                const forecastValue = Math.floor(Math.random() * 50000) + 80000; // 80,000 ~ 130,000 kWh
-                currentWeekGenerationData = null;
-                currentWeekForecastData = forecastValue;
-            } else {
-                // 과거 주는 즉시 처리
-                pastLabels.push(`${month}월 ${week}주차`);
-                const baseValue = 70000 + (month - 7) * 5000 + (week - 1) * 2000; // 계절성 패턴
-                const actualValue = baseValue + Math.floor(Math.random() * 20000) - 10000; // ±10,000 kWh 변동
-                const forecastValue = baseValue + Math.floor(Math.random() * 15000) - 7500; // ±7,500 kWh 변동
-                
-                pastGenerationData.push(Math.max(0, actualValue));
-                pastForecastData.push(Math.max(0, forecastValue));
-            }
-        }
-    }
-    
-    // 과거 주차를 먼저 추가하고, 현재 주차를 마지막에 추가 (스크롤 시 가장 왼쪽에 보이도록)
-    const labels = [...pastLabels];
-    const generationData = [...pastGenerationData];
-    const forecastData = [...pastForecastData];
-    
-    if (currentWeekLabel) {
-        labels.push(currentWeekLabel);
-        if (currentWeekGenerationData !== null) {
-            generationData.push(currentWeekGenerationData);
-        }
-        if (currentWeekForecastData !== null) {
-            forecastData.push(currentWeekForecastData);
-        }
-    }
-    
-    console.log('🧪 생성된 테스트 데이터:', {
-        labels,
-        generationData,
-        forecastData
-    });
-    
-    return {
-        labels: labels,
-        datasets: [
             {
                 label: "주차별 유휴 전력 발생량 (kWh)",
-                data: generationData,
+                data: generationData,  // 모든 주차의 실제값을 하나의 데이터셋으로 통합
                 borderColor: "rgba(255, 193, 7, 1)",        // 통일된 노란색
                 backgroundColor: "rgba(255, 193, 7, 0.6)",   // 통일된 노란색
                 pointRadius: 0,
                 fill: false,
                 type: "bar",
-                barPercentage: 0.6,
-                categoryPercentage: 0.8,
-                borderWidth: 1
+                barPercentage: 0.8,      // 바의 너비 (0.8 = 80%)
+                categoryPercentage: 0.9, // 카테고리 간격 (0.9 = 90%)
+                borderWidth: 1           // 통일된 테두리
             },
             {
                 label: "주차별 유휴 전력 발생 예측량 (kWh)",
-                data: forecastData,
+                data: forecastData,  // 모든 주차의 예측값을 하나의 데이터셋으로 통합
                 borderColor: "rgba(76, 175, 80, 0.8)",      // 통일된 초록색
                 backgroundColor: "rgba(76, 175, 80, 0.3)",   // 통일된 초록색
                 pointRadius: 0,
-                borderDash: [0, 0],
+                borderDash: [0, 0], // 바 차트에서는 점선 효과 제거
                 fill: false,
                 type: "bar",
-                barPercentage: 0.6,
-                categoryPercentage: 0.8,
-                borderWidth: 1
+                barPercentage: 0.8,
+                categoryPercentage: 0.9,
+                borderWidth: 1       // 통일된 테두리
             }
         ],
     };
@@ -738,22 +612,7 @@ export function buildMonthlyChartOptions(): Record<Plant, ChartOptions> {
     return {
         plant1: {
             responsive: true,
-            maintainAspectRatio: false, // 차트 비율 고정 해제로 스크롤 가능하게
             scales: {
-                x: {
-                    type: "category",
-                    display: true,
-                    grid: {
-                        display: false,
-                    },
-                    // x축 스크롤 설정
-                    min: undefined,
-                    max: undefined,
-                    ticks: {
-                        maxRotation: 45, // 라벨 회전으로 가독성 향상
-                        minRotation: 0,
-                    },
-                },
                 y: {
                     type: "linear",
                     display: true,
