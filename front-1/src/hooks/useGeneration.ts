@@ -1,4 +1,4 @@
-import { fetchDailyGeneration, fetchDetailedGeneration, fetchHourlyAvgGeneration, fetchRawGeneration, fetchSummaryGeneration } from "@/api/generationService";
+import { fetchDailyGeneration, fetchRawGeneration } from "@/api/generationService";
 import { useState, useCallback } from "react";
 
 export function useGeneration() {

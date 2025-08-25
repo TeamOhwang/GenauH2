@@ -9,20 +9,18 @@ const roleHome = (r: Role) => (r === "ADMIN" ? PATHS.admin : PATHS.dashboard);
 export default function Sidebar() {
   const role = useAuthStore((s) => s.role);
 
-  // 공통(최상단) – 대시보드는 역할에 따라 목적지 다르게
+  // 공통(최상단)
   const commonTop = [{ label: "대시보드", to: roleHome(role) }];
 
   // USER 전용 메뉴
   const userMenu = [
-    { label: "상세 데이터", to: PATHS.detailed },
+    { label: "수소 생산 분석", to: PATHS.facilityKpiPage },    
     { label: "수소 가격 정보", to: PATHS.price },
     { label: "설정", to: PATHS.setting },
   ];
 
-  // ADMIN 전용 메뉴 (필요시 추가)
-  const adminMenu = [
-    { label: "관리자 홈", to: PATHS.admin },
-  ];
+  // ADMIN 전용 (필요 시 확장)
+  const adminMenu = [{ label: "관리자 홈", to: PATHS.admin }];
 
   const menu = role === "ADMIN" ? [...commonTop, ...adminMenu] : [...commonTop, ...userMenu];
 

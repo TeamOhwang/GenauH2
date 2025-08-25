@@ -1,4 +1,4 @@
-// src/api/priceApi.ts
+
 import apiClient, { unwrap } from "@/api/apiClient";
 import type { RegionAvgPriceDTO } from "@/domain/maps/RegionAvgPriceDTO";
 import type { RegionPriceDTO } from "@/domain/maps/RegionPriceDTO";

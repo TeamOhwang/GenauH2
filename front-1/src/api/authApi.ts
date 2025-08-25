@@ -16,11 +16,18 @@ const ROLE_MAP = {
   USER: "USER",
 } as const;
 type ServerRoleKey = keyof typeof ROLE_MAP;
-
 const mapServerRole = (serverRole: unknown): Role | null => {
   if (typeof serverRole !== "string") return null;
   const key = serverRole.toUpperCase().trim() as ServerRoleKey;
   return key in ROLE_MAP ? ROLE_MAP[key] : null;
+};
+
+/** 프로필 정규화 타입 */
+export type Profile = {
+  userId?: number;
+  orgId?: number;
+  role?: string;     // 서버의 생 문자열 ("USER" | "SUPERVISOR" | "ADMIN")
+  email?: string;
 };
 
 export const AuthApi = {
@@ -45,14 +52,25 @@ export const AuthApi = {
     await apiClient.post(AUTH_ENDPOINTS.logout, {});
   },
 
-  async profile(): Promise<{ role?: string }> {
+  /**  프로필: { success, data } 래핑/비래핑 모두 안전 파싱 */
+  async profile(): Promise<Profile> {
     const res = await apiClient.get(AUTH_ENDPOINTS.profile);
-    return unwrap<{ role?: string }>(res) ?? {};
+
+    // 서버 표준: { success, data: {...} }
+    const wrapped = unwrap<{ success?: boolean; data?: any }>(res);
+    const d = wrapped?.data ?? wrapped; // 혹시 래핑이 없다면 본문 자체를 사용
+
+    return {
+      userId: d?.userId ?? d?.user?.userId,
+      orgId:  d?.orgId  ?? d?.user?.orgId,
+      role:   typeof d?.role === "string" ? d.role : d?.role?.toString?.(),
+      email:  d?.email ?? d?.user?.email,
+    };
   },
 
   /** 편의 메서드 ----------------------------------------- */
   async loginAndSyncRole(payload: LoginReq): Promise<Role | null> {
-    const token = await AuthApi.login(payload); 
+    const token = await AuthApi.login(payload);
     authToken.set(token);
     const prof = await AuthApi.profile();
     return mapServerRole(prof.role);
