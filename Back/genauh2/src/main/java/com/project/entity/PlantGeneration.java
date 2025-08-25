@@ -18,6 +18,9 @@ public class PlantGeneration {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "plant_id", nullable = false, length = 50)
+    private String plantId; 
+
     @Column(nullable=false)
     private LocalDate date;
 
