@@ -18,8 +18,21 @@ export async function getRawGenerationApi(startDate: string, endDate: string) {
 // 최신 데이터 조회
 // 일별 데이터 조회
 export async function getDailyGenerationApi(plantId: string, startDate: string, endDate: string) {
-    const res = await apiClient.get(GENERATION_ENDPOINTS.getDaily, { params: { plantId: plantId, start: startDate, end: endDate, limit:2000 } });
-    return res.data ?? [];
+    console.log('🌐 generationApi.getDailyGenerationApi 호출');
+    console.log('  - URL:', GENERATION_ENDPOINTS.getDaily);
+    console.log('  - 파라미터:', { plantId, start: startDate, end: endDate, limit: 2000 });
+    
+    try {
+        const res = await apiClient.get(GENERATION_ENDPOINTS.getDaily, { 
+            params: { plantId: plantId, start: startDate, end: endDate, limit: 2000 } 
+        });
+        console.log('  - API 응답 상태:', res.status);
+        console.log('  - API 응답 데이터:', res.data);
+        return res.data ?? [];
+    } catch (error) {
+        console.error('❌ getDailyGenerationApi 오류:', error);
+        throw error;
+    }
 }
 
 // 시간별 평균 데이터 조회

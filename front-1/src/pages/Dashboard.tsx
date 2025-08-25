@@ -1,12 +1,12 @@
 import { useDashboardData } from "@/hooks/useDashboardData";
-import { 
-    buildSolaData, 
-    buildChartOptions, 
+import {
+    buildSolaData,
+    buildChartOptions,
     buildDailyChartOptions,
     buildWeeklyChartOptions,
     buildMonthlyChartOptions,
-    buildH2Data, 
-    buildTimeFrameData 
+    buildH2Data,
+    buildTimeFrameData
 } from "@/utils/chartDataBuilder";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import TimeFrameTabs from "@/components/dashboard/TimeFrameTabs";
@@ -21,9 +21,8 @@ export default function Dashboard() {
         plant1,
         plant2,
         plant3,
-        weeklyPlant1,
-        weeklyPlant2,
-        weeklyPlant3,
+        weeklyData,
+        monthlyData,
         lastUpdateTime,
         isUpdating,
         setActiveTimeFrame,
@@ -34,15 +33,16 @@ export default function Dashboard() {
     // 차트 데이터 및 옵션 생성
     console.log('🎯 Dashboard 차트 데이터 생성 시작');
     console.log('  - 일간 데이터:', { plant1: plant1.length, plant2: plant2.length, plant3: plant3.length });
-    console.log('  - 주간 데이터:', { 
-        plant1: weeklyPlant1.length, 
-        plant2: weeklyPlant2.length, 
-        plant3: weeklyPlant3.length 
+    console.log('  - 주간 데이터:', {
+        weeklyData: weeklyData.length,
     });
-    
-    const solaData = buildSolaData(plant1, plant2, plant3, currentHour, weeklyPlant1, weeklyPlant2, weeklyPlant3);
+    console.log('  - 월간 데이터:', {
+        monthlyData: monthlyData.length,
+    });
+
+    const solaData = buildSolaData(plant1, plant2, plant3, currentHour, weeklyData, monthlyData);
     console.log('  - 생성된 solaData:', solaData);
-    
+
     // 탭별 차트 옵션 선택
     const getChartOptions = () => {
         switch (activeTimeFrame) {
@@ -56,7 +56,7 @@ export default function Dashboard() {
                 return buildChartOptions();
         }
     };
-    
+
     const chartOptions = getChartOptions();
     const h2Data = buildH2Data(currentHour);
     const timeFrameData = buildTimeFrameData();
@@ -87,7 +87,7 @@ export default function Dashboard() {
                 <DashboardCharts
                     solaData={solaData}
                     activeTimeFrame={activeTimeFrame}
-                    selectedPlant={selectedPlant}
+                    selectedPlant={selectedPlant === "all" ? "plant1" : selectedPlant}
                     chartOptions={chartOptions}
                     h2Data={h2Data}
                     chart1Title={currentData.chart1Title}

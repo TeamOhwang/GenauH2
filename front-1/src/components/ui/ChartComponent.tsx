@@ -27,14 +27,14 @@ interface ChartData {
     labels: string[];
     datasets: {
         label: string;
-        data: number[];
+        data: (number | null)[];
         borderColor?: string;
         backgroundColor?: string;
         pointRadius?: number;
         borderDash?: number[];
         yAxisID?: string;
         fill?: boolean;
-        type?: string;
+        type?: "line" | "bar";
     }[];
 }
 
@@ -47,9 +47,9 @@ interface ChartProps {
 export default function ChartComponent({ data, options, chartType = "line" }: ChartProps) {
     // 막대 차트인 경우
     if (chartType === "bar") {
-        return <Bar data={data} options={options} />;
+        return <Bar data={data as any} options={options} />;
     }
     
     // 기본적으로 라인 차트
-    return <Line data={data} options={options} />;
+    return <Line data={data as any} options={options} />;
 }

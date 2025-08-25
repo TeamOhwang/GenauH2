@@ -1,5 +1,5 @@
 export type TimeFrame = "daily" | "weekly" | "monthly";
-export type Plant = "plant1" | "plant2" | "plant3";
+export type Plant = "all" | "plant1" | "plant2" | "plant3";
 
 export interface StatItem {
     label: string;

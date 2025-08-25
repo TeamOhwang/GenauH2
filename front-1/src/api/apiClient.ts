@@ -89,6 +89,15 @@ const apiClient: AxiosInstance = axios.create({
 
 /* ======================== 요청 인터셉터 ======================== */
 apiClient.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
+  // 디버깅을 위한 요청 로깅
+  console.log('🌐 API 요청:', {
+    method: config.method?.toUpperCase(),
+    url: config.url,
+    baseURL: config.baseURL,
+    params: config.params,
+    headers: config.headers
+  });
+  
   // FormData 요청 시 Content-Type 자동 제거
   if (config.data instanceof FormData) setHeader(config.headers as any, "Content-Type");
   // 로그인/로그아웃/재발급 요청은 토큰 제외
@@ -127,8 +136,25 @@ apiClient.interceptors.request.use(async (config: InternalAxiosRequestConfig) =>
 
 /* ======================== 응답 인터셉터 ======================== */
 apiClient.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    // 디버깅을 위한 성공 응답 로깅
+    console.log('✅ API 응답 성공:', {
+      status: res.status,
+      statusText: res.statusText,
+      url: res.config.url,
+      data: res.data
+    });
+    return res;
+  },
   async (error: AxiosError & { _redirect?: string }) => {
+    // 디버깅을 위한 에러 응답 로깅
+    console.error('❌ API 응답 에러:', {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      url: error.config?.url,
+      message: error.message,
+      data: error.response?.data
+    });
     const st = error.response?.status;
 
     //  403 권한부족: 전역 라우팅 힌트 부여

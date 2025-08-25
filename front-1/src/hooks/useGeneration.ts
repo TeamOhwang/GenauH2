@@ -1,4 +1,4 @@
-import { fetchDailyGeneration, fetchDetailedGeneration, fetchHourlyAvgGeneration, fetchRawGeneration, fetchSummaryGeneration } from "@/api/generationService";
+import { fetchDailyGeneration, fetchRawGeneration } from "@/api/generationService";
 import { useState, useCallback } from "react";
 
 export function useGeneration() {
@@ -21,9 +21,20 @@ export function useGeneration() {
 
     const getDailyGeneration = useCallback(async (plantId: string, startDate: string, endDate: string) => {
         console.log('🔧 useGeneration.getDailyGeneration 호출');
+        console.log('  - plantId:', plantId);
         console.log('  - 시작일:', startDate);
         console.log('  - 종료일:', endDate);
-        
+
+        if (plantId === 'plant1') {
+            plantId = 'plt001';
+        } else if (plantId === 'plant2') {
+            plantId = 'plt002';
+        } else if (plantId === 'plant3') {
+            plantId = 'plt003';
+        }
+        console.log(' - plantId:', plantId);
+
+
         setLoading(true);
         setError(null);
         try {
@@ -35,11 +46,22 @@ export function useGeneration() {
             
             if (Array.isArray(data) && data.length > 0) {
                 console.log('  - 첫 번째 데이터 샘플:', data[0]);
+                console.log('  - 마지막 데이터 샘플:', data[data.length - 1]);
+                
+                // 데이터 구조 확인
+                const sampleKeys = Object.keys(data[0]);
+                console.log('  - 데이터 키들:', sampleKeys);
             }
             
             return data;
         } catch (e: any) {
             console.error('❌ getDailyGeneration 오류:', e);
+            console.error('  - 에러 상세:', {
+                message: e?.message,
+                status: e?.response?.status,
+                statusText: e?.response?.statusText,
+                data: e?.response?.data
+            });
             setError(e?.message ?? "일별 데이터 조회 실패");
             return null;
         } finally {
