@@ -1,15 +1,21 @@
 package com.project.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 // 페이징 기능
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import com.project.dto.DailyTotal;
 import com.project.entity.PlantGeneration;
+
+import io.lettuce.core.dynamic.annotation.Param;
 
 import java.time.LocalDate;
 import java.util.List;
+
+import java.util.Optional;
 
 @Repository
 public interface PlantGenerationRepository extends JpaRepository<PlantGeneration, Long> {
@@ -31,7 +37,21 @@ public interface PlantGenerationRepository extends JpaRepository<PlantGeneration
     
     // 페이징 기능 - 전체 발전소
     Page<PlantGeneration> findByDateBetween(LocalDate start, LocalDate end, Pageable pageable);
+    
+    @Query("SELECT new com.project.dto.DailyTotal(" +
+    	       "p.date, " +
+    	       "SUM(p.generation_Kw), " +
+    	       "SUM(p.forecast_Kwh), " +
+    	       "(SUM(p.generation_Kw) / SUM(p.capacity_Kw)) * 100) " +
+    	       "FROM PlantGeneration p " +
+    	       "WHERE p.date BETWEEN :start AND :end " +
+    	       "GROUP BY p.date " +
+    	       "ORDER BY p.date")
+    	List<DailyTotal> findDailyTotalsWithUtilization(@Param("start") LocalDate start, @Param("end") LocalDate end);
 
     // 발전소 ID 목록 조회
     List<String> findDistinctPlantIdByOrderByPlantIdAsc();
+
+    // 특정 발전소의 특정 날짜와 시간 데이터 조회 (추가)
+    Optional<PlantGeneration> findByPlantIdAndDateAndHour(String plantId, LocalDate date, int hour);
 }

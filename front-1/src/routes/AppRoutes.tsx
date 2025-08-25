@@ -1,19 +1,20 @@
+// src/router/AppRouter.tsx
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { Suspense, lazy } from "react";
 import RootLayout from "@/layouts/RootLayout";
 import { PublicOnlyRoute, ProtectedRoute } from "./ProtectedRoute";
 import { PATHS, roleHome, type Role } from "./paths";
-
-import Login from "@/pages/Login";
-import Dashboard from "@/pages/Dashboard";
-import Price from "@/pages/Price";
-import Detailed from "@/pages/Detailed";
-import Setting from "@/pages/Setting";
-import Admin from "@/pages/Admin";
-import About from "@/pages/About";
-import NotFound from "@/pages/NotFound";
-
 import { useAuthStore } from "@/stores/useAuthStore";
 import { authToken } from "@/stores/authStorage";
+
+const Login = lazy(() => import("@/pages/Login"));
+const Dashboard = lazy(() => import("@/pages/Dashboard"));
+const Price = lazy(() => import("@/pages/Price"));
+const FacilityKpiPage = lazy(() => import("@/pages/FacilityKpiPage"));
+const Setting = lazy(() => import("@/pages/Setting"));
+const Admin = lazy(() => import("@/pages/Admin"));
+const About = lazy(() => import("@/pages/About"));
+const NotFound = lazy(() => import("@/pages/NotFound"));
 
 function RoleHomeRedirect() {
   const role = useAuthStore((s) => s.role) as Role | null;
@@ -21,53 +22,48 @@ function RoleHomeRedirect() {
   return <Navigate to={roleHome(role)} replace />;
 }
 
-
 export default function AppRouter() {
   return (
-    <Routes>
-      {/* 공용 메인 = 로그인, 로그인 상태면 홈으로 */}
-      <Route
-        path="/"
-        element={
-          <PublicOnlyRoute>
-            <Login />
-          </PublicOnlyRoute>
-        }
-      />
-      <Route
-        path={PATHS.login}
-        element={
-          <PublicOnlyRoute>
-            <Login />
-          </PublicOnlyRoute>
-        }
-      />
+    <Suspense fallback={<div className="p-6">로딩중…</div>}>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <PublicOnlyRoute>
+              <Login />
+            </PublicOnlyRoute>
+          }
+        />
+        <Route
+          path={PATHS.login}
+          element={
+            <PublicOnlyRoute>
+              <Login />
+            </PublicOnlyRoute>
+          }
+        />
 
-      <Route element={<RootLayout />}>
-        {/* 공개 */}
-        <Route path={PATHS.about} element={<About />} />
+        <Route element={<RootLayout />}>
+          <Route path={PATHS.about} element={<About />} />
 
-        {/* 로그인만 필요(역할 무관) → /home 에서 역할별 리다이렉트 */}
-        <Route element={<ProtectedRoute><Outlet /></ProtectedRoute>}>
-          <Route path={PATHS.home} element={<RoleHomeRedirect />} />
+          <Route element={<ProtectedRoute><Outlet /></ProtectedRoute>}>
+            <Route path={PATHS.home} element={<RoleHomeRedirect />} />
+          </Route>
+
+          <Route element={<ProtectedRoute require="USER"><Outlet /></ProtectedRoute>}>
+            <Route path={PATHS.dashboard} element={<Dashboard />} />
+            <Route path={PATHS.price} element={<Price />} />
+            <Route path={PATHS.facilityKpiPage} element={<FacilityKpiPage />} /> 
+            <Route path={PATHS.setting} element={<Setting />} />
+          </Route>
+
+          <Route element={<ProtectedRoute require="ADMIN"><Outlet /></ProtectedRoute>}>
+            <Route path={PATHS.admin} element={<Admin />} />
+          </Route>
+
+          <Route path={PATHS.notFound} element={<NotFound />} />
         </Route>
-
-        {/* USER 전용 */}
-        <Route element={<ProtectedRoute require="USER"><Outlet /></ProtectedRoute>}>
-          <Route path={PATHS.dashboard} element={<Dashboard />} />
-          <Route path={PATHS.price} element={<Price />} />
-          <Route path={PATHS.detailed} element={<Detailed />} />
-          <Route path={PATHS.setting} element={<Setting />} />
-        </Route>
-
-        {/* ADMIN 전용 */}
-        <Route element={<ProtectedRoute require="ADMIN"><Outlet /></ProtectedRoute>}>
-          <Route path={PATHS.admin} element={<Admin />} />
-        </Route>
-
-        {/* 403  */}
-        <Route path={PATHS.notFound} element={<NotFound />} />
-      </Route>
-    </Routes>
+      </Routes>
+    </Suspense>
   );
 }

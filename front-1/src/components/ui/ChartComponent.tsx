@@ -1,55 +1,33 @@
-import { Line, Bar } from "react-chartjs-2";
+// src/components/common/ChartComponent.tsx
+import { Chart as ReactChart } from "react-chartjs-2";
 
-import {
-    Chart as ChartJs,
-    CategoryScale, // x축
-    LinearScale, // y축
-    PointElement,
-    LineElement,
-    Title,
-    Tooltip,
-    Legend,
-    BarElement,
-} from "chart.js"
+export type ChartTopType = "line" | "bar" | "mixed" | "doughnut";
 
-ChartJs.register(
-    CategoryScale,
-    LinearScale,
-    BarElement,
-    PointElement,
-    LineElement,
-    Title,
-    Tooltip,
-    Legend,
-)
-
-interface ChartData {
-    labels: string[];
-    datasets: {
-        label: string;
-        data: (number | null)[];
-        borderColor?: string;
-        backgroundColor?: string;
-        pointRadius?: number;
-        borderDash?: number[];
-        yAxisID?: string;
-        fill?: boolean;
-        type?: "line" | "bar";
-    }[];
+export interface ChartData {
+  labels: string[];
+  datasets: Array<{
+    label?: string;
+    data: Array<number | null>;
+    borderColor?: string;
+    backgroundColor?: string | string[]; // ← 도넛 팔레트 배열 지원
+    pointRadius?: number;
+    borderDash?: number[];
+    yAxisID?: string;
+    fill?: boolean;
+    type?: "line" | "bar";               // ← 혼합차트 개별 타입
+  }>;
 }
 
 interface ChartProps {
-    data: ChartData;
-    options?: any;
-    chartType?: "line" | "bar" | "mixed";
+  data: ChartData;
+  options?: any;                         // 필요 시 ChartOptions로 좁혀도 OK
+  chartType?: ChartTopType;
 }
 
 export default function ChartComponent({ data, options, chartType = "line" }: ChartProps) {
-    // 막대 차트인 경우
-    if (chartType === "bar") {
-        return <Bar data={data as any} options={options} />;
-    }
-    
-    // 기본적으로 라인 차트
-    return <Line data={data as any} options={options} />;
+  // mixed는 상단을 'bar'로 두고 datasets[].type으로 섞어서 렌더
+  const topType: "line" | "bar" | "doughnut" =
+    chartType === "mixed" ? "bar" : chartType;
+
+  return <ReactChart type={topType as any} data={data as any} options={options} />;
 }

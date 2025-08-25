@@ -16,6 +16,7 @@ import com.project.dto.DailyTotal;
 import com.project.dto.DashboardSummaryDTO;
 import com.project.dto.HourlyAvg;
 import com.project.dto.PeriodSummaryDTO;
+import com.project.dto.HourlyHydrogenProductionDTO;
 import com.project.entity.PlantGeneration;
 import com.project.service.PlantGenerationQueryService;
 
@@ -81,6 +82,16 @@ public class PlantGenerationQueryController {
         return ResponseEntity.ok(result);
     }
     
+    /** 시간대별 수소 생산량(집계 DTO) */
+    @GetMapping("/hourly-hydrogen")
+    public ResponseEntity<List<HourlyHydrogenProductionDTO>> getHourlyHydrogenProduction(
+            @RequestParam(value = "start", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(value = "end", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        
+        List<HourlyHydrogenProductionDTO> result = service.getHourlyHydrogenProduction(startDate, endDate);
+        return ResponseEntity.ok(result);
+    }
+    
     /** 대시보드 요약 정보 */
     @GetMapping("/summary")
     public ResponseEntity<DashboardSummaryDTO> getSummary(
@@ -123,6 +134,30 @@ public class PlantGenerationQueryController {
         System.out.println("==================================");
         
         PeriodSummaryDTO result = service.getPeriodSummary(plantId, startDate, endDate);
+        return ResponseEntity.ok(result);
+    }
+    
+    /** 실시간 효율성 계산 */
+    @GetMapping("/real-time-efficiency")
+    public ResponseEntity<Double> getRealTimeEfficiency(
+            @RequestParam(value = "plantId", required = false) String plantId) {
+        
+        System.out.println("=== 실시간 효율성 계산 API 호출 ===");
+        System.out.println("plantId: " + plantId);
+        
+        Double result = service.calculateRealTimeEfficiency(plantId);
+        return ResponseEntity.ok(result);
+    }
+    
+    /** 실시간 수소 생산량 비교 */
+    @GetMapping("/real-time-hydrogen-comparison")
+    public ResponseEntity<Double> getRealTimeHydrogenComparison(
+            @RequestParam(value = "plantId", required = false) String plantId) {
+        
+        System.out.println("=== 실시간 수소 생산량 비교 API 호출 ===");
+        System.out.println("plantId: " + plantId);
+        
+        Double result = service.calculateRealTimeHydrogenComparison(plantId);
         return ResponseEntity.ok(result);
     }
 }

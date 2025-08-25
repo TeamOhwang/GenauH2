@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Application configuration files
+# 이 파일은 절대 외부에 공개하지 마세요.
+/src/main/resources/application.properties
