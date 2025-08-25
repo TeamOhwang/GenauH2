@@ -1,3 +1,5 @@
+import HydrogenPage from "@/pages/HydrogenPage";
+
 export const PATHS = {
   home: "/home",
   admin: "/admin",
@@ -6,6 +8,7 @@ export const PATHS = {
   user: "/user",
   dashboard: "/dashboard",
   detailed: "/detailed",
+  hydrogenPage: "/HydrogenPage",
   price: "/price",
   setting: "/setting",
   forbidden: "/403",

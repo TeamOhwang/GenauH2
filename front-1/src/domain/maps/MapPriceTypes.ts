@@ -3,82 +3,86 @@ export type RegionCode =
   | "11" | "26" | "27" | "28" | "29" | "30" | "31" | "36"
   | "41" | "42" | "43" | "44" | "45" | "46" | "47" | "48" | "50";
 
-/** 시·도 코드 → 한글명(축약형) */
+/** 시·도 코드 → 라벨 (축약형) */
 export const REGION_LABEL: Record<RegionCode, string> = {
   "11": "서울", "26": "부산", "27": "대구", "28": "인천", "29": "광주",
   "30": "대전", "31": "울산", "36": "세종",
   "41": "경기", "42": "강원", "43": "충북", "44": "충남",
   "45": "전북", "46": "전남", "47": "경북", "48": "경남", "50": "제주",
-};
+} as const;
 
-/** 한글명 → 코드 (축약형 기준) */
-const NAME_TO_CODE: Record<string, RegionCode | undefined> =
+/** 역매핑: 축약형 라벨 → 코드 */
+const NAME_TO_CODE: Readonly<Record<string, RegionCode>> = Object.freeze(
   Object.fromEntries(
     Object.entries(REGION_LABEL).map(([code, name]) => [name, code as RegionCode])
-  );
+  ) as Record<string, RegionCode>
+);
 
-/** 접미어 제거(가장 긴 패턴 먼저), 공백 제거 */
-export const stripSidoSuffix = (raw: string) =>
+/** 빠른 코드 판정용 Set */
+const REGION_CODE_SET: ReadonlySet<string> = new Set(Object.keys(REGION_LABEL));
+
+/** 접미어 제거 + 공백 제거 */
+export const stripSidoSuffix = (raw: string): string =>
   String(raw ?? "")
     .trim()
     .replace(/\s+/g, "")
     .replace(/(특별자치도|특별자치시|특별시|광역시|자치도|자치시|도|시)$/g, "");
 
-/** 장형 → 축약형 보정 (전라남 → 전남, 경상북 → 경북, 충청남 → 충남 등) */
-function compactLongName(s: string) {
-  return s
+/** 장형 → 축약형 보정 */
+export const compactLongName = (s: string): string =>
+  s
     .replace(/^전라남/, "전남")
     .replace(/^전라북/, "전북")
     .replace(/^경상남/, "경남")
     .replace(/^경상북/, "경북")
     .replace(/^충청남/, "충남")
     .replace(/^충청북/, "충북");
-}
 
-/** 코드/이름 입력을 RegionCode로 정규화 (강화판) */
+/** 코드/이름 입력을 RegionCode로 정규화 */
 export function toRegionCode(input: string): RegionCode | null {
   const s0 = String(input ?? "").trim();
   if (!s0) return null;
 
-  // 1) 이미 "11" 같은 코드면 통과
-  if ((Object.keys(REGION_LABEL) as RegionCode[]).includes(s0 as RegionCode)) {
-    return s0 as RegionCode;
-  }
+  // 1) "11" 같은 코드면 통과
+  if (REGION_CODE_SET.has(s0)) return s0 as RegionCode;
 
   // 2) 접미어 제거 + 장형 축약화
-  const s1 = compactLongName(stripSidoSuffix(s0));
+  const normalized = compactLongName(stripSidoSuffix(s0));
 
-  // 3) 축약형 매핑 우선
-  const byShort = NAME_TO_CODE[s1];
+  // 3) 축약형 라벨 매핑
+  const byShort = NAME_TO_CODE[normalized];
   if (byShort) return byShort;
 
-  // 4) 혹시 원문이 축약형 라벨과 일치하는 케이스
+  // 4) 원문이 축약형과 동일한 경우
   const byExact = NAME_TO_CODE[s0];
-  if (byExact) return byExact;
-
-  return null;
+  return byExact ?? null;
 }
 
-/** GeoJSON properties에서 코드/라벨 뽑기 (파일 키에 맞게 조정) */
-export function pickRegionFromProps(props: Record<string, unknown>) {
-  // CTPRVN_CD(시도 코드) 또는 SIG_CD(시군구 코드)의 앞 2자리 우선
+/** GeoJSON properties에서 코드/라벨 추출 */
+export function pickRegionFromProps(props: Record<string, unknown>): {
+  code: RegionCode | null; label: string;
+} {
+  // 시도 코드 우선, 없으면 시군구 코드 앞 2자리
   const rawCode = String(props["CTPRVN_CD"] ?? props["SIG_CD"] ?? "");
-  const code = (rawCode.slice(0, 2) as RegionCode) ||
-    (toRegionCode(String(props["CTPRVN_NM"] ?? props["SIG_KOR_NM"] ?? props["name"] ?? "")) as RegionCode | null);
+  const codeFromNum = rawCode ? (rawCode.slice(0, 2) as RegionCode) : null;
+
+  const code =
+    codeFromNum ??
+    toRegionCode(String(props["CTPRVN_NM"] ?? props["SIG_KOR_NM"] ?? props["name"] ?? ""));
 
   const label = code ? REGION_LABEL[code] : "알수없음";
   return { code, label };
 }
 
 /** 도메인: 시·도 평균 단가 요약 */
-export type RegionSummary = {
-  regionCode: RegionCode;      // 두 자리 코드 권장
-  regionName: string;          // "서울" 등
+export type RegionSummary = Readonly<{
+  regionCode: RegionCode;
+  regionName: string;   // "서울"
   avgPrice: number;
-};
+}>;
 
 /** 도메인: 주유소/충전소 */
-export type Station = {
+export type Station = Readonly<{
   id: string;
   name: string;
   regionCode: RegionCode;
@@ -89,4 +93,4 @@ export type Station = {
   lat?: number;
   lng?: number;
   avgPriceOfRegion?: number;
-};
+}>;

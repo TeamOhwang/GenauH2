@@ -6,6 +6,7 @@ import { PATHS, roleHome, type Role } from "./paths";
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
 import Price from "@/pages/Price";
+import HydrogenPage from "@/pages/HydrogenPage";
 import Detailed from "@/pages/Detailed";
 import Setting from "@/pages/Setting";
 import Admin from "@/pages/Admin";
@@ -56,7 +57,7 @@ export default function AppRouter() {
         <Route element={<ProtectedRoute require="USER"><Outlet /></ProtectedRoute>}>
           <Route path={PATHS.dashboard} element={<Dashboard />} />
           <Route path={PATHS.price} element={<Price />} />
-          <Route path={PATHS.detailed} element={<Detailed />} />
+          <Route path={PATHS.hydrogenPage} element={<HydrogenPage />} />
           <Route path={PATHS.setting} element={<Setting />} />
         </Route>
 
