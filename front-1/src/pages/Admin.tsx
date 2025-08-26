@@ -12,27 +12,31 @@ import { useEffect, useState } from "react";
 
 // 사용자 타입 정의
 interface User {
-  userId: string;
   email: string;
-  orgname: string;
-  organizationName: string;
+  name: string;
+  orgName: string;
   bizRegNo: string;
   status: "ACTIVE" | "SUSPENDED";
   orgId: string;
-  userUpdatedAt: string;
+  updatedAt: string;
 }
 
 // 시설 타입 정의
 interface Facility {
-  facilityId: string;
+  facId: string;
+  orgId: string;
   name: string;
+  type: string;
+  maker: string;
+  model: string;
+  powerKw: number;
+  h2Rate: number;
+  specKwh: number;
+  purity: number;
+  pressure: number;
   location: string;
-  modelNo: string;
-  cellCount: string;
-  ratedPowerKw: string;
-  ratedOutputKgH: string;
-  secNominalKwhPerKg: string;
-  catalystInstallDate: string;
+  install: string;
+  createdAt: string;
 }
 
 export default function Admin() {
@@ -40,13 +44,13 @@ export default function Admin() {
   const [isOpen, setIsOpen] = useState(false);
   const [statusChangeModal, setStatusChangeModal] = useState<{
     isOpen: boolean;
-    userId: string;
+    orgId: string;
     currentStatus: string;
     newStatus: string;
     userName: string;
   }>({
     isOpen: false,
-    userId: "",
+    orgId: "",
     currentStatus: "",
     newStatus: "",
     userName: ""
@@ -65,13 +69,11 @@ export default function Admin() {
   const [deleteFacilityModal, setDeleteFacilityModal] = useState<{
     isOpen: boolean;
     facility: Facility | null;
-    userId: string;
-    orgId: number;
+    orgId: string;
   }>({
     isOpen: false,
     facility: null,
-    userId: "",
-    orgId: 0
+    orgId: ""
   });
 
   useEffect(() => {
@@ -91,19 +93,19 @@ export default function Admin() {
     // 검색어가 있으면 다음 필드들에서 검색
     const searchLower = search.toLowerCase();
     const emailMatch = u.email?.toLowerCase().includes(searchLower) || false;
-    const orgNameMatch = u.orgname?.toLowerCase().includes(searchLower) || false;
-    const organizationNameMatch = u.organizationName?.toLowerCase().includes(searchLower) || false;
+    const nameMatch = u.name?.toLowerCase().includes(searchLower) || false;
+    const organizationNameMatch = u.orgName?.toLowerCase().includes(searchLower) || false;
     const bizRegNoMatch = u.bizRegNo?.toLowerCase().includes(searchLower) || false;
 
-    return statusMatch && (emailMatch || orgNameMatch || organizationNameMatch || bizRegNoMatch);
+    return statusMatch && (emailMatch || nameMatch || organizationNameMatch || bizRegNoMatch);
   });
 
   // 상태 변경 핸들러
-  const handleStatusChange = (userId: string, currentStatus: string, userName: string) => {
+  const handleStatusChange = (orgId: string, currentStatus: string, userName: string) => {
     const newStatus = currentStatus === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
     setStatusChangeModal({
       isOpen: true,
-      userId,
+      orgId,
       currentStatus,
       newStatus,
       userName
@@ -112,8 +114,8 @@ export default function Admin() {
 
   // 상태 변경 확인
   const confirmStatusChange = async () => {
-    const { userId, newStatus } = statusChangeModal;
-    const result = await updateUserStatusAction(userId, newStatus);
+    const { orgId, newStatus } = statusChangeModal;
+    const result = await updateUserStatusAction(orgId, newStatus);
 
     if (result) {
       // 사용자 목록 새로고침
@@ -127,21 +129,20 @@ export default function Admin() {
   };
 
   // 시설 삭제 핸들러
-  const handleDeleteFacility = (facility: Facility, userId: string, orgId: number) => {
+  const handleDeleteFacility = (facility: Facility, orgId: string) => {
     setDeleteFacilityModal({
       isOpen: true,
       facility,
-      userId,
       orgId
     });
   };
 
   // 시설 삭제 확인
   const confirmDeleteFacility = async () => {
-    const { facility, userId, orgId } = deleteFacilityModal;
+    const { facility, orgId } = deleteFacilityModal;
 
     try {
-      const result = await deleteFacilityAction(facility?.facilityId || "");
+      const result = await deleteFacilityAction(facility?.facId || "");
 
       if (result) {
         alert("시설이 삭제되었습니다.");
@@ -167,7 +168,7 @@ export default function Admin() {
   };
 
   // 시설 관리 열기/닫기 핸들러
-  const handleFacilityOpen = async (userId: string, orgId: number) => {
+  const handleFacilityOpen = async (userId: string, orgId: string) => {
     if (openFacilityUserId === userId) {
       setOpenFacilityUserId(null);
       return;
@@ -330,16 +331,16 @@ export default function Admin() {
             <tbody>
               {filteredUsers.map((u) => (
                 <>
-                  <tr key={u.userId}>
-                    <td>{u.orgname}</td>
+                  <tr key={u.orgId}>
+                    <td>{u.orgName}</td>
                     <td>{u.email}</td>
-                    <td>{u.organizationName}</td>
+                    <td>{u.name}</td>
                     <td className="text-left">{u.bizRegNo}</td>
-                    <td className="text-center">{u.userUpdatedAt.split("T")[0]}</td>
+                    <td className="text-center">{u.updatedAt.split("T")[0]}</td>
                     <td className="text-center">
                       <div className="w-20 mx-auto">
                         <Button
-                          onClick={() => handleStatusChange(u.userId, u.status, u.organizationName || u.email)}
+                          onClick={() => handleStatusChange(u.orgId, u.status, u.orgName || u.email)}
                           style={{
                             backgroundColor: "white",
                             color: u.status === "ACTIVE" ? "rgb(16, 185, 53)" : "rgb(236, 45, 45)",
@@ -354,10 +355,10 @@ export default function Admin() {
                       </div>
                     </td>
                     <td className="text-center">
-                      <Button onClick={() => handleFacilityOpen(u.userId, parseInt(u.orgId))}>시설 관리</Button>
+                      <Button onClick={() => handleFacilityOpen(u.orgId, u.orgId)}>시설 관리</Button>
                     </td>
                   </tr>
-                  {openFacilityUserId === u.userId && (
+                  {openFacilityUserId === u.orgId && (
                     <tr>
                       <td colSpan={7} className="bg-blue-50 p-4">
                         <div className="text-center bg-white rounded-2xl shadow p-4">
@@ -377,7 +378,7 @@ export default function Admin() {
                                 setFacilityOpen(false);
                                 // 시설 등록 후 목록 새로고침
                                 try {
-                                  const facilityList = await getFacilities(parseInt(u.orgId));
+                                  const facilityList = await getFacilities(u.orgId);
                                   const normalizedFacilities = Array.isArray(facilityList) ? facilityList :
                                     facilityList?.data && Array.isArray(facilityList.data) ? facilityList.data : [];
                                   setFacilities(normalizedFacilities);
@@ -397,7 +398,7 @@ export default function Admin() {
                                 setEditFacilityOpen(false);
                                 // 시설 수정 후 목록 새로고침
                                 try {
-                                  const facilityList = await getFacilities(parseInt(u.orgId));
+                                  const facilityList = await getFacilities(u.orgId);
                                   const normalizedFacilities = Array.isArray(facilityList) ? facilityList :
                                     facilityList?.data && Array.isArray(facilityList.data) ? facilityList.data : [];
                                   setFacilities(normalizedFacilities);
@@ -409,7 +410,7 @@ export default function Admin() {
                               onClose={() => setEditFacilityOpen(false)}
                             />
                           </Modal>
-                          {facilityLoading[u.userId] ? (
+                          {facilityLoading[u.orgId] ? (
                             <div className="text-center py-4">
                               <p>시설 정보를 불러오는 중...</p>
                             </div>
@@ -421,8 +422,9 @@ export default function Admin() {
                                     <tr className="border-b">
                                       <th className="px-4 py-2 text-center">시설명</th>
                                       <th className="px-4 py-2 text-center">위치</th>
-                                      <th className="px-4 py-2 text-center">모델번호</th>
-                                      <th className="px-4 py-2 text-center">셀 개수</th>
+                                      <th className="px-4 py-2 text-center">제조사</th>
+                                      <th className="px-4 py-2 text-center">모델명</th>
+                                      <th className="px-4 py-2 text-center">생산 방식</th>
                                       <th className="px-4 py-2 text-center">정격 전력(kW)</th>
                                       <th className="px-4 py-2 text-center">정격 출력(kg/h)</th>
                                       <th className="px-4 py-2 text-center">기준 SEC(kWh/kg)</th>
@@ -432,15 +434,16 @@ export default function Admin() {
                                   </thead>
                                   <tbody>
                                     {facilities.map((facility: Facility, index: number) => (
-                                      <tr key={facility.facilityId || index} className="border-b">
+                                      <tr key={facility.facId || index} className="border-b">
                                         <td className="px-4 py-2">{facility.name || 'N/A'}</td>
                                         <td className="px-4 py-2">{facility.location || 'N/A'}</td>
-                                        <td className="px-4 py-2">{facility.modelNo || 'N/A'}</td>
-                                        <td className="px-4 py-2">{facility.cellCount || 'N/A'}</td>
-                                        <td className="px-4 py-2">{facility.ratedPowerKw || 'N/A'}</td>
-                                        <td className="px-4 py-2">{facility.ratedOutputKgH || 'N/A'}</td>
-                                        <td className="px-4 py-2">{facility.secNominalKwhPerKg || 'N/A'}</td>
-                                        <td className="px-4 py-2">{facility.catalystInstallDate || 'N/A'}</td>
+                                        <td className="px-4 py-2">{facility.maker || 'N/A'}</td>
+                                        <td className="px-4 py-2">{facility.model || 'N/A'}</td>
+                                        <td className="px-4 py-2">{facility.type || 'N/A'}</td>
+                                        <td className="px-4 py-2">{facility.powerKw || 'N/A'}</td>
+                                        <td className="px-4 py-2">{facility.h2Rate || 'N/A'}</td>
+                                        <td className="px-4 py-2">{facility.specKwh || 'N/A'}</td>
+                                        <td className="px-4 py-2">{facility.install || 'N/A'}</td>
                                         <td className="px-4 py-2 text-center">
                                           <Button
                                             onClick={() => {
@@ -452,7 +455,7 @@ export default function Admin() {
                                             편집
                                           </Button>
                                           <Button
-                                            onClick={() => handleDeleteFacility(facility, u.userId, parseInt(u.orgId))}
+                                            onClick={() => handleDeleteFacility(facility, u.orgId)}
                                             style={{ backgroundColor: "#ef4444", color: "white", fontSize: "12px", padding: "4px 8px" }}
                                           >
                                             삭제

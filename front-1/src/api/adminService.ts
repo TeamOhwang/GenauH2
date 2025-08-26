@@ -23,21 +23,25 @@ export async function updateUserStatus(userId: string, status: string) {
     return await updateUserStatusApi(userId, status);
 }
 
-export async function fetchAllFacilities(orgId?: number) {
+export async function fetchAllFacilities(orgId?: string) {
     return await getFacilityListApi(orgId);
 }
 
 export async function addFacility(params: {
+    facId: string;
     orgId: string;
     name: string;
+    type: string;
+    maker: string;
+    model: string;
+    powerKw: number;
+    h2Rate: number;
+    specKwh: number;
+    purity: number;
+    pressure: number;
     location: string;
-    modelNo: string;
-    cellCount: string;
-    ratedPowerKw: string;
-    ratedOutputKgH: string;
-    secNominalKwhPerKg: string;
-    catalystInstallDate: string;
-    catalystLifeHours: string;
+    install: string;
+    createdAt: string;
 }) {
     console.log('=== adminService.addFacility 시작 ===');
     console.log('받은 파라미터:', params);
@@ -67,16 +71,20 @@ export async function addFacility(params: {
 }
 
 export async function updateFacility(params: {
-    facilityId: string;
+    facId: string;
+    orgId: string;
     name: string;
+    type: string;
+    maker: string;
+    model: string;
+    powerKw: number;
+    h2Rate: number;
+    specKwh: number;
+    purity: number;
+    pressure: number;
     location: string;
-    modelNo: string;
-    cellCount: string;
-    ratedPowerKw: string;
-    ratedOutputKgH: string;
-    secNominalKwhPerKg: string;
-    catalystInstallDate: string;
-    catalystLifeHours: string;
+    install: string;
+    createdAt: string;
 }) {
     return await updateFacilityApi(params);
 }

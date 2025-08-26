@@ -2,22 +2,24 @@ import { useAdmin } from '@/hooks/useAdmin';
 import { useState, useEffect } from 'react'
 
 type FacilitiesProps = { 
-    orgId: string | number;
+    orgId: string;
     onSuccess?: () => void 
 };
 
 const FacilitiesFrom = ({ orgId, onSuccess }: FacilitiesProps) => {
     const [form, setForm] = useState({
-        orgId: String(orgId), // 조직 ID를 문자열로 변환
+        orgId: orgId, // 조직 ID를 문자열로 변환
         name: "", // 시설 이름
         location: "", // 시설 위치
-        modelNo: "",
-        cellCount: "", // 셀 개수
-        ratedPowerKw: "", // 정격 전력(kW)
-        ratedOutputKgH: "", // 정격 출력(kg/h)
-        secNominalKwhPerKg: "", // 기준 SEC(kWh/kg)
-        catalystInstallDate: "", // 촉매 설치일
-        catalystLifeHours: "", // 촉매 수명
+        model: "",
+        maker: "",
+        type: "",
+        powerKw: "",
+        h2Rate: "",
+        specKwh: "",
+        purity: "",
+        pressure: "",
+        install: "",
     });
 
     const { createFacility, loading, error } = useAdmin();
@@ -49,7 +51,7 @@ const FacilitiesFrom = ({ orgId, onSuccess }: FacilitiesProps) => {
         console.log('전송할 데이터:', form);
         
         // 필수 필드 검증
-        const requiredFields = ['name', 'location', 'modelNo', 'cellCount', 'ratedPowerKw', 'ratedOutputKgH'];
+        const requiredFields = ['name', 'location', 'type', 'powerKw', 'h2Rate', 'specKwh'];
         const missingFields = requiredFields.filter(field => !form[field as keyof typeof form]);
         
         if (missingFields.length > 0) {
@@ -61,7 +63,7 @@ const FacilitiesFrom = ({ orgId, onSuccess }: FacilitiesProps) => {
             // 날짜 형식 변환
             const formattedForm = {
                 ...form,
-                catalystInstallDate: formatDateForBackend(form.catalystInstallDate)
+                install: formatDateForBackend(form.install)
             };
             
             console.log('변환된 form 데이터:', formattedForm);
