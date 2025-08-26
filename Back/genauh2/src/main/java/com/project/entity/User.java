@@ -43,6 +43,12 @@ public class User {
     
     @Column(insertable = false)
     private LocalDateTime updatedAt;
+
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
+    private boolean emailNotification = true;
+
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
+    private boolean smsNotification = true;
     
     public enum Role {
         SUPERVISOR, USER

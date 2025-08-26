@@ -114,8 +114,18 @@ public class ProductionChangeNotifier {
                 return;
             }
 
+            // SMS 수신 설정이 켜진 사용자에게만 발송하도록 변경
+            List<User> subscribedUsers = users.stream()
+                                              .filter(User::isSmsNotification)
+                                              .toList();
+
+            if (subscribedUsers.isEmpty()) {
+                log.info("'{}' 설비의 모든 사용자가 SMS 알림을 비활성화하여 발송하지 않습니다.", facility.getName());
+                return;
+            }
+
             log.info("'{}' 설비에 변경사항이 감지되어 총 {}명에게 SMS를 발송합니다.", facility.getName(), users.size());
-            for (User user : users) {
+            for (User user : subscribedUsers) {
                 smsService.sendSms(user.getPhoneNum(), message);
             }
         });

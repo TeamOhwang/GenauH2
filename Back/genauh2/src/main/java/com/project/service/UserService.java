@@ -5,9 +5,9 @@ import com.project.entity.User;
 import com.project.entity.Organization;
 import com.project.repository.OrganizationRepository;
 import com.project.repository.UserRepository;
+import com.project.dto.NotificationSettingsDTO; // 알림설정
 
-import jakarta.transaction.Transactional;
-
+import org.springframework.transaction.annotation.Transactional; // 알림설정
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -170,6 +170,8 @@ public class UserService {
                 user.getRole(),
                 user.getPhoneNum(),
                 user.getStatus(),
+                user.isEmailNotification(), // 이메일알림
+                user.isSmsNotification(),   // SMS알림
                 user.getCreatedAt(),
                 user.getUpdatedAt());
     }
@@ -298,5 +300,30 @@ public class UserService {
             e.printStackTrace();
             return false;
         }
+    }
+
+    // 알림 설정 조회
+    @Transactional(readOnly = true)
+    public UserDTO getNotificationSettings(Long userId) {
+        return userRepository.findById(userId)
+                .map(this::convertToDTO)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
+    }
+
+    // 알림 설정 업데이트
+    @Transactional
+    public UserDTO updateNotificationSettings(Long userId, NotificationSettingsDTO settingsDTO) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userId));
+
+        if (settingsDTO.getEmailNotification() != null) {
+            user.setEmailNotification(settingsDTO.getEmailNotification());
+        }
+        if (settingsDTO.getSmsNotification() != null) {
+            user.setSmsNotification(settingsDTO.getSmsNotification());
+        }
+
+        User updatedUser = userRepository.save(user);
+        return convertToDTO(updatedUser);
     }
 }

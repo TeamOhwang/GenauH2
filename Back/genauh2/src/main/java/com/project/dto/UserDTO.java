@@ -17,6 +17,11 @@ public class UserDTO {
     private User.Role role;
     private String phoneNum;
     private User.Status status;
+
+    // 알림 설정 필드
+    private boolean emailNotification;
+    private boolean smsNotification;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
