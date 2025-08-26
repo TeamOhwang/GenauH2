@@ -29,41 +29,31 @@ export type SignupReq = {
 };
 
 export const AuthApi = {
-  /** 로그인 */
   async login(body: LoginReq): Promise<string> {
-    type LoginOk = string | { accessToken?: string; token?: string; Authorization?: string };
     const res = await apiClient.post(AUTH_ENDPOINTS.login, body);
-    const u = unwrap<LoginOk>(res);
-
-    const raw =
-      typeof u === "string" ? u : u?.accessToken ?? u?.token ?? u?.Authorization;
-    if (!raw) throw new Error("로그인 응답에 토큰이 없습니다.");
-    const token = raw.replace(/^Bearer\s+/i, "").trim();
+    const data = unwrap<any>(res);
+    const token = data.token ?? data.accessToken ?? data.Authorization;
+    if (!token) throw new Error("로그인 응답에 토큰 없음");
     return token;
   },
 
-  /** 로그아웃 */
-  async logout(): Promise<void> {
-    await apiClient.post(AUTH_ENDPOINTS.logout, {});
-  },
-
-  /** 회원가입 */
-  async signup(body: SignupReq): Promise<void> {
-    await apiClient.post(AUTH_ENDPOINTS.signup, body);
-  },
-
-  /** 프로필 조회 */
   async profile() {
     const res = await apiClient.get(AUTH_ENDPOINTS.profile);
     return unwrap<any>(res);
   },
 
-  /** 편의 메서드 */
-  async loginAndSyncRole(payload: LoginReq): Promise<Role | null> {
-    const token = await AuthApi.login(payload);
-    authToken.set(token);
+  async signup(body: SignupReq ) : Promise<void> {
+    await apiClient.post(AUTH_ENDPOINTS.signup, body);
+  },
 
-    const prof = await AuthApi.profile();
+  async logout() {
+    await apiClient.post(AUTH_ENDPOINTS.logout, {});
+  },
+
+  async loginAndSyncRole(payload: LoginReq): Promise<Role | null> {
+    const token = await this.login(payload);
+    authToken.set(token);
+    const prof = await this.profile();
     const { setEmail, setUserId, setRole } = useAuthStore.getState();
     setEmail(prof.email ?? null);
     setUserId(prof.userId ?? null);
@@ -72,7 +62,7 @@ export const AuthApi = {
   },
 
   async syncRole(): Promise<Role | null> {
-    const prof = await AuthApi.profile();
+    const prof = await this.profile();
     const { setEmail, setUserId, setRole } = useAuthStore.getState();
     setEmail(prof.email ?? null);
     setUserId(prof.userId ?? null);
@@ -80,9 +70,9 @@ export const AuthApi = {
     return prof.role ?? null;
   },
 
-  async logoutAll(): Promise<void> {
+  async logoutAll() {
     try {
-      await AuthApi.logout();
+      await this.logout();
     } finally {
       authToken.clear();
       const { setEmail, setUserId, setRole } = useAuthStore.getState();

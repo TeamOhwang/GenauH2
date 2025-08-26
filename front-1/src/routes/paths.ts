@@ -16,4 +16,8 @@ export const PATHS = {
 
 
 export type Role = "USER" | "ADMIN";
-export const roleHome = (r: Role) => (r === "ADMIN" ? PATHS.admin : PATHS.dashboard);
+export const roleHome = (r: Role) =>
+  r === "ADMIN" ? PATHS.admin : PATHS.dashboard;
+
+
+
