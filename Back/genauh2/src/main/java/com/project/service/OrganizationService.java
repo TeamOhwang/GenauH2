@@ -25,25 +25,53 @@ public class OrganizationService {
     private PasswordEncoder passwordEncoder;
 
     // 사용자 로그인
-    public OrganizationDTO login(String email, String password) {
-        Optional<Organization> orgOpt = organizationRepository.findByEmailAndStatus(email, Organization.Status.ACTIVE);
+//    public OrganizationDTO login(String email, String password) {
+//        Optional<Organization> orgOpt = organizationRepository.findByEmailAndStatus(email, Organization.Status.ACTIVE);
+//
+//        if (orgOpt.isPresent()) {
+//            Organization organization = orgOpt.get();
+//
+//            // 비밀번호 확인
+//            if (passwordEncoder.matches(password, organization.getPasswordHash())) {
+//                // 로그인 시간 업데이트
+//                organization.setUpdatedAt(LocalDateTime.now());
+//                organizationRepository.save(organization);
+//
+//                return convertToDTO(organization);
+//            }
+//        }
+//
+//        return null; // 로그인 실패
+//    }
 
+    public OrganizationDTO login(String email, String password) {
+        System.out.println("=== 로그인 시도 ===");
+        System.out.println("입력된 이메일: " + email);
+        System.out.println("입력된 비밀번호: " + password);
+        
+        Optional<Organization> orgOpt = organizationRepository.findByEmailAndStatus(email, Organization.Status.ACTIVE);
+        System.out.println("사용자 조회 결과: " + (orgOpt.isPresent() ? "찾음" : "못찾음"));
+        
         if (orgOpt.isPresent()) {
             Organization organization = orgOpt.get();
-
-            // 비밀번호 확인
-            if (passwordEncoder.matches(password, organization.getPasswordHash())) {
-                // 로그인 시간 업데이트
+            System.out.println("찾은 사용자 이메일: " + organization.getEmail());
+            System.out.println("저장된 해시: " + organization.getPasswordHash());
+            System.out.println("상태: " + organization.getStatus());
+            
+            boolean passwordMatch = passwordEncoder.matches(password, organization.getPasswordHash());
+            System.out.println("비밀번호 매칭 결과: " + passwordMatch);
+            
+            if (passwordMatch) {
                 organization.setUpdatedAt(LocalDateTime.now());
                 organizationRepository.save(organization);
-
                 return convertToDTO(organization);
             }
         }
-
-        return null; // 로그인 실패
+        
+        System.out.println("=== 로그인 실패 ===");
+        return null;
     }
-
+    
     // 모든 조직/사용자 조회 (상태와 관계없이)
     public List<OrganizationDTO> getAllUsers() {
         List<Organization> organizations = organizationRepository.findAll();

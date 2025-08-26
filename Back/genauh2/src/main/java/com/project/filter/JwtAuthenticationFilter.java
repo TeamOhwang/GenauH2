@@ -31,14 +31,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         
         String path = request.getRequestURI();
-        log.info("Request URI: " + path); // 디버그용 로그 추가
+        log.info("Request URI: " + path);
         
-        // context-path를 고려한 로그인 경로 확인
-        if (path.equals("/demo/user/login") || 
+        // context-path를 고려한 로그인 경로 확인 (/gh 경로 추가)
+        if (path.equals("/gh/user/login") || 
+            path.equals("/gh/user/register") ||
+            path.equals("/demo/user/login") || 
             path.equals("/demo/user/register") ||
-            path.equals("/user/login") ||      // context-path 제외한 경우도 확인
+            path.equals("/user/login") ||
             path.equals("/user/register") ||
-            path.endsWith("/user/login") ||    // 더 안전한 체크
+            path.endsWith("/user/login") ||
             path.endsWith("/user/register")) {
             log.info("Skipping JWT filter for path: " + path);
             filterChain.doFilter(request, response);
