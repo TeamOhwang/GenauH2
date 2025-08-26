@@ -72,6 +72,7 @@ export const KoreaMap = memo(function KoreaMap({
   const colorize = useMemo(() => createColorFunction(max), [max]);
   const handleClick = useCallback((code?: RegionCode) => onRegionSelect?.(code), [onRegionSelect]);
 
+
   // 툴팁 상태
   const [hover, setHover] = useState<{ label: string; avg?: number } | null>(null);
   const [coords, setCoords] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -118,13 +119,11 @@ export const KoreaMap = memo(function KoreaMap({
     refs.setReference(virtualEl as any);
   }, [virtualEl, refs]);
 
-  return (
-    <div className="w-full h-full">
+ return (
+    <div className="w-full h-[700px]"> 
       <ComposableMap
         projection="geoMercator"
-        projectionConfig={{ center: [127.5, 36.5], scale: 4500 }}
-        width={800}
-        height={600}
+        projectionConfig={{ center: [128.0, 36.], scale: 5000 }}
         style={{ width: "100%", height: "100%" }}
       >
         <Geographies geography={geoUrl}>
@@ -134,9 +133,6 @@ export const KoreaMap = memo(function KoreaMap({
               const avg = code ? avgByCode[code] : undefined;
               const isSelected = !!selectedRegion && code === selectedRegion;
 
-              const [cx, cy] = geoCentroid(geo as any);
-              void cx; void cy;
-
               return (
                 <g
                   key={geo.rsmKey ?? (geo.id as string) ?? JSON.stringify(geo.properties)}
@@ -145,8 +141,8 @@ export const KoreaMap = memo(function KoreaMap({
                   <Geography
                     geography={geo}
                     fill={colorize(avg, isSelected)}
-                    stroke="#777"
-                    strokeWidth={0.6}
+                    stroke="#fff"                
+                    strokeWidth={0.8}            
                     tabIndex={-1}
                     style={{
                       default: { outline: "none" },
@@ -154,7 +150,6 @@ export const KoreaMap = memo(function KoreaMap({
                       pressed: { outline: "none" },
                     } as any}
                     onClick={() => handleClick(code ?? undefined)}
-                    // ⬇⬇⬇ (2) 여기서부터 scheduleMove 사용
                     onMouseEnter={(e: any) => {
                       setHover({ label, avg });
                       scheduleMove(e);
@@ -165,7 +160,6 @@ export const KoreaMap = memo(function KoreaMap({
                       setOpen(false);
                       setHover(null);
                     }}
-                    // ⬆⬆⬆
                   />
                 </g>
               );
@@ -173,7 +167,6 @@ export const KoreaMap = memo(function KoreaMap({
           }
         </Geographies>
       </ComposableMap>
-
       <FloatingPortal>
         {open && hover && (
           <div

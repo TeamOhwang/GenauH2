@@ -1,6 +1,7 @@
 import { useState, FormEvent } from "react";
 import { useSignup } from "@/hooks/useSignup";
 import type { FacilityReq, RegisterReq } from "@/api/authApi";
+import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 
 type Props = { onClose: () => void };
 
@@ -107,9 +108,16 @@ export default function SignupModal({ onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50">
-      <div className="bg-white w-11/12 md:w-3/4 lg:w-2/3 xl:w-1/2 max-h-[90vh] overflow-y-auto rounded-lg p-6">
-        <h2 className="text-xl font-bold mb-6">회원가입</h2>
+  <Dialog open={true} onClose={onClose} className="relative z-50">
+    {/* 오버레이 */}
+    <div className="fixed inset-0 bg-black/60" aria-hidden="true" />
+
+    {/* 모달 컨테이너 */}
+    <div className="fixed inset-0 flex items-center justify-center p-4">
+      <DialogPanel className="bg-white w-11/12 md:w-3/4 lg:w-2/3 xl:w-1/2 
+                               max-h-[90vh] overflow-y-auto rounded-lg p-6">
+        {/* 제목 */}
+        <Dialog.Title className="text-xl font-bold mb-6">회원가입</Dialog.Title>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           {/* 사용자 정보 */}
@@ -310,7 +318,8 @@ export default function SignupModal({ onClose }: Props) {
 
           {error && <p className="text-red-500 mt-2">{error}</p>}
         </form>
-      </div>
+      </DialogPanel>
     </div>
-  );
+  </Dialog>
+);
 }
