@@ -24,7 +24,10 @@ export const AUTH_ENDPOINTS = {
   logout: "/user/logout",
   reissue: "/reissue",
   profile: "/user/profile",
-  signup: "/user/register",
+  register: "/user/register",
+  regionAverages: "/trade/list",
+  allStations: "/api/region-price",
+  stationsByRegion: "/api/region-price/by-region",
 } as const;
 
 /* ======================== 헤더 유틸 함수 ======================== */

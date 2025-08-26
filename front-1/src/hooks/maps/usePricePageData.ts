@@ -1,4 +1,3 @@
-// src/hooks/usePricePageData.ts
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { RegionCode, RegionSummary, Station } from "@/domain/maps/MapPriceTypes";
 import { REGION_LABEL } from "@/domain/maps/MapPriceTypes";

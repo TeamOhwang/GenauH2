@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { authToken } from "@/Stores/authStorage";
+import { authToken } from "@/stores/authStorage";
 import { AuthApi } from "@/api/authApi";
 import { useEffect, useRef, useState } from "react";
 import { PATHS, roleHome, Role } from "./paths";

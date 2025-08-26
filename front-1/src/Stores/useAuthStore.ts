@@ -10,7 +10,7 @@ type JWTPayload = {
   roles?: string[];
   exp?: number;
   sub?: string | number;   
-  userId?: number;         
+  orgId?: number;         
   email?: string;
 };
 
@@ -31,22 +31,22 @@ const decodeRole = (t: string | null): Role => {
 
 export const useAuthStore = create<{
   role: Role;
-  userId: number | null;
+  orgId: number | null;
   email: string | null;
   isInit: boolean;
   setRole: (r: Role) => void;
-  setUserId: (id: number | null) => void;
+  setOrgId: (id: number | null) => void;
   setEmail: (e: string | null) => void;
   init: () => Promise<void>;
   logout: () => void;
 }>((set) => ({
   role: decodeRole(authToken.get()),
-  userId: null,
+  orgId: null,
   email: null,
   isInit: false,
 
   setRole: (r) => set({ role: r }),
-  setUserId: (id) => set({ userId: id }),
+  setOrgId: (id) => set({ orgId: id }),
   setEmail: (e) => set({ email: e }),
 
   init: async () => {
@@ -56,6 +56,6 @@ export const useAuthStore = create<{
 
   logout: () => {
     AuthApi.logoutAll();
-    set({ role: null, userId: null, email: null, isInit: true });
+    set({ role: null, orgId: null, email: null, isInit: true });
   },
 }));

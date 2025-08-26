@@ -1,6 +1,6 @@
 import { useState, FormEvent } from "react";
 import { useSignup } from "@/hooks/useSignup";
-import type { FacilityReq, SignupReq } from "@/api/authApi";
+import type { FacilityReq, RegisterReq } from "@/api/authApi";
 
 type Props = { onClose: () => void };
 
@@ -8,13 +8,13 @@ export default function SignupModal({ onClose }: Props) {
   const { submit, validateBiz, loading, error } = useSignup();
 
   // 사용자 정보 상태
-  const [userInfo, setUserInfo] = useState<Omit<SignupReq, "facilities">>({
+   const [userInfo, setUserInfo] = useState<Omit<RegisterReq, "facilities">>({
     email: "",
-    password: "",
-    company: "",
-    ceoName: "",
+    rawPassword: "",
+    orgName: "",
+    ownerName: "",
     bizRegNo: "",
-    orgId: "AUTO_ORG_001",
+    phoneNum: "",
   });
 
   // 설비 정보 상태
@@ -35,7 +35,7 @@ export default function SignupModal({ onClose }: Props) {
   const [bizVerified, setBizVerified] = useState(false);
   const [verifying, setVerifying] = useState(false);
 
-  // 설비 추가/삭제
+
   const addFacility = () =>
     setFacilities([
       ...facilities,
@@ -51,8 +51,9 @@ export default function SignupModal({ onClose }: Props) {
       },
     ]);
 
-  const removeFacility = (idx: number) =>
+ const removeFacility = (idx: number) =>
     setFacilities(facilities.filter((_, i) => i !== idx));
+
 
   //  사업자번호 검증
   const handleValidateBiz = async () => {
@@ -90,7 +91,7 @@ export default function SignupModal({ onClose }: Props) {
     }
 
     // 비밀번호 길이 체크
-    if (userInfo.password.length < 8) {
+    if (userInfo.rawPassword.length < 8) {
       alert("비밀번호는 최소 8자 이상이어야 합니다.");
       return;
     }
@@ -127,27 +128,27 @@ export default function SignupModal({ onClose }: Props) {
               <input
                 type="password"
                 placeholder="비밀번호 (8자 이상)"
-                value={userInfo.password}
+                value={userInfo.rawPassword}
                 onChange={(e) =>
-                  setUserInfo({ ...userInfo, password: e.target.value })
+                  setUserInfo({ ...userInfo, rawPassword: e.target.value })
                 }
                 className="border rounded px-3 py-2"
               />
               <input
                 type="text"
                 placeholder="회사명"
-                value={userInfo.company}
+                value={userInfo.orgName}
                 onChange={(e) =>
-                  setUserInfo({ ...userInfo, company: e.target.value })
+                  setUserInfo({ ...userInfo, orgName: e.target.value })
                 }
                 className="border rounded px-3 py-2"
               />
               <input
                 type="text"
                 placeholder="대표자명"
-                value={userInfo.ceoName}
+                value={userInfo.ownerName}
                 onChange={(e) =>
-                  setUserInfo({ ...userInfo, ceoName: e.target.value })
+                  setUserInfo({ ...userInfo, ownerName: e.target.value })
                 }
                 className="border rounded px-3 py-2"
               />
