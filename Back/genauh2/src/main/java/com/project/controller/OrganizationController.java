@@ -25,7 +25,7 @@ import com.project.security.TokenProvider;
 import com.project.service.OrganizationService;
 
 @RestController
-@RequestMapping("/user")  // 기존 API 호환을 위해 경로는 그대로 유지
+@RequestMapping("/user")
 @CrossOrigin(origins = { "http://localhost:5174" })
 public class OrganizationController {
 
@@ -73,19 +73,12 @@ public class OrganizationController {
         }
     }
 
-    // 조직 + 사용자 등록 (관리자 권한 필요)
+    // 일반 회원가입 (관리자 권한 불필요, INVITED 상태로 생성)
     @PostMapping("/register")
-    public ResponseEntity<Map<String, Object>> registerOrganizationAndUser(
-            @RequestBody Map<String, String> request,
-            @RequestHeader(value = "Authorization", required = false) String token) {
+    public ResponseEntity<Map<String, Object>> register(@RequestBody Map<String, String> request) {
         Map<String, Object> response = new HashMap<>();
+        
         try {
-            // 관리자 권한 검증
-            OrganizationDTO currentUser = validateAdminToken(token, response);
-            if (currentUser == null) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-            }
-
             String orgName = request.get("orgName");
             String name = request.get("name");
             String bizRegNo = request.get("bizRegNo");
@@ -93,21 +86,102 @@ public class OrganizationController {
             String password = request.get("password");
             String phoneNum = request.get("phoneNum");
 
-            if (orgName == null || name == null || bizRegNo == null || email == null || password == null) {
+            // 필수 필드 검증
+            if (orgName == null || name == null || email == null || password == null) {
                 response.put("success", false);
                 response.put("message", "필수 입력값이 누락되었습니다.");
                 return ResponseEntity.badRequest().body(response);
             }
 
-            OrganizationDTO created = organizationService.createOrganizationAndUser(orgName, name, bizRegNo, email, password, phoneNum);
+            // INVITED 상태로 회원 생성
+            OrganizationDTO created = organizationService.createPendingUser(orgName, name, bizRegNo, email, password, phoneNum);
 
             response.put("success", true);
             response.put("data", created);
-            response.put("message", "조직 및 사용자가 등록되었습니다.");
+            response.put("message", "회원가입이 완료되었습니다. 관리자 승인을 기다려주세요.");
             return ResponseEntity.ok(response);
-        } catch (Exception e) {
+            
+        } catch (RuntimeException e) {
             response.put("success", false);
             response.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "회원가입 처리 중 오류가 발생했습니다.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    // 관리자용 회원가입 승인 요청 목록 조회
+    @GetMapping("/pending")
+    public ResponseEntity<Map<String, Object>> getPendingUsers(@RequestHeader(value = "Authorization", required = false) String token) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // 관리자 권한 확인
+            OrganizationDTO currentUser = validateAdminToken(token, response);
+            if (currentUser == null) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+
+            List<OrganizationDTO> pendingUsers = organizationService.getInvitedUsers();
+            response.put("success", true);
+            response.put("data", pendingUsers);
+            response.put("message", "승인 대기 중인 회원 목록을 조회했습니다.");
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "승인 대기 목록 조회 중 오류가 발생했습니다.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    // 관리자용 회원가입 승인/거부
+    @PutMapping("/{orgId}/approve")
+    public ResponseEntity<Map<String, Object>> approveUser(
+            @PathVariable Long orgId,
+            @RequestBody Map<String, String> request,
+            @RequestHeader(value = "Authorization", required = false) String token) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // 관리자 권한 확인
+            OrganizationDTO currentUser = validateAdminToken(token, response);
+            if (currentUser == null) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+
+            String action = request.get("action"); // "approve" 또는 "reject"
+            
+            if ("approve".equals(action)) {
+                // ACTIVE 상태로 변경
+                OrganizationDTO updatedUser = organizationService.updateUserStatus(orgId, Organization.Status.ACTIVE);
+                if (updatedUser != null) {
+                    response.put("success", true);
+                    response.put("data", updatedUser);
+                    response.put("message", "회원가입이 승인되었습니다.");
+                    return ResponseEntity.ok(response);
+                }
+            } else if ("reject".equals(action)) {
+                // SUSPENDED 상태로 변경 (거부)
+                OrganizationDTO updatedUser = organizationService.updateUserStatus(orgId, Organization.Status.SUSPENDED);
+                if (updatedUser != null) {
+                    response.put("success", true);
+                    response.put("data", updatedUser);
+                    response.put("message", "회원가입이 거부되었습니다.");
+                    return ResponseEntity.ok(response);
+                }
+            }
+
+            response.put("success", false);
+            response.put("message", "사용자를 찾을 수 없습니다.");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "승인 처리 중 오류가 발생했습니다.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
@@ -432,4 +506,3 @@ public class OrganizationController {
                         "SUPERVISOR".equals(user.getRole().toString()));
     }
 }
-                

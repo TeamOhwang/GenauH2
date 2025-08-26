@@ -24,26 +24,7 @@ public class OrganizationService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    // 사용자 로그인
-//    public OrganizationDTO login(String email, String password) {
-//        Optional<Organization> orgOpt = organizationRepository.findByEmailAndStatus(email, Organization.Status.ACTIVE);
-//
-//        if (orgOpt.isPresent()) {
-//            Organization organization = orgOpt.get();
-//
-//            // 비밀번호 확인
-//            if (passwordEncoder.matches(password, organization.getPasswordHash())) {
-//                // 로그인 시간 업데이트
-//                organization.setUpdatedAt(LocalDateTime.now());
-//                organizationRepository.save(organization);
-//
-//                return convertToDTO(organization);
-//            }
-//        }
-//
-//        return null; // 로그인 실패
-//    }
-
+    // 사용자 로그인 (ACTIVE 상태만 로그인 가능)
     public OrganizationDTO login(String email, String password) {
         System.out.println("=== 로그인 시도 ===");
         System.out.println("입력된 이메일: " + email);
@@ -88,6 +69,14 @@ public class OrganizationService {
                 .collect(Collectors.toList());
     }
 
+    // 승인 대기 중인 사용자 조회 (INVITED 상태)
+    public List<OrganizationDTO> getInvitedUsers() {
+        List<Organization> organizations = organizationRepository.findByStatus(Organization.Status.INVITED);
+        return organizations.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
     // 정지된 조직/사용자만 조회
     public List<OrganizationDTO> getSuspendedUsers() {
         List<Organization> organizations = organizationRepository.findByStatus(Organization.Status.SUSPENDED);
@@ -110,7 +99,46 @@ public class OrganizationService {
                 .orElse(null);
     }
 
-    // 조직 및 사용자 생성 (통합)
+    // 일반 회원가입 - INVITED 상태로 생성
+    @Transactional
+    public OrganizationDTO createPendingUser(
+            String orgName,
+            String ownerName,
+            String bizRegNo,
+            String email,
+            String rawPassword,
+            String phoneNum) {
+        
+        // 이메일 중복 검사
+        if (organizationRepository.existsByEmail(email)) {
+            throw new RuntimeException("이미 등록된 이메일입니다.");
+        }
+        
+        // 사업자등록번호 중복 검사 (선택사항)
+        if (bizRegNo != null && !bizRegNo.trim().isEmpty() && organizationRepository.existsByBizRegNo(bizRegNo)) {
+            throw new RuntimeException("이미 등록된 사업자등록번호입니다.");
+        }
+
+        Organization organization = new Organization();
+        // 사용자 정보 설정
+        organization.setEmail(email);
+        organization.setPasswordHash(passwordEncoder.encode(rawPassword));
+        organization.setRole(Organization.Role.USER);  // 기본 역할은 USER
+        organization.setPhoneNum(phoneNum);
+        organization.setStatus(Organization.Status.INVITED);  // 승인 대기 상태
+        organization.setEmailNotification(true);
+        organization.setSmsNotification(true);
+        
+        // 조직 정보 설정
+        organization.setOrgName(orgName);
+        organization.setName(ownerName);
+        organization.setBizRegNo(bizRegNo);
+
+        Organization saved = organizationRepository.save(organization);
+        return convertToDTO(saved);
+    }
+
+    // 관리자용 조직 및 사용자 생성 (ACTIVE 상태로 즉시 생성)
     @Transactional
     public OrganizationDTO createOrganizationAndUser(
             String orgName,
@@ -136,7 +164,7 @@ public class OrganizationService {
         organization.setPasswordHash(passwordEncoder.encode(rawPassword));
         organization.setRole(Organization.Role.USER);
         organization.setPhoneNum(phoneNum);
-        organization.setStatus(Organization.Status.ACTIVE);
+        organization.setStatus(Organization.Status.ACTIVE);  // 관리자가 생성시 즉시 활성화
         organization.setEmailNotification(true);
         organization.setSmsNotification(true);
         
@@ -198,23 +226,6 @@ public class OrganizationService {
                 .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
-    }
-
-    // Entity를 DTO로 변환
-    private OrganizationDTO convertToDTO(Organization organization) {
-        return new OrganizationDTO(
-                organization.getOrgId(),
-                organization.getEmail(),
-                organization.getRole(),
-                organization.getPhoneNum(),
-                organization.getStatus(),
-                organization.isEmailNotification(),
-                organization.isSmsNotification(),
-                organization.getOrgName(),
-                organization.getName(),
-                organization.getBizRegNo(),
-                organization.getCreatedAt(),
-                organization.getUpdatedAt());
     }
 
     public List<OrganizationDTO> searchUsers(String keyword) {
@@ -303,5 +314,22 @@ public class OrganizationService {
             e.printStackTrace();
             return false;
         }
+    }
+
+    // Entity를 DTO로 변환
+    private OrganizationDTO convertToDTO(Organization organization) {
+        return new OrganizationDTO(
+                organization.getOrgId(),
+                organization.getEmail(),
+                organization.getRole(),
+                organization.getPhoneNum(),
+                organization.getStatus(),
+                organization.isEmailNotification(),
+                organization.isSmsNotification(),
+                organization.getOrgName(),
+                organization.getName(),
+                organization.getBizRegNo(),
+                organization.getCreatedAt(),
+                organization.getUpdatedAt());
     }
 }

@@ -33,16 +33,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         log.info("Request URI: " + path);
         
-        // context-path를 고려한 로그인 경로 확인 (/gh 경로 추가)
-        if (path.equals("/gh/user/login") || 
-            path.equals("/gh/user/register") ||
-            path.equals("/demo/user/login") || 
-            path.equals("/demo/user/register") ||
-            path.equals("/user/login") ||
-            path.equals("/user/register") ||
-            path.endsWith("/user/login") ||
-            path.endsWith("/user/register")) {
-            log.info("Skipping JWT filter for path: " + path);
+        // JWT 토큰 검증을 건너뛸 경로들
+        if (isPublicPath(path)) {
+            log.info("Skipping JWT filter for public path: " + path);
             filterChain.doFilter(request, response);
             return;
         }
@@ -70,6 +63,39 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
         
         filterChain.doFilter(request, response);
+    }
+
+    /**
+     * 공개 경로 (JWT 토큰 없이 접근 가능한 경로) 확인
+     */
+    private boolean isPublicPath(String path) {
+        // 로그인 경로
+        if (path.equals("/gh/user/login") || 
+            path.equals("/demo/user/login") || 
+            path.equals("/user/login") ||
+            path.endsWith("/user/login")) {
+            return true;
+        }
+        
+        // 회원가입 경로 (일반 사용자 회원가입)
+        if (path.equals("/gh/user/register") ||
+            path.equals("/demo/user/register") ||
+            path.equals("/user/register") ||
+            path.endsWith("/user/register")) {
+            return true;
+        }
+        
+        // 기타 정적 리소스나 헬스체크 등
+        if (path.startsWith("/health") || 
+            path.startsWith("/actuator") ||
+            path.startsWith("/static/") ||
+            path.startsWith("/css/") ||
+            path.startsWith("/js/") ||
+            path.startsWith("/images/")) {
+            return true;
+        }
+        
+        return false;
     }
 
     private String parseBearerToken(HttpServletRequest request) {
