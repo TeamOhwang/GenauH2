@@ -3,9 +3,9 @@ package com.project.service;
 import com.project.dto.OrganizationDTO;
 import com.project.entity.Organization;
 import com.project.repository.OrganizationRepository;
+import com.project.dto.NotificationSettingsDTO; // 알림설정 추가
 
-import jakarta.transaction.Transactional;
-
+import org.springframework.transaction.annotation.Transactional; // 추가
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -332,4 +332,31 @@ public class OrganizationService {
                 organization.getCreatedAt(),
                 organization.getUpdatedAt());
     }
+     // 알림 설정 조회
+    @Transactional(readOnly = true)
+    public OrganizationDTO getNotificationSettings(Long orgId) {
+        return organizationRepository.findById(orgId)
+                .map(this::convertToDTO)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + orgId));
+    }
+
+    // 알림 설정 업데이트
+    @Transactional
+    public OrganizationDTO updateNotificationSettings(Long orgId, NotificationSettingsDTO settingsDTO) {
+        Organization organization = organizationRepository.findById(orgId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + orgId));
+
+        // 요청에 emailNotification 값이 있으면 업데이트
+        if (settingsDTO.getEmailNotification() != null) {
+            organization.setEmailNotification(settingsDTO.getEmailNotification());
+        }
+        // 요청에 smsNotification 값이 있으면 업데이트
+        if (settingsDTO.getSmsNotification() != null) {
+            organization.setSmsNotification(settingsDTO.getSmsNotification());
+        }
+
+        Organization updatedOrg = organizationRepository.save(organization);
+        return convertToDTO(updatedOrg);
+    }
+
 }

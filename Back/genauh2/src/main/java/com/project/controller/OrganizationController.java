@@ -18,6 +18,11 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.project.dto.NotificationSettingsDTO; // 추가
+import org.springframework.security.core.Authentication; // 추가
+import org.springframework.security.core.context.SecurityContextHolder; // 추가
+import org.springframework.web.bind.annotation.PatchMapping; // 추가
+
 import com.project.dto.LoginRequestDTO;
 import com.project.dto.OrganizationDTO;
 import com.project.entity.Organization;
@@ -505,4 +510,57 @@ public class OrganizationController {
                 (user.getRole().equals(Organization.Role.SUPERVISOR) ||
                         "SUPERVISOR".equals(user.getRole().toString()));
     }
+
+     //  현재 사용자의 알림 설정 조회 API
+    @GetMapping("/notification-settings")
+    public ResponseEntity<Map<String, Object>> getNotificationSettings() {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            Long orgId = getAuthenticatedUserId(); // JWT 토큰에서 사용자 ID 추출
+            OrganizationDTO settings = organizationService.getNotificationSettings(orgId);
+            
+            response.put("success", true);
+            response.put("data", settings);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    // 알림 설정 업데이트 API
+    @PatchMapping("/notification-settings")
+    public ResponseEntity<Map<String, Object>> updateNotificationSettings(@RequestBody NotificationSettingsDTO settingsDTO) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            Long orgId = getAuthenticatedUserId(); // JWT 토큰에서 사용자 ID 추출
+            OrganizationDTO updatedUser = organizationService.updateNotificationSettings(orgId, settingsDTO);
+            
+            response.put("success", true);
+            response.put("message", "알림 설정이 업데이트되었습니다.");
+            response.put("data", updatedUser);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    // JWT 토큰에서 사용자(조직) ID를 추출하는 헬퍼 메소드
+    private Long getAuthenticatedUserId() {
+        // SecurityContext에서 인증 정보 가져오기
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        
+        // 인증 정보가 없거나, 인증되지 않았거나, 익명 사용자인 경우 예외 발생
+        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
+            throw new SecurityException("인증된 사용자가 아닙니다.");
+        }
+        
+        // Principal에서 사용자 ID(문자열)를 가져와 Long으로 변환
+        String userIdStr = (String) authentication.getPrincipal();
+        return Long.parseLong(userIdStr);
+    }
 }
+                
