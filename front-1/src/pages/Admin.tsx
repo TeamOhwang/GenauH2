@@ -148,8 +148,8 @@ export default function Admin() {
         // 시설 목록 새로고침
         try {
           const facilityList = await getFacilities(orgId);
-          const normalizedFacilities = Array.isArray(facilityList) ? facilityList : 
-                                     facilityList?.data && Array.isArray(facilityList.data) ? facilityList.data : [];
+          const normalizedFacilities = Array.isArray(facilityList) ? facilityList :
+            facilityList?.data && Array.isArray(facilityList.data) ? facilityList.data : [];
           setFacilities(normalizedFacilities);
           console.log('시설 삭제 후 목록 새로고침 완료:', normalizedFacilities);
         } catch (error) {
@@ -179,11 +179,11 @@ export default function Admin() {
     try {
       const facilityList = await getFacilities(orgId);
       console.log('시설 목록 조회 결과:', facilityList);
-      
+
       // 데이터 구조 통일: 백엔드 응답이 { data: [...] } 형태인지 확인
-      const normalizedFacilities = Array.isArray(facilityList) ? facilityList : 
-                                 facilityList?.data && Array.isArray(facilityList.data) ? facilityList.data : [];
-      
+      const normalizedFacilities = Array.isArray(facilityList) ? facilityList :
+        facilityList?.data && Array.isArray(facilityList.data) ? facilityList.data : [];
+
       console.log('정규화된 시설 목록:', normalizedFacilities);
       setFacilities(normalizedFacilities);
     } catch (error) {
@@ -378,8 +378,8 @@ export default function Admin() {
                                 // 시설 등록 후 목록 새로고침
                                 try {
                                   const facilityList = await getFacilities(parseInt(u.orgId));
-                                  const normalizedFacilities = Array.isArray(facilityList) ? facilityList : 
-                                                             facilityList?.data && Array.isArray(facilityList.data) ? facilityList.data : [];
+                                  const normalizedFacilities = Array.isArray(facilityList) ? facilityList :
+                                    facilityList?.data && Array.isArray(facilityList.data) ? facilityList.data : [];
                                   setFacilities(normalizedFacilities);
                                   console.log('시설 등록 후 목록 새로고침 완료:', normalizedFacilities);
                                 } catch (error) {
@@ -398,8 +398,8 @@ export default function Admin() {
                                 // 시설 수정 후 목록 새로고침
                                 try {
                                   const facilityList = await getFacilities(parseInt(u.orgId));
-                                  const normalizedFacilities = Array.isArray(facilityList) ? facilityList : 
-                                                             facilityList?.data && Array.isArray(facilityList.data) ? facilityList.data : [];
+                                  const normalizedFacilities = Array.isArray(facilityList) ? facilityList :
+                                    facilityList?.data && Array.isArray(facilityList.data) ? facilityList.data : [];
                                   setFacilities(normalizedFacilities);
                                   console.log('시설 수정 후 목록 새로고침 완료:', normalizedFacilities);
                                 } catch (error) {
