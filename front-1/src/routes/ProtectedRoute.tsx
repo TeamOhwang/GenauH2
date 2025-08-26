@@ -1,7 +1,7 @@
 import { JSX, useEffect, useRef, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { authToken } from "@/stores/authStorage";
+import { authToken } from "@/Stores/authStorage";
 import { AuthApi } from "@/api/authApi";
 import { PATHS, roleHome, type Role } from "./paths";
 

@@ -1,10 +1,10 @@
 import apiClient, { AUTH_ENDPOINTS, unwrap } from "@/api/apiClient";
-import { authToken } from "@/stores/authStorage";
+import { authToken } from "@/Stores/authStorage";
 import { useAuthStore } from "@/stores/useAuthStore";
 import axios from "axios";
 
 /** 공개 타입 */
-export type Role = "ADMIN" | "USER";
+export type Role = "SUPERVISOR" | "USER";
 export type LoginReq = { email: string; password: string };
 
 // 회원가입 Request 타입

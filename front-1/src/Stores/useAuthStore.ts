@@ -1,12 +1,12 @@
 import { create } from "zustand";
 import {jwtDecode} from "jwt-decode";
-import { authToken, ACCESS_TOKEN_KEY } from "@/stores/authStorage";
+import { authToken, ACCESS_TOKEN_KEY } from "@/Stores/authStorage";
 import { AuthApi } from "@/api/authApi";
 
-export type Role = "USER" | "ADMIN" | null;
+export type Role = "USER" | "SUPERVISOR" | null;
 
 type JWTPayload = {
-  role?: "USER" | "ADMIN";
+  role?: "USER" | "SUPERVISOR";
   roles?: string[];
   exp?: number;
   sub?: string | number;   // 보통 userId는 sub에 들어옴
@@ -19,9 +19,9 @@ const decodeRole = (t: string | null): Role => {
   if (!t) return null;
   try {
     const p = jwtDecode<JWTPayload>(t);
-    if (p.role === "ADMIN" || p.role === "USER") return p.role;
+    if (p.role === "SUPERVISOR" || p.role === "USER") return p.role;
     if (Array.isArray(p.roles)) {
-      if (p.roles.includes("ADMIN")) return "ADMIN";
+      if (p.roles.includes("SUPERVISOR")) return "SUPERVISOR";
       if (p.roles.includes("USER")) return "USER";
     }
   } catch {}
@@ -77,7 +77,14 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   email: decodeEmail(authToken.get()),
   isInit: false,
 
-  setRole: (r) => set({ role: r }),
+  setRole: (r) => {
+    // console.log("=== useAuthStore Role 설정 ===");
+    // console.log("이전 role:", get().role);
+    // console.log("새로운 role:", r);
+    set({ role: r });
+    // console.log("✅ Role 설정 완료:", r);
+    // console.log("=============================");
+  },
   setUserId: (id) => set({ userId: id }),
   setEmail: (e) => set({ email: e }),
 
