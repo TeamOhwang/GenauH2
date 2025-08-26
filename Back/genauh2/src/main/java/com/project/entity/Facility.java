@@ -36,11 +36,11 @@ public class Facility {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @EqualsAndHashCode.Include
-    @Column(name = "facid", nullable = false, updatable = false)
-    private Long facid;
+    @Column(name = "facId", nullable = false, updatable = false)
+    private Long facId;
 
-    @Column(name = "orgid", nullable = false)
-    private Long orgid;
+    @Column(name = "orgId", nullable = false)
+    private Long orgId;
 
     @Column(name = "name", nullable = false, length = 100)
     private String name;

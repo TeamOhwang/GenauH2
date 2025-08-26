@@ -54,7 +54,7 @@ public class FacilitiesController {
     @PostMapping("/update")
     public ResponseEntity<Map<String, Object>> facUpdate(@RequestBody Facility facility) {
         try {
-            Long facilityId = facility.getFacid();
+            Long facilityId = facility.getFacId();
             if (facilityId == null) {
                 return ResponseEntity.badRequest().body(Map.of("message", "facilityId는 필수입니다."));
             }
