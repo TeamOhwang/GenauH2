@@ -5,7 +5,7 @@ import RootLayout from "@/layouts/RootLayout";
 import { PublicOnlyRoute, ProtectedRoute } from "./ProtectedRoute";
 import { PATHS, roleHome, type Role } from "./paths";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { authToken } from "@/stores/authStorage";
+import { authToken } from "@/Stores/authStorage";
 
 const Login = lazy(() => import("@/pages/Login"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
@@ -18,7 +18,21 @@ const NotFound = lazy(() => import("@/pages/NotFound"));
 
 function RoleHomeRedirect() {
   const role = useAuthStore((s) => s.role) as Role | null;
-  if (!authToken.get() || !role) return <Navigate to={PATHS.login} replace />;
+  const token = authToken.get();
+  
+  // console.log("=== RoleHomeRedirect 디버깅 ===");
+  // console.log("토큰:", token);
+  // console.log("현재 role:", role);
+  // console.log("roleHome 결과:", role ? roleHome(role) : "role 없음");
+  // console.log("=============================");
+  
+  if (!token || !role) {
+    // console.log("❌ 리다이렉트 실패: 토큰 또는 role 없음");
+    return <Navigate to={PATHS.login} replace />;
+  }
+  
+  // const targetPath = roleHome(role);
+  // console.log("✅ 리다이렉트 성공:", targetPath);
   return <Navigate to={roleHome(role)} replace />;
 }
 
@@ -57,7 +71,7 @@ export default function AppRouter() {
             <Route path={PATHS.setting} element={<Setting />} />
           </Route>
 
-          <Route element={<ProtectedRoute require="ADMIN"><Outlet /></ProtectedRoute>}>
+          <Route element={<ProtectedRoute require="SUPERVISOR"><Outlet /></ProtectedRoute>}>
             <Route path={PATHS.admin} element={<Admin />} />
           </Route>
 
