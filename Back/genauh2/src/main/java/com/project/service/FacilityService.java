@@ -35,35 +35,41 @@ public class FacilityService {
         Facility existingFacility = facilityRepository.findById(facilityId)
                 .orElseThrow(() -> new RuntimeException("ID " + facilityId + "에 해당하는 설비를 찾을 수 없습니다."));
         
-        if (facilityDetails.getOrgId() != null) {
-            existingFacility.setOrgId(facilityDetails.getOrgId());
+        if (facilityDetails.getOrgid() != null) {
+            existingFacility.setOrgid(facilityDetails.getOrgid());
         }
         if (facilityDetails.getName() != null) {
             existingFacility.setName(facilityDetails.getName());
         }
-        if (facilityDetails.getModelNo() != null) {
-            existingFacility.setModelNo(facilityDetails.getModelNo());
+        if (facilityDetails.getType() != null) {
+            existingFacility.setType(facilityDetails.getType());
         }
-        if (facilityDetails.getCellCount() != null) {
-            existingFacility.setCellCount(facilityDetails.getCellCount());
+        if (facilityDetails.getMaker() != null) {
+            existingFacility.setMaker(facilityDetails.getMaker());
         }
-        if (facilityDetails.getRatedPowerKw() != null) {
-            existingFacility.setRatedPowerKw(facilityDetails.getRatedPowerKw());
+        if (facilityDetails.getModel() != null) {
+            existingFacility.setModel(facilityDetails.getModel());
         }
-        if (facilityDetails.getRatedOutputKgH() != null) {
-            existingFacility.setRatedOutputKgH(facilityDetails.getRatedOutputKgH());
+        if (facilityDetails.getPowerKw() != null) {
+            existingFacility.setPowerKw(facilityDetails.getPowerKw());
         }
-        if (facilityDetails.getSecNominalKwhPerKg() != null) {
-            existingFacility.setSecNominalKwhPerKg(facilityDetails.getSecNominalKwhPerKg());
+        if (facilityDetails.getH2Rate() != null) {
+            existingFacility.setH2Rate(facilityDetails.getH2Rate());
         }
-        if (facilityDetails.getCatalystInstallDate() != null) {
-            existingFacility.setCatalystInstallDate(facilityDetails.getCatalystInstallDate());
+        if (facilityDetails.getSpecKwh() != null) {
+            existingFacility.setSpecKwh(facilityDetails.getSpecKwh());
         }
-        if (facilityDetails.getCatalystLifeHours() != null) {
-            existingFacility.setCatalystLifeHours(facilityDetails.getCatalystLifeHours());
+        if (facilityDetails.getPurity() != null) {
+            existingFacility.setPurity(facilityDetails.getPurity());
+        }
+        if (facilityDetails.getPressure() != null) {
+            existingFacility.setPressure(facilityDetails.getPressure());
         }
         if (facilityDetails.getLocation() != null) {
             existingFacility.setLocation(facilityDetails.getLocation());
+        }
+        if (facilityDetails.getInstall() != null) {
+            existingFacility.setInstall(facilityDetails.getInstall());
         }
         
         return facilityRepository.save(existingFacility);

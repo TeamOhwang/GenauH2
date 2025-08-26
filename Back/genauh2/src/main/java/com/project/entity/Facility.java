@@ -6,6 +6,8 @@ import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -27,43 +29,54 @@ import lombok.Setter;
 @Table(name = "facilities")
 public class Facility {
 
+    public enum ElectrolysisType {
+        PEM, ALK, SOEC
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @EqualsAndHashCode.Include
-    @Column(name = "facilityId", nullable = false, updatable = false)
-    private Long facilityId;
+    @Column(name = "facid", nullable = false, updatable = false)
+    private Long facid;
 
-    @Column(name = "orgId", nullable = false)
-    private Long orgId;
+    @Column(name = "orgid", nullable = false)
+    private Long orgid;
 
     @Column(name = "name", nullable = false, length = 100)
     private String name;
 
-    @Column(name = "modelNo", nullable = false, length = 100)
-    private String modelNo;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type", nullable = false)
+    private ElectrolysisType type;
 
-    @Column(name = "cellCount", nullable = false)
-    private Integer cellCount;
+    @Column(name = "maker", length = 100)
+    private String maker;
 
-    @Column(name = "ratedPowerKw", nullable = false, precision = 10, scale = 2)
-    private BigDecimal ratedPowerKw; // 정격 전력(kW)
+    @Column(name = "model", length = 100)
+    private String model;
 
-    @Column(name = "ratedOutputKgH", nullable = false, precision = 10, scale = 3)
-    private BigDecimal ratedOutputKgH; // 정격 출력(kg/h)
+    @Column(name = "power_kw", nullable = false, precision = 10, scale = 2)
+    private BigDecimal powerKw; // 정격 전력(kW)
 
-    @Column(name = "secNominalKwhPerKg", nullable = false, precision = 10, scale = 3)
-    private BigDecimal secNominalKwhPerKg; // 기준 SEC(kWh/kg)
+    @Column(name = "h2_rate", nullable = false, precision = 10, scale = 2)
+    private BigDecimal h2Rate; // 정격 수소 생산량(kg/h)
 
-    @Column(name = "catalystInstallDate")
-    private LocalDate catalystInstallDate;
+    @Column(name = "spec_kwh", nullable = false, precision = 10, scale = 2)
+    private BigDecimal specKwh; // 특정 소비전력(kWh/kg)
 
-    @Column(name = "catalystLifeHours")
-    private Integer catalystLifeHours;
+    @Column(name = "purity", precision = 6, scale = 3)
+    private BigDecimal purity; // 수소 순도(%)
 
-    @Column(name = "location", length = 255)
+    @Column(name = "pressure", precision = 10, scale = 2)
+    private BigDecimal pressure; // 인출 압력(bar)
+
+    @Column(name = "location", length = 200)
     private String location;
 
+    @Column(name = "install")
+    private LocalDate install; // 설치 일자
+
     // DB에서 자동으로 세팅 (DEFAULT CURRENT_TIMESTAMP)
-    @Column(name = "createdAt", nullable = false, insertable = false, updatable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "created", nullable = false, insertable = false, updatable = false)
+    private LocalDateTime created;
 }
