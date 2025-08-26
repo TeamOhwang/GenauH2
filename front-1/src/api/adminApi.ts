@@ -2,7 +2,7 @@ import apiClient from "./apiClient";
 
 export const ADMIN_ENDPOINTS = {
     register: "/user/register",
-    getUserList: "/userOrgan/all",
+    getUserList: "/user/list",
     updateUserStatus: (userId: string) => `/user/${userId}/status`,
     getFacilityList: "/plant/list",
     addFacility: "/plant/insert",
@@ -39,7 +39,7 @@ export async function updateUserStatusApi(userId:string, status:string) {
 
 // 시설 조회
 
-export async function getFacilityListApi(orgId?: number) {
+export async function getFacilityListApi(orgId?: string) {
     // console.log('=== adminApi.getFacilityListApi 시작 ===');
     // console.log('받은 orgId:', orgId);
     // console.log('orgId 타입:', typeof orgId);
@@ -88,15 +88,16 @@ export async function getFacilityListApi(orgId?: number) {
 export async function addFacilityApi(params: {
     orgId: string;
     name: string;
+    type: string;
+    maker: string;
+    model: string;
+    powerKw: number;
+    h2Rate: number;
+    specKwh: number;
+    purity: number;
+    pressure: number;
     location: string;
-    // status: string;
-    modelNo: string;
-    cellCount: string;
-    ratedPowerKw: string; // 정격 전력(kW)
-    ratedOutputKgH: string; // 정격 출력(kg/h)
-    secNominalKwhPerKg: string; // 기준 SEC(kWh/kg) 
-    catalystInstallDate: string; // 촉매 설치일
-    catalystLifeHours: string; // 촉매 수명
+    install: string;
 }) {
     // console.log('=== adminApi.addFacilityApi 시작 ===');
     // console.log('API 엔드포인트:', ADMIN_ENDPOINTS.addFacility);
@@ -151,21 +152,24 @@ export async function addFacilityApi(params: {
 // 시설 수정
 
 export async function updateFacilityApi(params: {
-    facilityId: string;
+    facId: string;
+    orgId: string;
     name: string;
+    type: string;
+    maker: string;
+    model: string;
+    powerKw: number;
+    h2Rate: number;
+    specKwh: number;
+    purity: number;
+    pressure: number;
     location: string;
-    modelNo: string;
-    cellCount: string;
-    ratedPowerKw: string;
-    ratedOutputKgH: string;
-    secNominalKwhPerKg: string;
-    catalystInstallDate: string;
-    catalystLifeHours: string;
+    install: string;
 }) {
     console.log('=== adminApi.updateFacilityApi 시작 ===');
     console.log('API 엔드포인트:', ADMIN_ENDPOINTS.updateFacility);
     console.log('전송할 데이터:', params);
-    console.log('facilityId 값:', params.facilityId);
+    console.log('facilityId 값:', params.facId);
     
     try {
         console.log('HTTP POST 요청 시작...');

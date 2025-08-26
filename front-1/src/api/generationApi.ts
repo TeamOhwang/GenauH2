@@ -4,9 +4,10 @@ export const GENERATION_ENDPOINTS = {
     getRaw: "/generation/raw",
     getLatest: "/generation/latest",
     getDaily: "/generation/daily",
-    getHourlyAvg: "/generation/hourly-avg",
-    getSummary: "/generation/summary",
-    getDetailed: "/generation/detailed",
+    // getHourlyAvg: "/generation/hourly-avg",
+    // getSummary: "/generation/summary",
+    // getDetailed: "/generation/detailed",
+    getHourlyHydrogen: "/generation/hourly-hydrogen",
 }
 
 // 원시 데이터 조회
@@ -50,5 +51,11 @@ export async function getDailyGenerationApi(plantId: string, startDate: string, 
 // 상세 데이터 조회
 // export async function getDetailedGenerationApi(startDate: string, endDate: string) {
 //     const res = await apiClient.get(GENERATION_ENDPOINTS.getDetailed, { params: { start: startDate, end: endDate, limit:2000 } });
+//     return res.data ?? [];
+// }
+
+// 시간별 수소 생산량 조회
+// export async function getHourlyHydrogenApi(plantId: string, startDate: string, endDate: string) {
+//     const res = await apiClient.get(GENERATION_ENDPOINTS.getHourlyHydrogen, { params: { plantId: plantId, start: startDate, end: endDate, limit: 2000 } });
 //     return res.data ?? [];
 // }

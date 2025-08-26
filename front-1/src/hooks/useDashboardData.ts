@@ -35,6 +35,7 @@ export function useDashboardData() {
 
     // 무한 루프 방지를 위한 ref
     const isInitialized = useRef(false);
+    const refreshDataRef = useRef<() => Promise<void>>();
 
     // 데이터 갱신 함수
     const refreshData = useCallback(async () => {
@@ -153,18 +154,33 @@ export function useDashboardData() {
             setIsUpdating(false);
             console.log('🔄 useDashboardData.refreshData 완료');
         }
-    }, [getRawGeneration, getDailyGeneration, selectedPlant]);
+    }, [getRawGeneration, getDailyGeneration, selectedPlant, isUpdating]);
+
+    // refreshData 함수가 변경될 때마다 ref 업데이트
+    useEffect(() => {
+        refreshDataRef.current = refreshData;
+    }, [refreshData]);
 
     // 매시 정각 자동 갱신
-    useHourlyUpdater({ onUpdate: refreshData, immediate: false });
+    useHourlyUpdater({ 
+        onUpdate: () => refreshDataRef.current?.(), 
+        immediate: false 
+    });
 
     // 초기 데이터 로딩 및 selectedPlant 변경 시 데이터 갱신
     useEffect(() => {
         if (!isInitialized.current) {
             isInitialized.current = true;
+            refreshDataRef.current?.();
         }
-        refreshData();
-    }, [selectedPlant, refreshData]);
+    }, []); // 의존성 배열을 비워서 초기 로딩만 실행
+
+    // selectedPlant 변경 시에만 데이터 갱신
+    useEffect(() => {
+        if (isInitialized.current) {
+            refreshDataRef.current?.();
+        }
+    }, [selectedPlant]);
 
     // 발전소별 데이터 필터링 (일간용)
     const plant1 = data.filter((item: any) => item.capacity_Kw === PLANT_CAPACITIES.plant1);

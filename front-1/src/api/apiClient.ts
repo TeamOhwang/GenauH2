@@ -7,8 +7,9 @@ import axios, {
 import { authToken } from "@/stores/authStorage";
 
 /* ======================== 상수 ======================== */
-export const API_BASE_URL: string =
-  (import.meta as any)?.env?.VITE_API_BASE_URL ?? "/gh";
+// API 기본 주소
+export const API_BASE_URL: string = (import.meta as any)?.env?.VITE_API_BASE_URL || "/gh";
+// JWT 만료 임계 시간(초)
 const EXP_MARGIN_SEC = 30;
 const ENABLE_REFRESH =
   ((import.meta as any)?.env?.VITE_ENABLE_REFRESH ?? "false") === "true";

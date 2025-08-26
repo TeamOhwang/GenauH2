@@ -10,16 +10,20 @@ type user = {
 }
 
 type facility = {
+    facId: string;
     orgId: string;
     name: string;
+    type: string;
+    maker: string;
+    model: string;
+    powerKw: number;
+    h2Rate: number;
+    specKwh: number;
+    purity: number;
+    pressure: number;
     location: string;
-    modelNo: string;
-    cellCount: string;
-    ratedPowerKw: string;
-    ratedOutputKgH: string;
-    secNominalKwhPerKg: string;
-    catalystInstallDate: string;
-    catalystLifeHours: string;
+    install: string;
+    createdAt: string;
 }
 
 export function useAdmin() {
@@ -33,7 +37,7 @@ export function useAdmin() {
         try {
             const user = await createUser(params)
             return user
-        } catch (e:any) {
+        } catch (e: any) {
             setError(e?.message ?? "회원 등록 실패");
             return null;
         } finally {
@@ -69,7 +73,7 @@ export function useAdmin() {
         }
     }, [])
 
-    const getFacilities = useCallback(async (orgId?: number) => {
+    const getFacilities = useCallback(async (orgId?: string) => {
         setLoading(true);
         setError(null);
         try {
@@ -83,7 +87,7 @@ export function useAdmin() {
         }
     }, [])
 
-    const createFacility = useCallback(async (params:facility) => {
+    const createFacility = useCallback(async (params: facility) => {
         setLoading(true);
         setError(null);
         try {
@@ -91,7 +95,7 @@ export function useAdmin() {
             const result = await addFacility(params);
             // console.log('addFacility API 응답:', result);
             // console.log('응답 타입:', typeof result);
-            
+
             if (result) {
                 // console.log('시설 등록 성공 - 결과 반환');
                 return result;
@@ -105,7 +109,7 @@ export function useAdmin() {
             // console.error('에러 타입:', typeof e);
             // console.error('에러 메시지:', e?.message);
             // console.error('전체 에러 객체:', e);
-            
+
             const errorMessage = e?.message ?? "시설 등록 실패";
             setError(errorMessage);
             return null;
@@ -114,18 +118,7 @@ export function useAdmin() {
         }
     }, [])
 
-    const updateFacilityAction = useCallback(async (params:{
-        facilityId: string;
-        name: string;
-        location: string;
-        modelNo: string;
-        cellCount: string;
-        ratedPowerKw: string;
-        ratedOutputKgH: string;
-        secNominalKwhPerKg: string;
-        catalystInstallDate: string;
-        catalystLifeHours: string;
-    }) => {
+    const updateFacilityAction = useCallback(async (params: facility) => {
         setLoading(true);
         setError(null);
         try {
@@ -153,5 +146,5 @@ export function useAdmin() {
         }
     }, [])
 
-    return { loading, error, addUser, getUsers, updateUserStatusAction, getFacilities, createFacility, updateFacilityAction, deleteFacilityAction}
+    return { loading, error, addUser, getUsers, updateUserStatusAction, getFacilities, createFacility, updateFacilityAction, deleteFacilityAction }
 }
