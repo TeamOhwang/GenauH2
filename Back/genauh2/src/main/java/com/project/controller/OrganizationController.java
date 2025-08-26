@@ -19,20 +19,21 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.project.dto.LoginRequestDTO;
-import com.project.dto.UserDTO;
+import com.project.dto.OrganizationDTO;
+import com.project.entity.Organization;
 import com.project.security.TokenProvider;
-import com.project.service.UserService;
+import com.project.service.OrganizationService;
 
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/user")  // 기존 API 호환을 위해 경로는 그대로 유지
 @CrossOrigin(origins = { "http://localhost:5174" })
-public class UserController {
+public class OrganizationController {
 
     @Autowired
-    private UserService userService;
+    private OrganizationService organizationService;
 
     @Autowired
-    private TokenProvider tokenProvider; // TokenProvider 주입
+    private TokenProvider tokenProvider;
 
     // 로그인
     @PostMapping("/login")
@@ -43,11 +44,11 @@ public class UserController {
         Map<String, Object> response = new HashMap<>();
 
         try {
-            UserDTO user = userService.login(email, password);
+            OrganizationDTO user = organizationService.login(email, password);
 
             if (user != null) {
-                // JWT 토큰 생성 (TokenProvider 사용)
-                String token = tokenProvider.create(user.getUserId().toString());
+                // JWT 토큰 생성 (orgId 사용)
+                String token = tokenProvider.create(user.getOrgId().toString());
 
                 response.put("success", true);
                 response.put("token", token);
@@ -61,7 +62,7 @@ public class UserController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
         } catch (Exception e) {
-            System.err.println("❌ 로그인 오류 발생:");
+            System.err.println("로그인 오류 발생:");
             System.err.println("오류 타입: " + e.getClass().getSimpleName());
             System.err.println("오류 메시지: " + e.getMessage());
             e.printStackTrace();
@@ -80,7 +81,7 @@ public class UserController {
         Map<String, Object> response = new HashMap<>();
         try {
             // 관리자 권한 검증
-            UserDTO currentUser = validateAdminToken(token, response);
+            OrganizationDTO currentUser = validateAdminToken(token, response);
             if (currentUser == null) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
             }
@@ -98,7 +99,7 @@ public class UserController {
                 return ResponseEntity.badRequest().body(response);
             }
 
-            UserDTO created = userService.createOrganizationAndUser(orgName, name, bizRegNo, email, password, phoneNum);
+            OrganizationDTO created = organizationService.createOrganizationAndUser(orgName, name, bizRegNo, email, password, phoneNum);
 
             response.put("success", true);
             response.put("data", created);
@@ -142,15 +143,15 @@ public class UserController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
 
-            // 사용자 정보로 권한 확인
-            UserDTO currentUser = userService.getUserById(Long.parseLong(userId));
+            // 사용자 정보로 권한 확인 (orgId 사용)
+            OrganizationDTO currentUser = organizationService.getUserById(Long.parseLong(userId));
             if (currentUser == null || !isAdmin(currentUser)) {
                 response.put("success", false);
                 response.put("message", "관리자 권한이 필요합니다.");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
             }
 
-            List<UserDTO> users = userService.getAllUsers();
+            List<OrganizationDTO> users = organizationService.getAllUsers();
             return ResponseEntity.ok(users);
         } catch (Exception e) {
             response.put("success", false);
@@ -181,7 +182,7 @@ public class UserController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
 
-            UserDTO user = userService.getUserById(Long.parseLong(userId));
+            OrganizationDTO user = organizationService.getUserById(Long.parseLong(userId));
 
             if (user != null) {
                 response.put("success", true);
@@ -200,9 +201,9 @@ public class UserController {
     }
 
     // 사용자 역할 업데이트 (관리자 권한 필요)
-    @PutMapping("/{userId}/role")
+    @PutMapping("/{orgId}/role")
     public ResponseEntity<Map<String, Object>> updateUserRole(
-            @PathVariable Long userId,
+            @PathVariable Long orgId,
             @RequestBody Map<String, String> request,
             @RequestHeader(value = "Authorization", required = false) String token) {
 
@@ -210,7 +211,7 @@ public class UserController {
 
         try {
             // 관리자 권한 확인
-            UserDTO currentUser = validateAdminToken(token, response);
+            OrganizationDTO currentUser = validateAdminToken(token, response);
             if (currentUser == null) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
             }
@@ -218,14 +219,14 @@ public class UserController {
             String roleStr = request.get("role");
 
             // String을 Enum으로 변환
-            com.project.entity.User.Role role;
+            Organization.Role role;
             if ("SUPERVISOR".equalsIgnoreCase(roleStr) || "관리자".equals(roleStr)) {
-                role = com.project.entity.User.Role.SUPERVISOR;
+                role = Organization.Role.SUPERVISOR;
             } else {
-                role = com.project.entity.User.Role.USER;
+                role = Organization.Role.USER;
             }
 
-            UserDTO updatedUser = userService.updateUserRole(userId, role);
+            OrganizationDTO updatedUser = organizationService.updateUserRole(orgId, role);
 
             if (updatedUser != null) {
                 response.put("success", true);
@@ -245,9 +246,9 @@ public class UserController {
     }
 
     // 사용자 상태 업데이트
-    @PutMapping("/{userId}/status")
+    @PutMapping("/{orgId}/status")
     public ResponseEntity<Map<String, Object>> updateUserStatus(
-            @PathVariable Long userId,
+            @PathVariable Long orgId,
             @RequestBody Map<String, String> request,
             @RequestHeader(value = "Authorization", required = false) String token) {
 
@@ -255,7 +256,7 @@ public class UserController {
 
         try {
             // 관리자 권한 확인
-            UserDTO currentUser = validateAdminToken(token, response);
+            OrganizationDTO currentUser = validateAdminToken(token, response);
             if (currentUser == null) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
             }
@@ -263,25 +264,25 @@ public class UserController {
             String statusStr = request.get("status");
 
             // String을 Enum으로 변환
-            com.project.entity.User.Status status;
+            Organization.Status status;
             switch (statusStr.toUpperCase()) {
                 case "ACTIVE":
                 case "활성":
-                    status = com.project.entity.User.Status.ACTIVE;
+                    status = Organization.Status.ACTIVE;
                     break;
                 case "SUSPENDED":
                 case "정지":
-                    status = com.project.entity.User.Status.SUSPENDED;
+                    status = Organization.Status.SUSPENDED;
                     break;
                 case "INVITED":
                 case "초대됨":
-                    status = com.project.entity.User.Status.INVITED;
+                    status = Organization.Status.INVITED;
                     break;
                 default:
-                    status = com.project.entity.User.Status.ACTIVE;
+                    status = Organization.Status.ACTIVE;
             }
 
-            UserDTO updatedUser = userService.updateUserStatus(userId, status);
+            OrganizationDTO updatedUser = organizationService.updateUserStatus(orgId, status);
 
             if (updatedUser != null) {
                 response.put("success", true);
@@ -301,9 +302,9 @@ public class UserController {
     }
 
     // 사용자 비밀번호 변경 (관리자 권한 필요)
-    @PutMapping("/{userId}/password")
+    @PutMapping("/{orgId}/password")
     public ResponseEntity<Map<String, Object>> updateUserPassword(
-            @PathVariable Long userId,
+            @PathVariable Long orgId,
             @RequestBody Map<String, String> request,
             @RequestHeader(value = "Authorization", required = false) String token) {
 
@@ -311,7 +312,7 @@ public class UserController {
 
         try {
             // 관리자 권한 확인
-            UserDTO currentUser = validateAdminToken(token, response);
+            OrganizationDTO currentUser = validateAdminToken(token, response);
             if (currentUser == null) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
             }
@@ -324,7 +325,7 @@ public class UserController {
                 return ResponseEntity.badRequest().body(response);
             }
 
-            boolean updateResult = userService.updateUserPassword(userId, newPassword);
+            boolean updateResult = organizationService.updateUserPassword(orgId, newPassword);
 
             if (updateResult) {
                 response.put("success", true);
@@ -352,63 +353,47 @@ public class UserController {
 
         System.out.println("=== 사용자 삭제 요청 시작 ===");
         System.out.println("요청 본문: " + request);
-        System.out.println("요청 본문 타입: " + (request != null ? request.getClass().getSimpleName() : "null"));
-        System.out.println("토큰: " + (token != null ? token.substring(0, Math.min(20, token.length())) + "..." : "null"));
 
         try {
             // 관리자 권한 확인
-            System.out.println("관리자 권한 확인 중...");
-            UserDTO currentUser = validateAdminToken(token, response);
+            OrganizationDTO currentUser = validateAdminToken(token, response);
             if (currentUser == null) {
-                System.out.println("관리자 권한 확인 실패");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
             }
-            System.out.println("관리자 권한 확인 완료: " + currentUser.getEmail());
 
             @SuppressWarnings("unchecked")
-            List<Object> userIds = (List<Object>) request.get("userIds");
-            System.out.println("삭제할 사용자 ID 목록: " + userIds);
-            System.out.println("userIds 타입: " + (userIds != null ? userIds.getClass().getSimpleName() : "null"));
+            List<Object> orgIds = (List<Object>) request.get("userIds"); // 기존 API 호환을 위해 userIds 그대로 사용
+            System.out.println("삭제할 조직 ID 목록: " + orgIds);
 
-            if (userIds == null || userIds.isEmpty()) {
-                System.out.println("사용자 ID 목록이 비어있음");
+            if (orgIds == null || orgIds.isEmpty()) {
                 response.put("success", false);
                 response.put("message", "삭제할 사용자 ID 목록이 필요합니다.");
                 return ResponseEntity.badRequest().body(response);
             }
 
-            // 사용자 삭제 처리
-            System.out.println("UserService.deleteUsers 호출 중...");
-            boolean deleteResult = userService.deleteUsers(userIds);
-            System.out.println("UserService.deleteUsers 결과: " + deleteResult);
+            boolean deleteResult = organizationService.deleteUsers(orgIds);
 
             if (deleteResult) {
                 response.put("success", true);
                 response.put("message", "선택된 사용자가 삭제되었습니다.");
-                System.out.println("사용자 삭제 성공");
                 return ResponseEntity.ok(response);
             } else {
                 response.put("success", false);
                 response.put("message", "사용자 삭제 중 오류가 발생했습니다.");
-                System.out.println("사용자 삭제 실패");
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
             }
 
         } catch (Exception e) {
             System.err.println("사용자 삭제 컨트롤러에서 예외 발생: " + e.getMessage());
-            System.err.println("예외 타입: " + e.getClass().getSimpleName());
-            System.err.println("예외 스택 트레이스:");
             e.printStackTrace();
             response.put("success", false);
             response.put("message", "사용자 삭제 중 오류가 발생했습니다: " + e.getMessage());
-            response.put("error", e.getClass().getSimpleName());
-            response.put("details", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 
-    // 관리자 토큰 검증 헬퍼 메소드 (수정됨)
-    private UserDTO validateAdminToken(String token, Map<String, Object> response) {
+    // 관리자 토큰 검증 헬퍼 메서드
+    private OrganizationDTO validateAdminToken(String token, Map<String, Object> response) {
         try {
             if (token == null || !token.startsWith("Bearer ")) {
                 response.put("success", false);
@@ -425,7 +410,7 @@ public class UserController {
                 return null;
             }
 
-            UserDTO currentUser = userService.getUserById(Long.parseLong(userId));
+            OrganizationDTO currentUser = organizationService.getUserById(Long.parseLong(userId));
             if (currentUser == null || !isAdmin(currentUser)) {
                 response.put("success", false);
                 response.put("message", "관리자 권한이 필요합니다.");
@@ -440,10 +425,11 @@ public class UserController {
         }
     }
 
-    // 관리자 권한 확인 헬퍼 메소드
-    private boolean isAdmin(UserDTO user) {
+    // 관리자 권한 확인 헬퍼 메서드
+    private boolean isAdmin(OrganizationDTO user) {
         return user.getRole() != null &&
-                (user.getRole().equals(com.project.entity.User.Role.SUPERVISOR) ||
+                (user.getRole().equals(Organization.Role.SUPERVISOR) ||
                         "SUPERVISOR".equals(user.getRole().toString()));
     }
 }
+                

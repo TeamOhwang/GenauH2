@@ -9,7 +9,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class LoginResponseDTO {
     private String token;
-    private UserDTO user;
+    private OrganizationDTO user; // UserDTO에서 OrganizationDTO로 변경
     private String message;
     private boolean success;
 }
