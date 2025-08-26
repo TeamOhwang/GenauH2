@@ -15,7 +15,8 @@ type JwtPayload = { exp?: number };
 type HeaderLike = AxiosHeaders | Record<string, any> | undefined;
 
 /* ======================== 인증 관련 엔드포인트 ======================== */
-const AUTH_ENDPOINTS = { login: "/user/login", logout: "/user/logout", reissue: "/reissue" ,profile: "/user/profile"} as const;
+const AUTH_ENDPOINTS = { login: "/user/login", logout: "/user/logout", reissue: "/reissue" ,
+  profile: "/user/profile",signup: "/user/signup",validateBiz: "/auth/validate-biz",} as const;
 
 /* ======================== 헤더 유틸 함수 ======================== */
 // 요청 헤더에 값 설정/삭제

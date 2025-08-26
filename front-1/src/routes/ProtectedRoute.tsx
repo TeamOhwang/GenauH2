@@ -9,6 +9,7 @@ import { PATHS, roleHome, type Role } from "./paths";
 export function PublicOnlyRoute({ children }: { children: JSX.Element }) {
   const role = useAuthStore((s) => s.role) as Role | null;
   const isInit = useAuthStore((s) => s.isInit);
+
   if (!isInit) return null;
   if (role) return <Navigate to={roleHome(role)} replace />;
   return children;
@@ -20,9 +21,9 @@ type GuardProps = { children: JSX.Element; require?: Role };
 const SYNC_TTL_MS = 60_000;
 
 export function ProtectedRoute({ children, require }: GuardProps) {
+  const role = useAuthStore((s) => s.role);
   const { setRole } = useAuthStore();
   const [checking, setChecking] = useState(true);
-  const [role, setLocalRole] = useState<Role | null>(null);
   const loc = useLocation();
   const lastSync = useRef(0);
 
@@ -48,7 +49,6 @@ export function ProtectedRoute({ children, require }: GuardProps) {
       .then((r) => {
         if (!alive) return;
         lastSync.current = Date.now();
-        setLocalRole(r);
         if (r) setRole(r);
         else authToken.clear();
       })
@@ -64,7 +64,7 @@ export function ProtectedRoute({ children, require }: GuardProps) {
     return () => {
       alive = false;
     };
-  }, [loc.pathname]);
+  }, [loc.pathname, role, setRole]);
 
   if (checking) return <div style={{ padding: 24 }}>Checking session...</div>;
   if (require && role && role !== require) return <Navigate to={PATHS.forbidden} replace />;

@@ -25,9 +25,9 @@ import com.project.dto.HourlyHydrogenProductionDTO;
 import com.project.dto.MonthlyTotal;
 import com.project.dto.PeriodSummaryDTO;
 import com.project.dto.WeeklyTotal;
-import com.project.entity.Facilities;
+import com.project.entity.Facility;
 import com.project.entity.PlantGeneration;
-import com.project.repository.FacilitiesRepository;
+import com.project.repository.FacilityRepository;
 import com.project.repository.PlantGenerationRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -39,7 +39,7 @@ import lombok.extern.slf4j.Slf4j;
 public class PlantGenerationQueryService {
 
     private final PlantGenerationRepository repo;
-    private final FacilitiesRepository facilitiesRepo;
+    private final FacilityRepository facilityRepository;
 
     /** 원시 시계열(엔티티 그대로) */
     public List<PlantGeneration> getRawSeries(String plantId, LocalDate start, LocalDate end, int limit) {
@@ -242,13 +242,13 @@ public class PlantGenerationQueryService {
         LocalDate e = (end != null) ? end : LocalDate.now();
 
         // 1. Facilities 테이블에서 secNominalKwhPerKg 값을 가져옵니다.
-        Optional<Facilities> facilitiesOpt = facilitiesRepo.findByFacilityId("1");
-        if (facilitiesOpt.isEmpty()) {
+        Optional<Facility> facilityOpt = facilityRepository.findById(1L);
+        if (facilityOpt.isEmpty()) {
             System.out.println("❌ Facilities 데이터 없음: facilityId=\"1\"");
             return new ArrayList<>();
         }
         
-        double secNominalKwhPerKg = facilitiesOpt.get().getSecNominalKwhPerKg();
+        double secNominalKwhPerKg = facilityOpt.get().getSpecKwh().doubleValue();
         System.out.println("✅ secNominalKwhPerKg: " + secNominalKwhPerKg);
 
         // 2. DB에서 모든 원시 데이터를 가져옵니다.
