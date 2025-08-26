@@ -60,7 +60,8 @@ public class ProductionChangeNotifier {
     }
 
     private void checkPowerGeneration(Facility facility, LocalDateTime now) {
-        String plantId = "plt" + String.format("%03d", facility.getFacilityId());
+        // ID 필드명이 facId로 변경됨
+        String plantId = "plt" + String.format("%03d", facility.getFacId());
 
         Optional<PlantGeneration> currentGenOpt = plantGenerationRepository.findByPlantIdAndDateAndHour(plantId, now.toLocalDate(), now.getHour());
         Optional<PlantGeneration> previousGenOpt = plantGenerationRepository.findByPlantIdAndDateAndHour(plantId, now.minusHours(1).toLocalDate(), now.minusHours(1).getHour());
@@ -71,7 +72,8 @@ public class ProductionChangeNotifier {
             double drop = previousPower - currentPower;
 
             if (drop >= powerDropThreshold) {
-                log.warn("[태양광 발전량 급감] 설비 ID: {}, 변화량: {:.2f} kWh", facility.getFacilityId(), drop);
+                // ID 필드명이 facId로 변경됨
+                log.warn("[태양광 발전량 급감] 설비 ID: {}, 변화량: {:.2f} kWh", facility.getFacId(), drop);
                 String message = String.format("[발전량 경고] '%s'의 발전량이 1시간 전 대비 %.0f kWh 감소했습니다. (현재: %.0f kWh)",
                         facility.getName(), drop, currentPower);
                 sendNotifications(facility, message);
@@ -83,8 +85,9 @@ public class ProductionChangeNotifier {
         LocalDateTime currentHourStart = now.withMinute(0).withSecond(0).withNano(0);
         LocalDateTime previousHourStart = currentHourStart.minusHours(1);
 
-        Optional<HydrogenActual> currentProdOpt = hydrogenActualRepository.findTopByFacilityIdAndTsBetweenOrderByTsDesc(facility.getFacilityId(), currentHourStart, now);
-        Optional<HydrogenActual> previousProdOpt = hydrogenActualRepository.findTopByFacilityIdAndTsBetweenOrderByTsDesc(facility.getFacilityId(), previousHourStart, currentHourStart);
+        // ID 필드명이 facId로 변경됨
+        Optional<HydrogenActual> currentProdOpt = hydrogenActualRepository.findTopByFacilityIdAndTsBetweenOrderByTsDesc(facility.getFacId(), currentHourStart, now);
+        Optional<HydrogenActual> previousProdOpt = hydrogenActualRepository.findTopByFacilityIdAndTsBetweenOrderByTsDesc(facility.getFacId(), previousHourStart, currentHourStart);
 
         if (currentProdOpt.isPresent() && previousProdOpt.isPresent()) {
             double currentProduction = currentProdOpt.get().getProductionKg().doubleValue();
@@ -92,7 +95,8 @@ public class ProductionChangeNotifier {
             double drop = previousProduction - currentProduction;
 
             if (drop >= hydrogenDropThreshold) {
-                log.warn("[수소 생산량 급감] 설비 ID: {}, 변화량: {:.2f} kg", facility.getFacilityId(), drop);
+                // ID 필드명이 facId로 변경됨
+                log.warn("[수소 생산량 급감] 설비 ID: {}, 변화량: {:.2f} kg", facility.getFacId(), drop);
                 String message = String.format("[수소생산량 경고] '%s'의 생산량이 1시간 전 대비 %.0f kg 감소했습니다. (현재: %.0f kg)",
                         facility.getName(), drop, currentProduction);
                 sendNotifications(facility, message);
@@ -100,7 +104,8 @@ public class ProductionChangeNotifier {
         }
     }
 
-     private void sendNotifications(Facility facility, String message) {
+    private void sendNotifications(Facility facility, String message) {
+        // ID 필드명이 orgId로 변경됨
         organizationRepository.findById(facility.getOrgId()).ifPresent(organization -> {
             List<User> users = userRepository.findByBizRegNo(organization.getBizRegNo());
             

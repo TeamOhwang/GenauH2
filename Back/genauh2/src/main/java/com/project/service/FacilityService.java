@@ -35,8 +35,8 @@ public class FacilityService {
         Facility existingFacility = facilityRepository.findById(facilityId)
                 .orElseThrow(() -> new RuntimeException("ID " + facilityId + "에 해당하는 설비를 찾을 수 없습니다."));
         
-        if (facilityDetails.getOrgid() != null) {
-            existingFacility.setOrgid(facilityDetails.getOrgid());
+        if (facilityDetails.getOrgId() != null) {
+            existingFacility.setOrgId(facilityDetails.getOrgId());
         }
         if (facilityDetails.getName() != null) {
             existingFacility.setName(facilityDetails.getName());
