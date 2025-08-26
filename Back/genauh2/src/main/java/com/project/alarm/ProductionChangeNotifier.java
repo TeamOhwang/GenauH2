@@ -3,12 +3,11 @@ package com.project.alarm;
 import com.project.entity.Facility;
 import com.project.entity.HydrogenActual;
 import com.project.entity.PlantGeneration;
-import com.project.entity.User;
+import com.project.entity.Organization;
 import com.project.repository.FacilityRepository;
 import com.project.repository.HydrogenActualRepository;
 import com.project.repository.OrganizationRepository;
 import com.project.repository.PlantGenerationRepository;
-import com.project.repository.UserRepository;
 import com.project.service.Sms.SmsService;
 
 import lombok.RequiredArgsConstructor;
@@ -30,7 +29,6 @@ public class ProductionChangeNotifier {
     private final FacilityRepository facilityRepository;
     private final PlantGenerationRepository plantGenerationRepository;
     private final HydrogenActualRepository hydrogenActualRepository;
-    private final UserRepository userRepository;
     private final OrganizationRepository organizationRepository;
     private final SmsService smsService;
 
@@ -107,7 +105,7 @@ public class ProductionChangeNotifier {
     private void sendNotifications(Facility facility, String message) {
         // ID 필드명이 orgId로 변경됨
         organizationRepository.findById(facility.getOrgId()).ifPresent(organization -> {
-            List<User> users = userRepository.findByBizRegNo(organization.getBizRegNo());
+            List<Organization> users = organizationRepository.findByBizRegNo(organization.getBizRegNo());
             
             if (users.isEmpty()) {
                 log.warn("'{}' 설비(조직: {})에 연결된 사용자가 없어 SMS를 발송할 수 없습니다.", facility.getName(), organization.getOrgName());
@@ -115,8 +113,8 @@ public class ProductionChangeNotifier {
             }
 
             // SMS 수신 설정이 켜진 사용자에게만 발송하도록 변경
-            List<User> subscribedUsers = users.stream()
-                                              .filter(User::isSmsNotification)
+            List<Organization> subscribedUsers = users.stream()
+                                              .filter(Organization::isSmsNotification)
                                               .toList();
 
             if (subscribedUsers.isEmpty()) {
@@ -124,8 +122,8 @@ public class ProductionChangeNotifier {
                 return;
             }
 
-            log.info("'{}' 설비에 변경사항이 감지되어 총 {}명에게 SMS를 발송합니다.", facility.getName(), users.size());
-            for (User user : subscribedUsers) {
+            log.info("'{}' 설비에 변경사항이 감지되어 총 {}명에게 SMS를 발송합니다.", facility.getName(), subscribedUsers.size());
+            for (Organization user : subscribedUsers) {
                 smsService.sendSms(user.getPhoneNum(), message);
             }
         });
