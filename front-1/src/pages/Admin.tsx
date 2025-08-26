@@ -10,6 +10,31 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { Select } from "@radix-ui/react-select";
 import { useEffect, useState } from "react";
 
+// 사용자 타입 정의
+interface User {
+  userId: string;
+  email: string;
+  orgname: string;
+  organizationName: string;
+  bizRegNo: string;
+  status: "ACTIVE" | "SUSPENDED";
+  orgId: string;
+  userUpdatedAt: string;
+}
+
+// 시설 타입 정의
+interface Facility {
+  facilityId: string;
+  name: string;
+  location: string;
+  modelNo: string;
+  cellCount: string;
+  ratedPowerKw: string;
+  ratedOutputKgH: string;
+  secNominalKwhPerKg: string;
+  catalystInstallDate: string;
+}
+
 export default function Admin() {
 
   const [isOpen, setIsOpen] = useState(false);
@@ -28,18 +53,18 @@ export default function Admin() {
   });
 
   const { getUsers, updateUserStatusAction, getFacilities, deleteFacilityAction, loading, error } = useAdmin();
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ACTIVE" | "SUSPENDED" | "ALL">("ALL");
   const [openFacilityUserId, setOpenFacilityUserId] = useState<string | null>(null); // 유저 아이디 기준으로 시설 리스트 띄울 공간 띄우기
-  const [facilities, setFacilities] = useState<any>([]); // 시설 리스트
+  const [facilities, setFacilities] = useState<Facility[]>([]); // 시설 리스트
   const [facilityLoading, setFacilityLoading] = useState<{ [key: string]: boolean }>({}); // 시설 로딩 상태
   const [facilityOpen, setFacilityOpen] = useState(false); // 시설 추가 모달 열기/닫기
   const [editFacilityOpen, setEditFacilityOpen] = useState(false); // 시설 수정 모달 열기/닫기
-  const [selectedFacility, setSelectedFacility] = useState<any>(null); // 선택된 시설 정보
+  const [selectedFacility, setSelectedFacility] = useState<Facility | null>(null); // 선택된 시설 정보
   const [deleteFacilityModal, setDeleteFacilityModal] = useState<{
     isOpen: boolean;
-    facility: any;
+    facility: Facility | null;
     userId: string;
     orgId: number;
   }>({
@@ -102,7 +127,7 @@ export default function Admin() {
   };
 
   // 시설 삭제 핸들러
-  const handleDeleteFacility = (facility: any, userId: string, orgId: number) => {
+  const handleDeleteFacility = (facility: Facility, userId: string, orgId: number) => {
     setDeleteFacilityModal({
       isOpen: true,
       facility,
@@ -116,13 +141,20 @@ export default function Admin() {
     const { facility, userId, orgId } = deleteFacilityModal;
 
     try {
-      const result = await deleteFacilityAction(facility.facilityId);
+      const result = await deleteFacilityAction(facility?.facilityId || "");
 
       if (result) {
         alert("시설이 삭제되었습니다.");
         // 시설 목록 새로고침
-        const facilityList = await getFacilities(orgId);
-        setFacilities(facilityList);
+        try {
+          const facilityList = await getFacilities(orgId);
+          const normalizedFacilities = Array.isArray(facilityList) ? facilityList : 
+                                     facilityList?.data && Array.isArray(facilityList.data) ? facilityList.data : [];
+          setFacilities(normalizedFacilities);
+          console.log('시설 삭제 후 목록 새로고침 완료:', normalizedFacilities);
+        } catch (error) {
+          console.error('시설 목록 새로고침 실패:', error);
+        }
       } else {
         alert("시설 삭제에 실패했습니다.");
       }
@@ -147,9 +179,13 @@ export default function Admin() {
     try {
       const facilityList = await getFacilities(orgId);
       console.log('시설 목록 조회 결과:', facilityList);
-      console.log('시설 목록 타입:', typeof facilityList);
-      console.log('시설 목록 길이:', facilityList?.length);
-      setFacilities(facilityList);
+      
+      // 데이터 구조 통일: 백엔드 응답이 { data: [...] } 형태인지 확인
+      const normalizedFacilities = Array.isArray(facilityList) ? facilityList : 
+                                 facilityList?.data && Array.isArray(facilityList.data) ? facilityList.data : [];
+      
+      console.log('정규화된 시설 목록:', normalizedFacilities);
+      setFacilities(normalizedFacilities);
     } catch (error) {
       console.error('시설 목록 조회 실패:', error);
       setFacilities([]);
@@ -340,8 +376,15 @@ export default function Admin() {
                               onSuccess={async () => {
                                 setFacilityOpen(false);
                                 // 시설 등록 후 목록 새로고침
-                                const facilityList = await getFacilities(parseInt(u.orgId));
-                                setFacilities(facilityList);
+                                try {
+                                  const facilityList = await getFacilities(parseInt(u.orgId));
+                                  const normalizedFacilities = Array.isArray(facilityList) ? facilityList : 
+                                                             facilityList?.data && Array.isArray(facilityList.data) ? facilityList.data : [];
+                                  setFacilities(normalizedFacilities);
+                                  console.log('시설 등록 후 목록 새로고침 완료:', normalizedFacilities);
+                                } catch (error) {
+                                  console.error('시설 목록 새로고침 실패:', error);
+                                }
                               }}
                             />
                           </Modal>
@@ -353,8 +396,15 @@ export default function Admin() {
                               onSuccess={async () => {
                                 setEditFacilityOpen(false);
                                 // 시설 수정 후 목록 새로고침
-                                const facilityList = await getFacilities(parseInt(u.orgId));
-                                setFacilities(facilityList);
+                                try {
+                                  const facilityList = await getFacilities(parseInt(u.orgId));
+                                  const normalizedFacilities = Array.isArray(facilityList) ? facilityList : 
+                                                             facilityList?.data && Array.isArray(facilityList.data) ? facilityList.data : [];
+                                  setFacilities(normalizedFacilities);
+                                  console.log('시설 수정 후 목록 새로고침 완료:', normalizedFacilities);
+                                } catch (error) {
+                                  console.error('시설 목록 새로고침 실패:', error);
+                                }
                               }}
                               onClose={() => setEditFacilityOpen(false)}
                             />
@@ -365,15 +415,12 @@ export default function Admin() {
                             </div>
                           ) : (
                             <div>
-                              {/* <p className="text-sm text-gray-500 mb-2">디버그: facilities.length = {facilities?.data?.length || facilities?.length || 0}</p>
-                              <p className="text-sm text-gray-500 mb-2">디버그: facilities 데이터 = {JSON.stringify(facilities)}</p> */}
-                              {(facilities?.data?.length > 0 || facilities?.length > 0) ? (
+                              {facilities && facilities.length > 0 ? (
                                 <table className="w-full">
                                   <thead>
                                     <tr className="border-b">
                                       <th className="px-4 py-2 text-center">시설명</th>
                                       <th className="px-4 py-2 text-center">위치</th>
-                                      {/* <th className="px-4 py-2 text-center">시설 상태</th> */}
                                       <th className="px-4 py-2 text-center">모델번호</th>
                                       <th className="px-4 py-2 text-center">셀 개수</th>
                                       <th className="px-4 py-2 text-center">정격 전력(kW)</th>
@@ -384,11 +431,10 @@ export default function Admin() {
                                     </tr>
                                   </thead>
                                   <tbody>
-                                    {(facilities?.data || facilities || []).map((facility: any, index: number) => (
+                                    {facilities.map((facility: Facility, index: number) => (
                                       <tr key={facility.facilityId || index} className="border-b">
                                         <td className="px-4 py-2">{facility.name || 'N/A'}</td>
                                         <td className="px-4 py-2">{facility.location || 'N/A'}</td>
-                                        {/* <td className="px-4 py-2">{facility.status || 'N/A'}</td> */}
                                         <td className="px-4 py-2">{facility.modelNo || 'N/A'}</td>
                                         <td className="px-4 py-2">{facility.cellCount || 'N/A'}</td>
                                         <td className="px-4 py-2">{facility.ratedPowerKw || 'N/A'}</td>
