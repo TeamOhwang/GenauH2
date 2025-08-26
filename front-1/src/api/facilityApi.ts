@@ -11,7 +11,12 @@ const PATHS = {
 export async function fetchFacilities(userId: number): Promise<Facility[]> {
   const res = await apiClient.get(PATHS.facilitiesByUser(userId));
   const dtos = unwrap<FacilityDTO[]>(res) ?? [];
-  return dtos.map((dto) => ({ id: dto.id, name: dto.name }));
+  return dtos.map((dto) => ({
+    facilityId: dto.facilityId,
+    name: dto.name,
+    orgId: dto.orgId,
+    modelNo: dto.modelNo,
+  }));
 }
 
 /** 설비 KPI 데이터 조회 */
@@ -26,6 +31,6 @@ export async function fetchFacilityKpis(params: {
     facilityId: dto.facilityId,
     facilityName: dto.facilityName,
     productionKg: dto.productionKg,
-    maxPredictedKg: dto.maxPredictedKg,
+    maxPredictedKg: dto.predictedMaxKg, // DTO → Domain 변환
   }));
 }

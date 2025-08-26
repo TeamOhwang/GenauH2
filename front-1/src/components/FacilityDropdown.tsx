@@ -16,7 +16,7 @@ export default function FacilityDropdown({ facilities, selected, onChange }: Pro
       }
     >
       {facilities.map((f) => (
-        <option key={f.id} value={f.id}>
+        <option key={f.facilityId} value={f.facilityId}>
           {f.name}
         </option>
       ))}

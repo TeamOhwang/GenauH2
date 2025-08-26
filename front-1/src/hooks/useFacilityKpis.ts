@@ -8,7 +8,7 @@ export function useFacilityKpis(
   endDate: string
 ) {
   const [kpis, setKpis] = useState<FacilityKpi[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (facilityIds.length === 0) {
@@ -16,7 +16,6 @@ export function useFacilityKpis(
       return;
     }
     setLoading(true);
-
     fetchFacilityKpis({ facilityIds, startDate, endDate }).then((data) => {
       setKpis(data);
       setLoading(false);
