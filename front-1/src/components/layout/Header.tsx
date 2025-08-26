@@ -8,6 +8,7 @@ import { authToken } from "@/stores/authStorage";
 export default function Header() {
   const role = useAuthStore((s) => s.role) as Role | null;
   const logout = useAuthStore((s) => s.logout);
+  const email = useAuthStore((s) => s.email); 
 
   // 토큰과 역할로 로고 목적지 계산
   const token = authToken.get();
@@ -28,6 +29,8 @@ export default function Header() {
     }
   };
 
+
+
   return (
     <header className="flex flex-row justify-between items-center bg-white p-3">
       {/*  역할별 홈 또는 로그인으로 이동 */}
@@ -41,7 +44,7 @@ export default function Header() {
 
       {/* 우측: 이메일(임시) + 로그아웃 */}
       <div className="ml-auto mr-4 flex items-center gap-3">
-        <span className="font-semibold text-gray-600">UserEmail@test.com</span>
+        <span className="font-semibold text-gray-600">{email ?? "로그인 필요"}</span>
         <button
           onClick={handleLogout}
           disabled={pending}

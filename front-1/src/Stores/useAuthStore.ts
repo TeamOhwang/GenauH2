@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { jwtDecode } from "jwt-decode";
+import {jwtDecode} from "jwt-decode";
 import { authToken, ACCESS_TOKEN_KEY } from "@/stores/authStorage";
 import { AuthApi } from "@/api/authApi";
 
@@ -11,6 +11,7 @@ type JWTPayload = {
   exp?: number;
   sub?: string | number;   // 보통 userId는 sub에 들어옴
   userId?: number;         // 서버가 커스텀 claim으로 넣을 수도 있음
+  email?: string;          
 };
 
 // JWT에서 role 파싱
@@ -39,6 +40,16 @@ const decodeUserId = (t: string | null): number | null => {
   return null;
 };
 
+// JWT에서 email 파싱
+const decodeEmail = (t: string | null): string | null => {
+  if (!t) return null;
+  try {
+    const p = jwtDecode<JWTPayload>(t);
+    return p.email ?? null;
+  } catch {}
+  return null;
+};
+
 // BroadcastChannel 준비
 const hasBC =
   typeof window !== "undefined" &&
@@ -51,9 +62,11 @@ let initInFlight: Promise<void> | null = null;
 type AuthState = {
   role: Role;
   userId: number | null;
+  email: string | null;  
   isInit: boolean;
   setRole: (r: Role) => void;
   setUserId: (id: number | null) => void;
+  setEmail: (e: string | null) => void;
   init: () => Promise<void>;
   logout: () => void;
 };
@@ -61,10 +74,12 @@ type AuthState = {
 export const useAuthStore = create<AuthState>()((set, get) => ({
   role: decodeRole(authToken.get()),
   userId: decodeUserId(authToken.get()),
+  email: decodeEmail(authToken.get()),
   isInit: false,
 
   setRole: (r) => set({ role: r }),
   setUserId: (id) => set({ userId: id }),
+  setEmail: (e) => set({ email: e }),
 
   init: async () => {
     if (initInFlight) {
@@ -79,7 +94,11 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         window.addEventListener("storage", (e) => {
           if (e.key === ACCESS_TOKEN_KEY) {
             const token = e.newValue;
-            set({ role: decodeRole(token), userId: decodeUserId(token) });
+            set({ 
+              role: decodeRole(token), 
+              userId: decodeUserId(token),
+              email: decodeEmail(token), 
+            });
           }
         });
       }
@@ -89,15 +108,24 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
           token?: string | null;
         };
         if (type === "SET")
-          set({ role: decodeRole(token ?? null), userId: decodeUserId(token ?? null) });
-        if (type === "LOGOUT") set({ role: null, userId: null });
+          set({ 
+            role: decodeRole(token ?? null), 
+            userId: decodeUserId(token ?? null),
+            email: decodeEmail(token ?? null),  
+          });
+        if (type === "LOGOUT") set({ role: null, userId: null, email: null }); 
       });
     }
 
     initInFlight = (async () => {
       const t = authToken.get();
-      // 항상 토큰에서 role/userId를 다시 세팅
-      set({ role: decodeRole(t), userId: decodeUserId(t), isInit: true });
+      // 항상 토큰에서 role/userId/email 세팅
+      set({ 
+        role: decodeRole(t), 
+        userId: decodeUserId(t),
+        email: decodeEmail(t),   
+        isInit: true 
+      });
     })();
 
     try {
@@ -109,6 +137,6 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
 
   logout: () => {
     AuthApi.logoutAll().catch(() => {});
-    set({ role: null, userId: null, isInit: true });
+    set({ role: null, userId: null, email: null, isInit: true });
   },
 }));

@@ -5,7 +5,7 @@ export default function StatBar(props: {
 }) {
   const { total, nationAvg, selectedAvg } = props;
   return (
-    <div className="grid grid-cols-3 gap-2 text-sm">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
       <div className="p-2 rounded bg-gray-50 border">
         <div className="text-gray-500">총 지점</div>
         <div className="text-lg font-semibold">{total.toLocaleString()} 곳</div>

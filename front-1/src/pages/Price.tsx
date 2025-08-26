@@ -88,24 +88,22 @@ export default function PricePage() {
   };
 
   return (
-    <div className="grid grid-cols-5 gap-6 p-4">
-      {/* 좌측 3/5: 지도 */}
-      <div className="col-span-5 lg:col-span-3 border rounded p-2 relative">
+    <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 p-4">
+      {/* 좌측 지도 */}
+      <div className="col-span-1 lg:col-span-3 border rounded p-2 relative">
         {averages.loading && <div className="p-3 text-gray-500">지도를 불러오는 중…</div>}
         {averages.error && <div className="p-3 text-red-600">{averages.error}</div>}
 
         {averages.data?.length > 0 && (
           <div className="mx-auto w-full">
-            {/* 지도 비율 4:3 (원하면 aspect-[1/1]로 정사각형) */}
-            <div className="aspect-[4/3]">
-              <div className="w-full h-full">
-                <KoreaMap
-                  summary={averages.data}
-                  selectedRegion={selectedRegion}
-                  onRegionSelect={(code) => setSelectedRegion(code ?? null)}
-                  max={15000}
-                />
-              </div>
+            {/* 모바일: 정사각형, PC: 4:3 */}
+            <div className="aspect-[1/1] sm:aspect-[4/3]">
+              <KoreaMap
+                summary={averages.data}
+                selectedRegion={selectedRegion}
+                onRegionSelect={(code) => setSelectedRegion(code ?? null)}
+                max={15000}
+              />
             </div>
           </div>
         )}
@@ -115,15 +113,16 @@ export default function PricePage() {
         </div>
       </div>
 
-      {/* 우측 2/5: 검색/통계/목록/페이지네이션 */}
-      <div className="col-span-5 lg:col-span-2 flex flex-col gap-3">
+      {/* 우측 패널 */}
+      <div className="col-span-1 lg:col-span-2 flex flex-col gap-3">
         {/* 검색 + 페이지 크기 */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <SearchInput
             value={q}
             onChange={onChangeQuery}
             delay={250}
             placeholder="이름으로 검색…"
+            className="flex-1 border rounded px-2 py-1 text-sm"
           />
           <select
             className="border rounded px-2 py-1 text-sm"
@@ -146,7 +145,7 @@ export default function PricePage() {
         />
 
         <ResultTable
-          items={pagedItems}       //  페이지 단위로 잘라서 전달
+          items={pagedItems}
           loading={stations.loading}
           error={stations.error}
         />

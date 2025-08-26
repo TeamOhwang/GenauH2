@@ -1,6 +1,6 @@
-
 import apiClient, { AUTH_ENDPOINTS, unwrap } from "@/api/apiClient";
 import { authToken } from "@/stores/authStorage";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 /** 공개 타입 */
 export type Role = "ADMIN" | "USER";
@@ -12,7 +12,7 @@ const extractBearer = (raw: string) => raw.replace(/^Bearer\s+/i, "").trim();
 /** 서버 role → 앱 Role 매핑 (런타임/타입 안전) */
 const ROLE_MAP = {
   ADMIN: "ADMIN",
-  SUPERVISOR: "ADMIN", // 서버 SUPERVISOR → 앱 ADMIN
+  SUPERVISOR: "ADMIN",
   USER: "USER",
 } as const;
 type ServerRoleKey = keyof typeof ROLE_MAP;
@@ -52,7 +52,7 @@ export const AuthApi = {
     await apiClient.post(AUTH_ENDPOINTS.logout, {});
   },
 
-  /**  프로필: { success, data } 래핑/비래핑 모두 안전 파싱 */
+  /** 프로필: { success, data } 래핑/비래핑 모두 안전 파싱 */
   async profile(): Promise<Profile> {
     const res = await apiClient.get(AUTH_ENDPOINTS.profile);
 
@@ -72,13 +72,30 @@ export const AuthApi = {
   async loginAndSyncRole(payload: LoginReq): Promise<Role | null> {
     const token = await AuthApi.login(payload);
     authToken.set(token);
+
     const prof = await AuthApi.profile();
-    return mapServerRole(prof.role);
+
+    //스토어 업데이트
+    const { setEmail, setUserId, setRole } = useAuthStore.getState();
+    setEmail(prof.email ?? null);
+    setUserId(prof.userId ?? null);
+    const role = mapServerRole(prof.role);
+    setRole(role);
+
+    return role;
   },
 
   async syncRole(): Promise<Role | null> {
     const prof = await AuthApi.profile();
-    return mapServerRole(prof.role);
+
+    //스토어 업데이트
+    const { setEmail, setUserId, setRole } = useAuthStore.getState();
+    setEmail(prof.email ?? null);
+    setUserId(prof.userId ?? null);
+    const role = mapServerRole(prof.role);
+    setRole(role);
+
+    return role;
   },
 
   async logoutAll(): Promise<void> {
@@ -86,6 +103,12 @@ export const AuthApi = {
       await AuthApi.logout();
     } finally {
       authToken.clear();
+
+      // 스토어도 초기화
+      const { setEmail, setUserId, setRole } = useAuthStore.getState();
+      setEmail(null);
+      setUserId(null);
+      setRole(null);
     }
   },
 } as const;
