@@ -1,51 +1,46 @@
+import { useState } from "react";
 import { useLogin } from "@/hooks/useLogin";
 import LoginForm from "@/components/LoginForm";
-import { useNavigate, useLocation, type Location } from "react-router-dom";
-import { useAuthStore } from "@/stores/useAuthStore";
-import { PATHS } from "@/routes/paths";
+import SignupModal from "@/components/SignupModal";
 
+export default function LoginPage() {
+  const { submit, loading, error } = useLogin();
+  const [signupOpen, setSignupOpen] = useState(false);
 
-type Role = "USER" | "ADMIN";
-const roleHome = (r: Role) => (r === "ADMIN" ? PATHS.admin : PATHS.home);
+  return (
+    <div className="flex h-screen w-screen">
+      {/* 왼쪽 로그인 패널 */}
+      <div className="flex w-full md:w-1/2 flex-col items-center justify-center p-8 bg-white">
+        {/* 로고 */}
+        <div className="flex items-center gap-2 mb-6">
+          <div className="w-5 h-5 bg-black rounded-sm" />
+          <span className="font-bold text-lg">SaveUp</span>
+        </div>
 
+        <h2 className="text-2xl font-bold mb-6">로그인</h2>
 
-export default function Login() {
-const { submit, loading, error } = useLogin();
-const navigate = useNavigate();
-const location = useLocation();
+        <LoginForm loading={loading} error={error} onSubmit={submit} />
 
+        {/* 회원가입 버튼 */}
+        <button
+          onClick={() => setSignupOpen(true)}
+          className="mt-6 text-blue-600 underline"
+        >
+          회원가입
+        </button>
+      </div>
 
-const fromState = location.state as { from?: Location | string } | undefined;
+      {/* 오른쪽 이미지 패널 */}
+      <div className="hidden md:block md:w-1/2">
+        <img
+          src="https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?q=80&w=1200"
+          alt="City view"
+          className="h-full w-full object-cover"
+        />
+      </div>
 
-
-const handleSubmit = async (v: { email: string; password: string }): Promise<boolean> => {
-const ok = await submit(v);
-if (!ok) return false;
-
-
-const latestRole = useAuthStore.getState().role;
-
-
-if (fromState?.from) {
-if (typeof fromState.from === "string") {
-navigate(fromState.from || "/", { replace: true });
-} else {
-const loc = fromState.from as Location;
-const path = `${loc.pathname ?? ""}${loc.search ?? ""}${loc.hash ?? ""}`;
-navigate(path || "/", { replace: true });
-}
-return true;
-}
-
-
-if (latestRole) {
-navigate(roleHome(latestRole as Role), { replace: true });
-} else {
-navigate(PATHS.home, { replace: true });
-}
-return true;
-};
-
-
-return <LoginForm loading={loading} error={error} onSubmit={handleSubmit} />;
+      {/* 회원가입 모달 */}
+      {signupOpen && <SignupModal onClose={() => setSignupOpen(false)} />}
+    </div>
+  );
 }
