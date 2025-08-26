@@ -3,7 +3,7 @@ import { authToken } from "@/stores/authStorage";
 
 /* ======================== 상수 ======================== */
 // API 기본 주소
-export const API_BASE_URL: string = (import.meta as any)?.env?.VITE_API_BASE_URL ?? "/gh";
+export const API_BASE_URL: string = (import.meta as any)?.env?.VITE_API_BASE_URL || "/gh";
 // JWT 만료 임계 시간(초)
 const EXP_MARGIN_SEC = 30;
 // 리프레시 토큰 사용 여부

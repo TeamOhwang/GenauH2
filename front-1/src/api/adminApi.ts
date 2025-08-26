@@ -88,15 +88,16 @@ export async function getFacilityListApi(orgId?: string) {
 export async function addFacilityApi(params: {
     orgId: string;
     name: string;
+    type: string;
+    maker: string;
+    model: string;
+    powerKw: number;
+    h2Rate: number;
+    specKwh: number;
+    purity: number;
+    pressure: number;
     location: string;
-    // status: string;
-    modelNo: string;
-    cellCount: string;
-    ratedPowerKw: string; // 정격 전력(kW)
-    ratedOutputKgH: string; // 정격 출력(kg/h)
-    secNominalKwhPerKg: string; // 기준 SEC(kWh/kg) 
-    catalystInstallDate: string; // 촉매 설치일
-    catalystLifeHours: string; // 촉매 수명
+    install: string;
 }) {
     // console.log('=== adminApi.addFacilityApi 시작 ===');
     // console.log('API 엔드포인트:', ADMIN_ENDPOINTS.addFacility);
@@ -164,7 +165,6 @@ export async function updateFacilityApi(params: {
     pressure: number;
     location: string;
     install: string;
-    createdAt: string;
 }) {
     console.log('=== adminApi.updateFacilityApi 시작 ===');
     console.log('API 엔드포인트:', ADMIN_ENDPOINTS.updateFacility);

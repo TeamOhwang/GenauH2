@@ -1045,10 +1045,10 @@ export function buildTimeFrameData() {
         daily: {
             title: "데일리 모니터링",
             stats: [
-                { label: "예측 유휴 전력량 vs 실제 유휴 전력량", value: "40,689", diff: "목표 대비" },
-                { label: "현재 수소 생산량 vs 예측 생산량", value: "40,689", diff: "목표 대비" },
-                { label: "수소 1kg당 전력 소비량", value: "78.1%", diff: "전일 대비" },
-                { label: "현재 설비 가동률", value: "80%", diff: "전일 대비" },
+                { label: "유휴 전력 오차", value: "40,689", diff: "목표 대비" },
+                { label: "수소 생산 달성률", value: "40,689", diff: "목표 대비" },
+                { label: "전력 효율", value: "78.1%", diff: "전일 대비" },
+                { label: "설비 가동률", value: "80%", diff: "전일 대비" },
             ],
             chart1Title: "시간대별 유휴 전력 발생량",
             chart2Title: "시간대별 수소 생산량"
@@ -1056,7 +1056,7 @@ export function buildTimeFrameData() {
         weekly: {
             title: "위클리 모니터링",
             stats: [
-                { label: "총 유휴 전력 발생 시간", value: "40,689", diff: "목표 대비" },
+                { label: "총 유휴 전력 발생 시간", value: "40,689", diff: "전주 대비" },
                 { label: "주간 총 수소 생산량 vs 예측 생산량", value: "40,689", diff: "목표 대비" },
                 { label: "전주 대비 증감률", value: "80%", diff: "전주 대비" },
                 { label: "주간 평균 효율", value: "78.1%", diff: "전주 대비" },
