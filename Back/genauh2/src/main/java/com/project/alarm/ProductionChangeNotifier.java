@@ -32,12 +32,13 @@ public class ProductionChangeNotifier {
     private final OrganizationRepository organizationRepository;
     private final SmsService smsService;
 
-    @Value("${alert.power-drop-kwh:200.0}")
-    private double powerDropThreshold;
+    @Value("${alert.power-change-kwh:200.0}")
+    private double powerChangeThreshold;
 
-    @Value("${alert.hydrogen-drop-kgh:50.0}")
-    private double hydrogenDropThreshold;
+    @Value("${alert.hydrogen-change-kgh:50.0}")
+    private double hydrogenChangeThreshold;
 
+    // 1시간마다 실행 (매시 정각)
     @Scheduled(cron = "0 0 * * * *", zone = "Asia/Seoul")
     @Transactional(readOnly = true)
     public void checkProductionChanges() {
@@ -57,23 +58,28 @@ public class ProductionChangeNotifier {
         log.info("✅ 생산량 변화 감지 스케줄러 종료.");
     }
 
+    // 발전량 급감 체크
     private void checkPowerGeneration(Facility facility, LocalDateTime now) {
         // ID 필드명이 facId로 변경됨
         String plantId = "plt" + String.format("%03d", facility.getFacId());
 
+        // 현재 시간과 1시간 전 데이터 조회
         Optional<PlantGeneration> currentGenOpt = plantGenerationRepository.findByPlantIdAndDateAndHour(plantId, now.toLocalDate(), now.getHour());
         Optional<PlantGeneration> previousGenOpt = plantGenerationRepository.findByPlantIdAndDateAndHour(plantId, now.minusHours(1).toLocalDate(), now.minusHours(1).getHour());
 
         if (currentGenOpt.isPresent() && previousGenOpt.isPresent()) {
             double currentPower = currentGenOpt.get().getGeneration_Kw();
             double previousPower = previousGenOpt.get().getGeneration_Kw();
-            double drop = previousPower - currentPower;
+            double change = currentPower - previousPower;
 
-            if (drop >= powerDropThreshold) {
+            if (Math.abs(change) >= powerChangeThreshold) {
                 // ID 필드명이 facId로 변경됨
-                log.warn("[태양광 발전량 급감] 설비 ID: {}, 변화량: {:.2f} kWh", facility.getFacId(), drop);
-                String message = String.format("[발전량 경고] '%s'의 발전량이 1시간 전 대비 %.0f kWh 감소했습니다. (현재: %.0f kWh)",
-                        facility.getName(), drop, currentPower);
+                String status = change > 0 ? "증가" : "감소";
+                log.warn("[태양광 발전량 급감] 설비 ID: {}, 변화량: {:.2f} kWh", facility.getFacId(), change);
+                
+                String message = String.format("[발전량 %s] '%s'의 발전량이 1시간 전 대비 %.0f kWh %s했습니다. (현재: %.0f kWh)",
+                        status, facility.getName(), Math.abs(change), status, currentPower);
+                
                 sendNotifications(facility, message);
             }
         }
@@ -90,13 +96,15 @@ public class ProductionChangeNotifier {
         if (currentProdOpt.isPresent() && previousProdOpt.isPresent()) {
             double currentProduction = currentProdOpt.get().getProductionKg().doubleValue();
             double previousProduction = previousProdOpt.get().getProductionKg().doubleValue();
-            double drop = previousProduction - currentProduction;
+            double change = currentProduction - previousProduction;
 
-            if (drop >= hydrogenDropThreshold) {
+            if (Math.abs(change) >= hydrogenChangeThreshold) {
                 // ID 필드명이 facId로 변경됨
-                log.warn("[수소 생산량 급감] 설비 ID: {}, 변화량: {:.2f} kg", facility.getFacId(), drop);
-                String message = String.format("[수소생산량 경고] '%s'의 생산량이 1시간 전 대비 %.0f kg 감소했습니다. (현재: %.0f kg)",
-                        facility.getName(), drop, currentProduction);
+                String status = change > 0 ? "증가" : "감소";
+                log.warn("[수소 생산량 급감] 설비 ID: {}, 변화량: {:.2f} kg", facility.getFacId(), change);
+                
+                String message = String.format("[수소생산량 %s] '%s'의 생산량이 1시간 전 대비 %.1f kg %s했습니다. (현재: %.1f kg)",
+                        status, facility.getName(), Math.abs(change), status, currentProduction);
                 sendNotifications(facility, message);
             }
         }
