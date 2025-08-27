@@ -1,166 +1,154 @@
+import { getNotificationSettingsApi, requestPasswordResetApi, updateNotificationSettingsApi } from "@/api/userApi";
 import Button from "@/components/ui/Button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function Setting() {
 
-    const [emailNotification, setEmailNotification] = useState(true);
-    const [smsNotification, setSmsNotification] = useState(true);
-    const [isEmailOpen, setIsEmailOpen] = useState(false);
+    const [emailNotification, setEmailNotification] = useState(false);
+    const [smsNotification, setSmsNotification] = useState(false);
     const [isSmsOpen, setIsSmsOpen] = useState(false);
-    const [isPasswordOpen, setIsPasswordOpen] = useState(false);
-    
-    // 이메일과 SMS 계정 목록 상태 추가
-    const [emailAccounts, setEmailAccounts] = useState<string[]>([]);
-    const [smsAccounts, setSmsAccounts] = useState<string[]>([]);
-    
-    // 입력값 상태 추가
-    const [emailInput, setEmailInput] = useState("");
-    const [smsInput, setSmsInput] = useState("");
-    const [currentPassword, setCurrentPassword] = useState("");
-    const [newPassword, setNewPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
+    const [isLoading, setIsLoading] = useState(true);
 
-    const handleEmailButtonClick = () => {
-        console.log("이메일 추가 클릭");
-        setIsEmailOpen(!isEmailOpen);
-        if (isEmailOpen) {
-            setEmailInput(""); // 모달 닫을 때 입력값 초기화
+    // 비밀번호 변경 메일 발송 여부
+    const [isPasswordReset, setIsPasswordReset] = useState(false);
+
+    // 알림 설정 번호
+    const [notificationSms, setNotificationSms] = useState("");
+
+    // 이메일과 SMS 계정 목록 상태 추가
+    const [smsAccounts, setSmsAccounts] = useState<string[]>([]);
+
+    // 입력값 상태 추가
+    const [smsInput, setSmsInput] = useState("");
+
+    // 알림 설정 불러오기
+    const loadNotificationSettings = async () => {
+        try {
+            setIsLoading(true);
+            const res = await getNotificationSettingsApi();
+            console.log("알림 설정 조회 결과:", res);
+            
+            if (res) {
+                setEmailNotification(res.emailNotification || false);
+                setSmsNotification(res.smsNotification || false);
+                setNotificationSms(res.phoneNum || "");
+            }
+        } catch (error) {
+            console.error("알림 설정 조회 실패:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // 이메일 알림 토글 처리
+    const handleEmailNotificationToggle = async (checked: boolean) => {
+        try {
+            setEmailNotification(checked);
+            const res = await updateNotificationSettingsApi({
+                emailNotification: checked,
+                smsNotification: smsNotification
+            });
+            console.log("이메일 알림 설정 업데이트 결과:", res);
+        } catch (error) {
+            console.error("이메일 알림 설정 업데이트 실패:", error);
+            // 실패 시 원래 상태로 되돌리기
+            setEmailNotification(!checked);
+        }
+    };
+
+    // SMS 알림 토글 처리
+    const handleSmsNotificationToggle = async (checked: boolean) => {
+        try {
+            setSmsNotification(checked);
+            const res = await updateNotificationSettingsApi({
+                emailNotification: emailNotification,
+                smsNotification: checked
+            });
+            console.log("SMS 알림 설정 업데이트 결과:", res);
+        } catch (error) {
+            console.error("SMS 알림 설정 업데이트 실패:", error);
+            // 실패 시 원래 상태로 되돌리기
+            setSmsNotification(!checked);
         }
     };
 
     const handleSmsButtonClick = () => {
-        console.log("SMS 추가 클릭");
+        console.log("SMS 변경 클릭");
         setIsSmsOpen(!isSmsOpen);
         if (isSmsOpen) {
             setSmsInput(""); // 모달 닫을 때 입력값 초기화
         }
     };
 
-    // 이메일 계정 추가
-    const handleEmailAdd = () => {
-        if (emailInput.trim() && !emailAccounts.includes(emailInput.trim())) {
-            setEmailAccounts([...emailAccounts, emailInput.trim()]);
-            setEmailInput("");
-            setIsEmailOpen(!isEmailOpen);
-        }
-    };
-
-    // SMS 계정 추가
-    const handleSmsAdd = () => {
+    // SMS 계정 변경
+    const handleSmsUpdate = () => {
         if (smsInput.trim() && !smsAccounts.includes(smsInput.trim())) {
             setSmsAccounts([...smsAccounts, smsInput.trim()]);
             setSmsInput("");
             setIsSmsOpen(!isSmsOpen);
-        }
-    };
-
-    // 이메일 계정 삭제
-    const handleEmailDelete = (index: number) => {
-        setEmailAccounts(emailAccounts.filter((_, i) => i !== index));
-    };
-
-    // SMS 계정 삭제
-    const handleSmsDelete = (index: number) => {
-        setSmsAccounts(smsAccounts.filter((_, i) => i !== index));
-    };
-
-    // 엔터키 처리
-    const handleEmailKeyPress = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter') {
-            handleEmailAdd();
+        } else {
+            setIsSmsOpen(!isSmsOpen);
         }
     };
 
     const handleSmsKeyPress = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
-            handleSmsAdd();
+            handleSmsUpdate();
         }
     };
 
-    const handlePasswordChange = () => {
-        setIsPasswordOpen(!isPasswordOpen);
-        if (isPasswordOpen) {
-            setCurrentPassword("");
-            setNewPassword("");
-            setConfirmPassword("");
-        }
-        console.log("비밀번호 변경");
-    };
+    const handleChangePassword = () => {
+        console.log("비밀번호 변경 클릭");
+        requestPasswordResetApi().then((res: any) => {
+            setIsPasswordReset(isPasswordReset);
+            console.log(res);
+        });
+    }
+
+    useEffect(() => {
+        loadNotificationSettings();
+    }, []);
+
+    // 로딩 중일 때 표시할 내용
+    if (isLoading) {
+        return (
+            <div className="flex flex-col gap-4">
+                <div className="bg-white p-6 rounded-lg shadow-md">
+                    <div className="animate-pulse">
+                        <div className="h-6 bg-gray-200 rounded w-1/4 mb-4"></div>
+                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col gap-4">
             <div className="bg-white p-4 rounded-lg shadow-md">
                 <p className="text-xl font-bold">비밀번호 변경</p>
-                {!isPasswordOpen && (
-                    <button onClick={handlePasswordChange}>비밀번호 변경</button>
-                )}
-                {isPasswordOpen && (
-                    <div className="flex flex-col gap-5 w-1/6 m-4">
-                        <input type="password" placeholder="현재 비밀번호" />
-                        <input type="password" placeholder="새 비밀번호" />
-                        <input type="password" placeholder="새 비밀번호 확인" />
-                        <button type="submit" onClick={handlePasswordChange}>비밀번호 변경</button>
-                    </div>
-                )}
-                <span className="text-sm text-red-500"></span>
+                <button onClick={handleChangePassword}>비밀번호 변경</button>
+                {isPasswordReset && <p className="text-red-500 text-xs font-light mb-3">비밀번호 변경 메일이 발송되었습니다.</p>}
             </div>
-            
+
             {/* 알림 설정 섹션 */}
             <div className="bg-white p-6 rounded-lg shadow-md">
                 <h2 className="text-xl font-bold text-black mb-6">알림 설정</h2>
-                
+
                 {/* 이메일 알림 */}
                 <div className="mb-8">
                     <div className="flex items-start justify-between">
                         <div className="flex-1">
                             <h3 className="text-lg font-bold text-black mb-2">이메일</h3>
                             <p className="text-black mb-3">이메일 계정으로 알림을 발송합니다.</p>
-                            {!isEmailOpen && <button 
-                                className="text-sm text-gray-500 hover:text-gray-700"
-                                onClick={handleEmailButtonClick}
-                            >
-                                계정 추가+
-                            </button>}
-                            {isEmailOpen && (
-                                <div className="mt-4">
-                                    <input 
-                                        type="email" 
-                                        placeholder="이메일 추가" 
-                                        value={emailInput}
-                                        onChange={(e) => setEmailInput(e.target.value)}
-                                        onKeyPress={handleEmailKeyPress}
-                                        className="w-1/3 p-2 border border-gray-300 rounded-md mr-2" 
-                                    />
-                                    <Button type="submit" onClick={handleEmailAdd}>추가</Button>
-                                </div>
-                            )}
-                            
-                            {/* 이메일 계정 목록 */}
-                            {emailAccounts.length > 0 && (
-                                <div className="mt-4">
-                                    <h4 className="text-sm font-semibold text-gray-700 mb-2">등록된 이메일 계정:</h4>
-                                    <div className="space-y-2">
-                                        {emailAccounts.map((email, index) => (
-                                            <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded-md">
-                                                <span className="text-sm text-gray-800">{email}</span>
-                                                <button
-                                                    onClick={() => handleEmailDelete(index)}
-                                                    className="text-red-500 hover:text-red-700 text-sm px-2 py-1 rounded hover:bg-red-50"
-                                                >
-                                                    삭제
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
                         </div>
                         <label className="inline-flex items-center cursor-pointer ml-4">
-                            <input 
-                                type="checkbox" 
-                                className="sr-only peer" 
+                            <input
+                                type="checkbox"
+                                className="sr-only peer"
                                 checked={emailNotification}
-                                onChange={(e) => setEmailNotification(e.target.checked)}
+                                onChange={(e) => handleEmailNotificationToggle(e.target.checked)}
                             />
                             <div className={`
                                 relative w-11 h-6 rounded-full transition-colors duration-200 ease-in-out
@@ -181,52 +169,33 @@ export default function Setting() {
                         <div className="flex-1">
                             <h3 className="text-lg font-bold text-black mb-2">SMS</h3>
                             <p className="text-black mb-3">SMS로 알림을 발송합니다.</p>
-                            {!isSmsOpen && <button 
+                            <p className="text-black mb-3">등록된 번호 : {notificationSms}</p>
+                            {!isSmsOpen && <button
                                 className="text-sm text-gray-500 hover:text-gray-700"
                                 onClick={handleSmsButtonClick}
                             >
-                                계정 추가+
+                                번호 변경
                             </button>}
                             {isSmsOpen && (
                                 <div className="mt-4">
-                                    <input 
-                                        type="text" 
-                                        placeholder="SMS 추가" 
+                                    <input
+                                        type="text"
+                                        placeholder="등록 번호 변경"
                                         value={smsInput}
                                         onChange={(e) => setSmsInput(e.target.value)}
                                         onKeyPress={handleSmsKeyPress}
-                                        className="w-1/3 p-2 border border-gray-300 rounded-md mr-2" 
+                                        className="w-1/3 p-2 border border-gray-300 rounded-md mr-2"
                                     />
-                                    <Button type="submit" onClick={handleSmsAdd}>추가</Button>
-                                </div>
-                            )}
-                            
-                            {/* SMS 계정 목록 */}
-                            {smsAccounts.length > 0 && (
-                                <div className="mt-4">
-                                    <h4 className="text-sm font-semibold text-gray-700 mb-2">등록된 SMS 계정:</h4>
-                                    <div className="space-y-2">
-                                        {smsAccounts.map((sms, index) => (
-                                            <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded-md">
-                                                <span className="text-sm text-gray-800">{sms}</span>
-                                                <button
-                                                    onClick={() => handleSmsDelete(index)}
-                                                    className="text-red-500 hover:text-red-700 text-sm px-2 py-1 rounded hover:bg-red-50"
-                                                >
-                                                    삭제
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
+                                    <Button type="submit" onClick={handleSmsUpdate}>변경</Button>
                                 </div>
                             )}
                         </div>
                         <label className="inline-flex items-center cursor-pointer ml-4">
-                            <input 
-                                type="checkbox" 
-                                className="sr-only peer" 
+                            <input
+                                type="checkbox"
+                                className="sr-only peer"
                                 checked={smsNotification}
-                                onChange={(e) => setSmsNotification(e.target.checked)}
+                                onChange={(e) => handleSmsNotificationToggle(e.target.checked)}
                             />
                             <div className={`
                                 relative w-11 h-6 rounded-full transition-colors duration-200 ease-in-out
