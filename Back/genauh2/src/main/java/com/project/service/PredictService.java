@@ -5,11 +5,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.project.repository.PredictRepository;
 import com.project.dto.PredictDTO;
+import com.project.dto.SumRes;
+
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Transactional
@@ -105,4 +109,30 @@ public class PredictService {
         List<Object[]> rawResults = predictRepository.getPredictionsByDateRange(startDate, endDate);
         return convertToDto(rawResults);
     }
+    
+    
+    /// 사업자 id 기준으로 등록된 설비id 가져오고, 수소생산량, 최대수소생산량 집계합
+    @Transactional(readOnly = true)
+    public List<Map<String,Object>> sumGetByData(Long orgId) {
+        List<Object[]> rows = predictRepository.sumGetByData(orgId);
+
+        List<Map<String,Object>> result = new ArrayList<>();
+        for (Object[] row : rows) {
+            Map<String,Object> map = new HashMap<>();
+            map.put("orgId", row[0]);
+            map.put("facId", row[1]);
+            map.put("facilityName", row[2]);
+            map.put("ts", row[3]);
+            map.put("totalMaxKg", row[4]);
+            map.put("totalCurrentKg", row[5]);
+            map.put("cumulativeMax", row[6]);
+            map.put("cumulativeCurrent", row[7]);
+            result.add(map);
+        }
+        return result;
+    }
 }
+    
+    
+    
+    

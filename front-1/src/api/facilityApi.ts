@@ -1,29 +1,31 @@
 import apiClient, { AUTH_ENDPOINTS, unwrap } from "@/api/apiClient";
 
 export type FacilityReq = {
-  facId :number;
-  plantId:number;
-  ts: string;                 // 타임스탬프 (ISO: YYYY-MM-DDTHH:mm:ss)
-  predictedMaxKg: string;     // 예측 최대 수소 생산량 (kg)
-  predictedCurrentKg: string; // 예측 현재 수소 생산량 (kg)
-  facilityName: string;       // 설비명
+  orgId: number;               // 사업자 ID
+  facId: number;               // 설비 ID
+  facilityName: string;        // 설비 이름
+  ts: string;                  // ISO 날짜 문자열 (백엔드 LocalDateTime → JSON 문자열)
+  totalMaxKg: number;          // 시간당 최대생산량 합계
+  totalCurrentKg: number;      // 시간당 실제생산량 합계
+  cumulativeMax: number;       // 누적 최대생산량
+  cumulativeCurrent: number;   // 누적 실제생산량
 };
 
 
 export const FacilityApi = {
   async listByOrg(orgId: number): Promise<FacilityReq[]> {
     const res = await apiClient.get(AUTH_ENDPOINTS.predictAll, { params: { orgId } });
-    const data = res.data.map((item: any) => ({
-      facId: item.facid,
-      plantId: item.plantId,
-      facilityName: item.facilityName,
-      predictedMaxKg: item.predictedmaxkg,
-      predictedCurrentKg: item.predictedcurrentkg,
+    const raw = unwrap<any[]>(res) ?? []; 
+
+    return raw.map((item) => ({
+      orgId: item.orgId,
+      facId: item.facId,
+      facilityName: item.facilityName,      
       ts: item.ts,
+      totalMaxKg: Number(item.totalMaxKg),  
+      totalCurrentKg: Number(item.totalCurrentKg), 
+      cumulativeMax: Number(item.cumulativeMax),
+      cumulativeCurrent: Number(item.cumulativeCurrent),
     }));
-
-    console.log("필드만 추출:", data);
-
-    return data;
   },
 };

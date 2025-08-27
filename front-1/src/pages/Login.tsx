@@ -1,3 +1,4 @@
+// src/pages/LoginPage.tsx
 import { useState } from "react";
 import { useLogin } from "@/hooks/useLogin";
 import LoginForm from "@/components/LoginForm";
@@ -19,6 +20,7 @@ export default function LoginPage() {
 
         <h2 className="text-2xl font-bold mb-6">로그인</h2>
 
+        {/* 로그인 폼 */}
         <LoginForm loading={loading} error={error} onSubmit={submit} />
 
         {/* 회원가입 버튼 */}

@@ -1,4 +1,3 @@
-// src/hooks/useFacilitiesByOrg.ts
 import { useEffect, useState } from "react";
 import { FacilityApi, FacilityReq } from "@/api/facilityApi";
 
@@ -13,7 +12,8 @@ export function useFacilitiesByOrg(orgId: number) {
       const facilities = await FacilityApi.listByOrg(orgId);
       setData(facilities);
       setError(null);
-    } catch {
+    } catch (e) {
+      console.error("시설 데이터 조회 실패:", e); //  디버깅 로그
       setError("설비 목록을 불러오는데 실패했습니다.");
     } finally {
       setLoading(false);
@@ -21,7 +21,7 @@ export function useFacilitiesByOrg(orgId: number) {
   };
 
   useEffect(() => {
-    if (orgId) fetchFacilities();
+    if (orgId != null) fetchFacilities(); // 0 도 허용, null/undefined만 배제
   }, [orgId]);
 
   return { data, loading, error, refetch: fetchFacilities };

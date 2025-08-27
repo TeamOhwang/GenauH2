@@ -9,6 +9,7 @@ export const PATHS = {
     dashboard: "/dashboard",
     detailed: "/detailed",
     facilityPage: "/facilityPage",
+    equipmentList: "/equipmentList",
     price: "/price",
     setting: "/setting",
     forbidden: "/403",

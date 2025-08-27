@@ -1,6 +1,7 @@
 package com.project.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -8,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.project.service.PredictService;
 import com.project.dto.PredictDTO;
+import com.project.dto.SumRes;
 
 @RestController
 @RequestMapping("/predict")
@@ -107,4 +109,22 @@ public class PredictController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
+    
+    
+    
+    /// 사업자 id 기준으로 등록된 설비id 가져오고, 수소생산량, 최대수소생산량 집계합
+    @GetMapping("/allsumid")
+    public ResponseEntity<List<Map<String,Object>>> sumGetByData(@RequestParam("orgId") Long orgId) {
+        List<Map<String,Object>> data = predictService.sumGetByData(orgId);
+        return ResponseEntity.ok(data);
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+     
 }

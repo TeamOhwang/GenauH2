@@ -12,6 +12,7 @@ export default function Sidebar() {
         { label: "대시보드", to: PATHS.dashboard, icon: <LayoutDashboard /> },
         { label: "상세 데이터", to: PATHS.facilityPage, icon: <ChartLine /> },
         { label: "수소 가격 정보", to: PATHS.price, icon: <DollarSign /> },
+        { label: "설비 대시보드", to: PATHS.equipmentList, icon: <DollarSign /> },
         { label: "설정", to: PATHS.setting, icon: <Settings /> },
     ];
 
