@@ -1,7 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { PATHS } from "@/routes/paths";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { ChartLine, DollarSign, LayoutDashboard, Settings, ShieldUser } from "lucide-react"
+import { ChartLine, DollarSign, LayoutDashboard, Lock, Settings, ShieldUser } from "lucide-react"
 
 
 export default function Sidebar() {
@@ -13,6 +13,7 @@ export default function Sidebar() {
         { label: "상세 데이터", to: PATHS.facilityPage, icon: <ChartLine /> },
         { label: "수소 가격 정보", to: PATHS.price, icon: <DollarSign /> },
         { label: "설정", to: PATHS.setting, icon: <Settings /> },
+        // { label: "비밀번호 변경", to: PATHS.changePassword, icon: <Lock /> },
     ];
 
     // ADMIN 전용 메뉴 (필요시 추가)

@@ -59,6 +59,7 @@ export default function AppRouter() {
             <Route path={PATHS.price} element={<Price />} />
             <Route path={PATHS.facilityPage} element={<FacilityPage />} /> 
             <Route path={PATHS.setting} element={<Setting />} />
+            {/* <Route path={PATHS.changePassword} element={<ChangePassword />} /> */}
           </Route>
 
           <Route element={<ProtectedRoute require="SUPERVISOR"><Outlet /></ProtectedRoute>}>

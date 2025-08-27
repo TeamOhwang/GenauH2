@@ -11,6 +11,7 @@ export const PATHS = {
     facilityPage: "/facilityPage",
     price: "/price",
     setting: "/setting",
+    // changePassword: "/changePassword", // 비밀번호 페이지 테스트
     forbidden: "/403",
     notFound: "*",
 } as const;
