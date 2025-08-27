@@ -54,6 +54,10 @@ public class SecurityConfig {
                 .requestMatchers("/ws/**").permitAll()
                 .requestMatchers("/error").permitAll()
                 .requestMatchers("/alert/**").permitAll()
+
+                // 테스트용 엔드포인트 허용
+                .requestMatchers("/test/**").permitAll()
+                
                 // 나머지는 인증 필요
                 .anyRequest().authenticated()
             )
