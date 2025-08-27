@@ -21,14 +21,17 @@ export default function SignupModal({ onClose }: Props) {
   // 설비 정보 상태
   const [facilities, setFacilities] = useState<FacilityReq[]>([
     {
-      name: "",
-      location: "",
-      modelNo: "",
-      cellCount: "",
-      ratedPowerKw: "",
-      ratedOutputKgH: "",
-      secNominalKwhPerKg: "",
-      catalystInstallDate: "",
+  name: "",                       // 시설명
+  type: "PEM",                    // 전해조 타입 (Enum)
+  maker: "",                      // 제조사 (선택)
+  model: "",                      // 모델명 (선택)
+  powerKw: "",                     // 정격 전력 (kW)
+  h2Rate: "",                      // 정격 수소 생산량 (kg/h)
+  specKwh: "",                     // 특정 소비전력 (kWh/kg)
+  purity: "",                      // 수소 순도 (%) (선택)
+  pressure: "",                    // 인출 압력 (bar) (선택)
+  location: "",                   // 설치 위치 (선택)
+  install: "",                    // 설치일자 (YYYY-MM-DD, 선택)
     },
   ]);
 
@@ -41,14 +44,17 @@ export default function SignupModal({ onClose }: Props) {
     setFacilities([
       ...facilities,
       {
-        name: "",
-        location: "",
-        modelNo: "",
-        cellCount: "",
-        ratedPowerKw: "",
-        ratedOutputKgH: "",
-        secNominalKwhPerKg: "",
-        catalystInstallDate: "",
+      name: "",                       
+      type: "PEM",                   
+      maker: "",                     
+      model: "",                      
+      powerKw: "",                    
+      h2Rate: "",                      
+      specKwh: "",                   
+      purity: "",                      
+      pressure: "",                   
+      location: "",                  
+      install: "",        
       },
     ]);
 
@@ -117,7 +123,7 @@ export default function SignupModal({ onClose }: Props) {
       <DialogPanel className="bg-white w-11/12 md:w-3/4 lg:w-2/3 xl:w-1/2 
                                max-h-[90vh] overflow-y-auto rounded-lg p-6">
         {/* 제목 */}
-        <Dialog.Title className="text-xl font-bold mb-6">회원가입</Dialog.Title>
+        <DialogTitle className="text-xl font-bold mb-6">회원가입</DialogTitle>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           {/* 사용자 정보 */}
@@ -183,118 +189,178 @@ export default function SignupModal({ onClose }: Props) {
             </div>
           </fieldset>
 
-          {/* 설비 등록 */}
-          <fieldset className="border rounded p-4">
-            <legend className="font-semibold px-2">설비 등록</legend>
-            {facilities.map((f, idx) => (
-              <div key={idx} className="border p-4 mb-4 rounded-lg">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <input
-                    type="text"
-                    placeholder="시설명"
-                    value={f.name}
-                    onChange={(e) => {
-                      const copy = [...facilities];
-                      copy[idx].name = e.target.value;
-                      setFacilities(copy);
-                    }}
-                    className="border rounded px-3 py-2"
-                  />
-                  <input
-                    type="text"
-                    placeholder="위치"
-                    value={f.location}
-                    onChange={(e) => {
-                      const copy = [...facilities];
-                      copy[idx].location = e.target.value;
-                      setFacilities(copy);
-                    }}
-                    className="border rounded px-3 py-2"
-                  />
-                  <input
-                    type="text"
-                    placeholder="모델번호"
-                    value={f.modelNo}
-                    onChange={(e) => {
-                      const copy = [...facilities];
-                      copy[idx].modelNo = e.target.value;
-                      setFacilities(copy);
-                    }}
-                    className="border rounded px-3 py-2"
-                  />
-                  <input
-                    type="text"
-                    placeholder="셀 개수"
-                    value={f.cellCount}
-                    onChange={(e) => {
-                      const copy = [...facilities];
-                      copy[idx].cellCount = e.target.value;
-                      setFacilities(copy);
-                    }}
-                    className="border rounded px-3 py-2"
-                  />
-                  <input
-                    type="text"
-                    placeholder="정격 전력"
-                    value={f.ratedPowerKw}
-                    onChange={(e) => {
-                      const copy = [...facilities];
-                      copy[idx].ratedPowerKw = e.target.value;
-                      setFacilities(copy);
-                    }}
-                    className="border rounded px-3 py-2"
-                  />
-                  <input
-                    type="text"
-                    placeholder="정격 출력"
-                    value={f.ratedOutputKgH}
-                    onChange={(e) => {
-                      const copy = [...facilities];
-                      copy[idx].ratedOutputKgH = e.target.value;
-                      setFacilities(copy);
-                    }}
-                    className="border rounded px-3 py-2"
-                  />
-                  <input
-                    type="text"
-                    placeholder="기준 SEC"
-                    value={f.secNominalKwhPerKg}
-                    onChange={(e) => {
-                      const copy = [...facilities];
-                      copy[idx].secNominalKwhPerKg = e.target.value;
-                      setFacilities(copy);
-                    }}
-                    className="border rounded px-3 py-2"
-                  />
-                  <input
-                    type="text"
-                    placeholder="촉매 설치일"
-                    value={f.catalystInstallDate}
-                    onChange={(e) => {
-                      const copy = [...facilities];
-                      copy[idx].catalystInstallDate = e.target.value;
-                      setFacilities(copy);
-                    }}
-                    className="border rounded px-3 py-2"
-                  />
-                </div>
+              {/* 설비 등록 */}
+              <fieldset className="border rounded p-4">
+                <legend className="font-semibold px-2">설비 등록</legend>
+                {facilities.map((f, idx) => (
+                  <div key={idx} className="border p-4 mb-4 rounded-lg relative">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {/* 시설명 */}
+                      <input
+                        type="text"
+                        placeholder="시설명"
+                        value={f.name}
+                        onChange={(e) => {
+                          const copy = [...facilities];
+                          copy[idx].name = e.target.value;
+                          setFacilities(copy);
+                        }}
+                        className="border rounded px-3 py-2"
+                      />
+
+                      {/* 전해조 타입 */}
+                      <select
+                        value={f.type}
+                        onChange={(e) => {
+                          const copy = [...facilities];
+                          copy[idx].type = e.target.value as "PEM" | "ALK" | "SOEC";
+                          setFacilities(copy);
+                        }}
+                        className="border rounded px-3 py-2"
+                      >
+                        <option value="PEM">PEM</option>
+                        <option value="ALK">ALK</option>
+                        <option value="SOEC">SOEC</option>
+                      </select>
+
+                      {/* 제조사 */}
+                      <input
+                        type="text"
+                        placeholder="제조사"
+                        value={f.maker ?? ""}
+                        onChange={(e) => {
+                          const copy = [...facilities];
+                          copy[idx].maker = e.target.value;
+                          setFacilities(copy);
+                        }}
+                        className="border rounded px-3 py-2"
+                      />
+
+                      {/* 모델명 */}
+                      <input
+                        type="text"
+                        placeholder="모델명"
+                        value={f.model ?? ""}
+                        onChange={(e) => {
+                          const copy = [...facilities];
+                          copy[idx].model = e.target.value;
+                          setFacilities(copy);
+                        }}
+                        className="border rounded px-3 py-2"
+                      />
+
+                      {/* 정격 전력 */}
+                      <input
+                        type="text"
+                        placeholder="정격 전력 (kW)"
+                        value={f.powerKw}
+                        onChange={(e) => {
+                          const copy = [...facilities];
+                          copy[idx].powerKw = e.target.value;
+                          setFacilities(copy);
+                        }}
+                        className="border rounded px-3 py-2"
+                      />
+
+                      {/* 정격 수소 생산량 */}
+                      <input
+                        type="text"
+                        placeholder="정격 수소 생산량 (kg/h)"
+                        value={f.h2Rate}
+                        onChange={(e) => {
+                          const copy = [...facilities];
+                          copy[idx].h2Rate = e.target.value;
+                          setFacilities(copy);
+                        }}
+                        className="border rounded px-3 py-2"
+                      />
+
+                      {/* 특정 소비전력 */}
+                      <input
+                        type="text"
+                        placeholder="특정 소비전력 (kWh/kg)"
+                        value={f.specKwh}
+                        onChange={(e) => {
+                          const copy = [...facilities];
+                          copy[idx].specKwh = e.target.value;
+                          setFacilities(copy);
+                        }}
+                        className="border rounded px-3 py-2"
+                      />
+
+                      {/* 수소 순도 */}
+                      <input
+                        type="text"
+                        placeholder="수소 순도 (%)"
+                        value={f.purity ?? ""}
+                        onChange={(e) => {
+                          const copy = [...facilities];
+                          copy[idx].purity = e.target.value;
+                          setFacilities(copy);
+                        }}
+                        className="border rounded px-3 py-2"
+                      />
+
+                      {/* 인출 압력 */}
+                      <input
+                        type="text"
+                        placeholder="인출 압력 (bar)"
+                        value={f.pressure ?? ""}
+                        onChange={(e) => {
+                          const copy = [...facilities];
+                          copy[idx].pressure = e.target.value;
+                          setFacilities(copy);
+                        }}
+                        className="border rounded px-3 py-2"
+                      />
+
+                      {/* 설치 위치 */}
+                      <input
+                        type="text"
+                        placeholder="설치 위치"
+                        value={f.location ?? ""}
+                        onChange={(e) => {
+                          const copy = [...facilities];
+                          copy[idx].location = e.target.value;
+                          setFacilities(copy);
+                        }}
+                        className="border rounded px-3 py-2"
+                      />
+
+                      {/* 설치일자 */}
+                      <input
+                        type="date"
+                        placeholder="설치일자"
+                        value={f.install ?? ""}
+                        onChange={(e) => {
+                          const copy = [...facilities];
+                          copy[idx].install = e.target.value;
+                          setFacilities(copy);
+                        }}
+                        className="border rounded px-3 py-2"
+                      />
+                    </div>
+                    {/* 삭제 버튼 */}
+                    <button
+                      type="button"
+                      onClick={() => removeFacility(idx)}
+                      className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
+                    >
+                      삭제
+                    </button>
+                  </div>
+                ))}
+
+                {/* 설비 추가 버튼 */}
                 <button
                   type="button"
-                  onClick={() => removeFacility(idx)}
-                  className="text-red-500 text-sm mt-2 hover:underline"
+                  onClick={addFacility}
+                  className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
                 >
-                  삭제
+                  + 설비 추가
                 </button>
-              </div>
-            ))}
-            <button
-              type="button"
-              onClick={addFacility}
-              className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-            >
-              + 설비 추가
-            </button>
-          </fieldset>
+              </fieldset>
+
 
           {/* 버튼 영역 */}
           <div className="flex justify-end gap-3">

@@ -9,14 +9,17 @@ export type LoginReq = { email: string; password: string };
 
 /** 시설 등록 요청 DTO */
 export type FacilityReq = {
-  name: string;                  // 시설명
-  location: string;              // 설치 위치 (주소 or 좌표)
-  modelNo: string;               // 모델 번호
-  cellCount: string;             // 셀 수 (숫자형)
-  ratedPowerKw: string;          // 정격 출력 (kW)
-  ratedOutputKgH: string;        // 정격 수소 생산량 (kg/h)
-  secNominalKwhPerKg: string;    // SEC (kWh/kg)
-  catalystInstallDate: string;   // 촉매 설치일 (YYYY-MM-DD)
+  name: string;                 // 시설명
+  type: "PEM" | "ALK" | "SOEC"; // 전해조 타입 (Enum)
+  maker?: string;               // 제조사
+  model?: string;               // 모델명
+  powerKw: string;              // 정격 전력 (kW)
+  h2Rate: string;               // 정격 수소 생산량 (kg/h)
+  specKwh: string;              // 특정 소비전력 (kWh/kg)
+  purity?: string;              // 수소 순도 (%)
+  pressure?: string;            // 인출 압력 (bar)
+  location?: string;            // 설치 위치
+  install?: string;             // 설치일자 (YYYY-MM-DD)
 };
 
 /** 회원가입 + 시설 등록 요청 DTO */
