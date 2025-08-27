@@ -1,3 +1,4 @@
+import { verifyPasswordApi } from "@/api/userApi";
 import Button from "@/components/ui/Button";
 import { useState } from "react";
 
@@ -8,11 +9,11 @@ export default function Setting() {
     const [isEmailOpen, setIsEmailOpen] = useState(false);
     const [isSmsOpen, setIsSmsOpen] = useState(false);
     const [isPasswordOpen, setIsPasswordOpen] = useState(false);
-    
+
     // 이메일과 SMS 계정 목록 상태 추가
     const [emailAccounts, setEmailAccounts] = useState<string[]>([]);
     const [smsAccounts, setSmsAccounts] = useState<string[]>([]);
-    
+
     // 입력값 상태 추가
     const [emailInput, setEmailInput] = useState("");
     const [smsInput, setSmsInput] = useState("");
@@ -77,45 +78,28 @@ export default function Setting() {
         }
     };
 
-    const handlePasswordChange = () => {
-        setIsPasswordOpen(!isPasswordOpen);
-        if (isPasswordOpen) {
-            setCurrentPassword("");
-            setNewPassword("");
-            setConfirmPassword("");
-        }
-        console.log("비밀번호 변경");
-    };
+    const handleChangePassword = () => {
+        
+    }
 
     return (
         <div className="flex flex-col gap-4">
             <div className="bg-white p-4 rounded-lg shadow-md">
                 <p className="text-xl font-bold">비밀번호 변경</p>
-                {!isPasswordOpen && (
-                    <button onClick={handlePasswordChange}>비밀번호 변경</button>
-                )}
-                {isPasswordOpen && (
-                    <div className="flex flex-col gap-5 w-1/6 m-4">
-                        <input type="password" placeholder="현재 비밀번호" />
-                        <input type="password" placeholder="새 비밀번호" />
-                        <input type="password" placeholder="새 비밀번호 확인" />
-                        <button type="submit" onClick={handlePasswordChange}>비밀번호 변경</button>
-                    </div>
-                )}
-                <span className="text-sm text-red-500"></span>
+                <button onClick={handleChangePassword}>비밀번호 변경</button>
             </div>
-            
+
             {/* 알림 설정 섹션 */}
             <div className="bg-white p-6 rounded-lg shadow-md">
                 <h2 className="text-xl font-bold text-black mb-6">알림 설정</h2>
-                
+
                 {/* 이메일 알림 */}
                 <div className="mb-8">
                     <div className="flex items-start justify-between">
                         <div className="flex-1">
                             <h3 className="text-lg font-bold text-black mb-2">이메일</h3>
                             <p className="text-black mb-3">이메일 계정으로 알림을 발송합니다.</p>
-                            {!isEmailOpen && <button 
+                            {!isEmailOpen && <button
                                 className="text-sm text-gray-500 hover:text-gray-700"
                                 onClick={handleEmailButtonClick}
                             >
@@ -123,18 +107,18 @@ export default function Setting() {
                             </button>}
                             {isEmailOpen && (
                                 <div className="mt-4">
-                                    <input 
-                                        type="email" 
-                                        placeholder="이메일 추가" 
+                                    <input
+                                        type="email"
+                                        placeholder="이메일 추가"
                                         value={emailInput}
                                         onChange={(e) => setEmailInput(e.target.value)}
                                         onKeyPress={handleEmailKeyPress}
-                                        className="w-1/3 p-2 border border-gray-300 rounded-md mr-2" 
+                                        className="w-1/3 p-2 border border-gray-300 rounded-md mr-2"
                                     />
                                     <Button type="submit" onClick={handleEmailAdd}>추가</Button>
                                 </div>
                             )}
-                            
+
                             {/* 이메일 계정 목록 */}
                             {emailAccounts.length > 0 && (
                                 <div className="mt-4">
@@ -156,9 +140,9 @@ export default function Setting() {
                             )}
                         </div>
                         <label className="inline-flex items-center cursor-pointer ml-4">
-                            <input 
-                                type="checkbox" 
-                                className="sr-only peer" 
+                            <input
+                                type="checkbox"
+                                className="sr-only peer"
                                 checked={emailNotification}
                                 onChange={(e) => setEmailNotification(e.target.checked)}
                             />
@@ -181,7 +165,7 @@ export default function Setting() {
                         <div className="flex-1">
                             <h3 className="text-lg font-bold text-black mb-2">SMS</h3>
                             <p className="text-black mb-3">SMS로 알림을 발송합니다.</p>
-                            {!isSmsOpen && <button 
+                            {!isSmsOpen && <button
                                 className="text-sm text-gray-500 hover:text-gray-700"
                                 onClick={handleSmsButtonClick}
                             >
@@ -189,18 +173,18 @@ export default function Setting() {
                             </button>}
                             {isSmsOpen && (
                                 <div className="mt-4">
-                                    <input 
-                                        type="text" 
-                                        placeholder="SMS 추가" 
+                                    <input
+                                        type="text"
+                                        placeholder="SMS 추가"
                                         value={smsInput}
                                         onChange={(e) => setSmsInput(e.target.value)}
                                         onKeyPress={handleSmsKeyPress}
-                                        className="w-1/3 p-2 border border-gray-300 rounded-md mr-2" 
+                                        className="w-1/3 p-2 border border-gray-300 rounded-md mr-2"
                                     />
                                     <Button type="submit" onClick={handleSmsAdd}>추가</Button>
                                 </div>
                             )}
-                            
+
                             {/* SMS 계정 목록 */}
                             {smsAccounts.length > 0 && (
                                 <div className="mt-4">
@@ -222,9 +206,9 @@ export default function Setting() {
                             )}
                         </div>
                         <label className="inline-flex items-center cursor-pointer ml-4">
-                            <input 
-                                type="checkbox" 
-                                className="sr-only peer" 
+                            <input
+                                type="checkbox"
+                                className="sr-only peer"
                                 checked={smsNotification}
                                 onChange={(e) => setSmsNotification(e.target.checked)}
                             />

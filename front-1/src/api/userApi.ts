@@ -10,8 +10,7 @@ export const USER_ENDPOINTS = {
 // 비밀번호 확인
 export async function verifyPasswordApi(currentPassword: string) {
     const res = await apiClient.post(USER_ENDPOINTS.verifyPassword, { currentPassword });
-    console.log(res)
-    return (res as any)?.data?.data ?? (res as any)?.data ?? null;
+    return res.data.success;
 }
 
 export async function changePasswordApi(password: string) {
