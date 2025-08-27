@@ -1,5 +1,5 @@
 type Props = {
-  page: number;                // 1-base
+  page: number;                
   totalPages: number;
   total?: number;
   onChange: (next: number) => void;

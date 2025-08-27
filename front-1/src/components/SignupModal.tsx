@@ -1,6 +1,7 @@
 import { useState, FormEvent } from "react";
 import { useSignup } from "@/hooks/useSignup";
-import type { FacilityReq, SignupReq } from "@/api/authApi";
+import type { FacilityReq, RegisterReq } from "@/api/authApi";
+import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 
 type Props = { onClose: () => void };
 
@@ -8,13 +9,13 @@ export default function SignupModal({ onClose }: Props) {
   const { submit, validateBiz, loading, error } = useSignup();
 
   // 사용자 정보 상태
-  const [userInfo, setUserInfo] = useState<Omit<SignupReq, "facilities">>({
+   const [userInfo, setUserInfo] = useState<Omit<RegisterReq, "facilities">>({
     email: "",
-    password: "",
-    company: "",
-    ceoName: "",
+    rawPassword: "",
+    orgName: "",
+    ownerName: "",
     bizRegNo: "",
-    orgId: "AUTO_ORG_001",
+    phoneNum: "",
   });
 
   // 설비 정보 상태
@@ -35,7 +36,7 @@ export default function SignupModal({ onClose }: Props) {
   const [bizVerified, setBizVerified] = useState(false);
   const [verifying, setVerifying] = useState(false);
 
-  // 설비 추가/삭제
+
   const addFacility = () =>
     setFacilities([
       ...facilities,
@@ -51,8 +52,9 @@ export default function SignupModal({ onClose }: Props) {
       },
     ]);
 
-  const removeFacility = (idx: number) =>
+ const removeFacility = (idx: number) =>
     setFacilities(facilities.filter((_, i) => i !== idx));
+
 
   //  사업자번호 검증
   const handleValidateBiz = async () => {
@@ -90,7 +92,7 @@ export default function SignupModal({ onClose }: Props) {
     }
 
     // 비밀번호 길이 체크
-    if (userInfo.password.length < 8) {
+    if (userInfo.rawPassword.length < 8) {
       alert("비밀번호는 최소 8자 이상이어야 합니다.");
       return;
     }
@@ -106,9 +108,16 @@ export default function SignupModal({ onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50">
-      <div className="bg-white w-11/12 md:w-3/4 lg:w-2/3 xl:w-1/2 max-h-[90vh] overflow-y-auto rounded-lg p-6">
-        <h2 className="text-xl font-bold mb-6">회원가입</h2>
+  <Dialog open={true} onClose={onClose} className="relative z-50">
+    {/* 오버레이 */}
+    <div className="fixed inset-0 bg-black/60" aria-hidden="true" />
+
+    {/* 모달 컨테이너 */}
+    <div className="fixed inset-0 flex items-center justify-center p-4">
+      <DialogPanel className="bg-white w-11/12 md:w-3/4 lg:w-2/3 xl:w-1/2 
+                               max-h-[90vh] overflow-y-auto rounded-lg p-6">
+        {/* 제목 */}
+        <Dialog.Title className="text-xl font-bold mb-6">회원가입</Dialog.Title>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           {/* 사용자 정보 */}
@@ -127,27 +136,27 @@ export default function SignupModal({ onClose }: Props) {
               <input
                 type="password"
                 placeholder="비밀번호 (8자 이상)"
-                value={userInfo.password}
+                value={userInfo.rawPassword}
                 onChange={(e) =>
-                  setUserInfo({ ...userInfo, password: e.target.value })
+                  setUserInfo({ ...userInfo, rawPassword: e.target.value })
                 }
                 className="border rounded px-3 py-2"
               />
               <input
                 type="text"
                 placeholder="회사명"
-                value={userInfo.company}
+                value={userInfo.orgName}
                 onChange={(e) =>
-                  setUserInfo({ ...userInfo, company: e.target.value })
+                  setUserInfo({ ...userInfo, orgName: e.target.value })
                 }
                 className="border rounded px-3 py-2"
               />
               <input
                 type="text"
                 placeholder="대표자명"
-                value={userInfo.ceoName}
+                value={userInfo.ownerName}
                 onChange={(e) =>
-                  setUserInfo({ ...userInfo, ceoName: e.target.value })
+                  setUserInfo({ ...userInfo, ownerName: e.target.value })
                 }
                 className="border rounded px-3 py-2"
               />
@@ -309,7 +318,8 @@ export default function SignupModal({ onClose }: Props) {
 
           {error && <p className="text-red-500 mt-2">{error}</p>}
         </form>
-      </div>
+      </DialogPanel>
     </div>
-  );
+  </Dialog>
+);
 }

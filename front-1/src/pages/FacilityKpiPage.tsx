@@ -8,7 +8,7 @@ import HydrogenDonut from "@/components/HydrogenDonut";
 import DateRangeBar from "@/components/DateRangeBar";
 
 export default function FacilityKpiPage() {
-  const userId = useAuthStore((s) => s.userId);
+  const userId = useAuthStore((s) => s.orgId);
   const { facilities, setFacilities, clear } = useFacilityStore();
 
   const [selectedIds, setSelectedIds] = useState<number[]>([]);

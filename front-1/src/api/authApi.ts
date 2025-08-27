@@ -1,5 +1,5 @@
 import apiClient, { AUTH_ENDPOINTS, unwrap } from "@/api/apiClient";
-import { authToken } from "@/Stores/authStorage";
+import { authToken } from "@/stores/authStorage";
 import { useAuthStore } from "@/stores/useAuthStore";
 import axios from "axios";
 
@@ -7,87 +7,80 @@ import axios from "axios";
 export type Role = "SUPERVISOR" | "USER";
 export type LoginReq = { email: string; password: string };
 
-// 회원가입 Request 타입
+/** 시설 등록 요청 DTO */
 export type FacilityReq = {
-  name: string;
-  location: string;
-  modelNo: string;
-  cellCount: string;
-  ratedPowerKw: string;
-  ratedOutputKgH: string;
-  secNominalKwhPerKg: string;
-  catalystInstallDate: string;
+  name: string;                  // 시설명
+  location: string;              // 설치 위치 (주소 or 좌표)
+  modelNo: string;               // 모델 번호
+  cellCount: string;             // 셀 수 (숫자형)
+  ratedPowerKw: string;          // 정격 출력 (kW)
+  ratedOutputKgH: string;        // 정격 수소 생산량 (kg/h)
+  secNominalKwhPerKg: string;    // SEC (kWh/kg)
+  catalystInstallDate: string;   // 촉매 설치일 (YYYY-MM-DD)
 };
-export type SignupReq = {
-  email: string;
-  password: string;
-  company: string;
-  ceoName: string;
-  bizRegNo: string;
-  orgId?: string;        // 자동 연동
+
+/** 회원가입 + 시설 등록 요청 DTO */
+export type RegisterReq = {
+  orgName: string;        // 회사명
+  ownerName: string;      // 대표자명
+  bizRegNo: string;       // 사업자 등록번호 (하이픈 제거 문자열)
+  email: string;          // 이메일
+  rawPassword: string;    // 비밀번호 (서버에서 암호화 예정)
+  phoneNum: string;       // 전화번호 (숫자 문자열, '-' 제거 추천)
   facilities: FacilityReq[];
 };
 
 export const AuthApi = {
-  /** 로그인 */
   async login(body: LoginReq): Promise<string> {
-    type LoginOk = string | { accessToken?: string; token?: string; Authorization?: string };
     const res = await apiClient.post(AUTH_ENDPOINTS.login, body);
-    const u = unwrap<LoginOk>(res);
-
-    const raw =
-      typeof u === "string" ? u : u?.accessToken ?? u?.token ?? u?.Authorization;
-    if (!raw) throw new Error("로그인 응답에 토큰이 없습니다.");
-    const token = raw.replace(/^Bearer\s+/i, "").trim();
+    const data = unwrap<any>(res);
+    const token = data.token ?? data.accessToken ?? data.Authorization;
+    if (!token) throw new Error("로그인 응답에 토큰 없음");
     return token;
   },
 
-  /** 로그아웃 */
-  async logout(): Promise<void> {
-    await apiClient.post(AUTH_ENDPOINTS.logout, {});
-  },
-
-  /** 회원가입 */
-  async signup(body: SignupReq): Promise<void> {
-    await apiClient.post(AUTH_ENDPOINTS.signup, body);
-  },
-
-  /** 프로필 조회 */
   async profile() {
     const res = await apiClient.get(AUTH_ENDPOINTS.profile);
     return unwrap<any>(res);
   },
 
-  /** 편의 메서드 */
-  async loginAndSyncRole(payload: LoginReq): Promise<Role | null> {
-    const token = await AuthApi.login(payload);
-    authToken.set(token);
+async register(body: RegisterReq): Promise<any> {
+  const res = await apiClient.post(AUTH_ENDPOINTS.register, body);
+  return unwrap<any>(res);
+},
 
-    const prof = await AuthApi.profile();
-    const { setEmail, setUserId, setRole } = useAuthStore.getState();
+  async logout() {
+    await apiClient.post(AUTH_ENDPOINTS.logout, {});
+  },
+
+  async loginAndSyncRole(payload: LoginReq): Promise<Role | null> {
+    const token = await this.login(payload);
+    authToken.set(token);
+    const prof = await this.profile();
+    const { setEmail, setOrgId, setRole } = useAuthStore.getState();
     setEmail(prof.email ?? null);
-    setUserId(prof.userId ?? null);
+    setOrgId(prof.userId ?? null);
     setRole(prof.role ?? null);
     return prof.role ?? null;
   },
 
   async syncRole(): Promise<Role | null> {
-    const prof = await AuthApi.profile();
-    const { setEmail, setUserId, setRole } = useAuthStore.getState();
+    const prof = await this.profile();
+    const { setEmail, setOrgId, setRole } = useAuthStore.getState();
     setEmail(prof.email ?? null);
-    setUserId(prof.userId ?? null);
+    setOrgId(prof.userId ?? null);
     setRole(prof.role ?? null);
     return prof.role ?? null;
   },
 
-  async logoutAll(): Promise<void> {
+  async logoutAll() {
     try {
-      await AuthApi.logout();
+      await this.logout();
     } finally {
       authToken.clear();
-      const { setEmail, setUserId, setRole } = useAuthStore.getState();
+      const { setEmail, setOrgId, setRole } = useAuthStore.getState();
       setEmail(null);
-      setUserId(null);
+      setOrgId(null);
       setRole(null);
     }
   },

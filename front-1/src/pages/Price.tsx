@@ -3,17 +3,22 @@ import { useEffect, useMemo, useState } from "react";
 import type { RegionCode } from "@/domain/maps/MapPriceTypes";
 import { KoreaMap } from "@/types/KoreaMap";
 import { usePricePageData } from "@/hooks/maps/usePricePageData";
+import type { Station } from "@/domain/maps/MapPriceTypes";
+
 import StatBar from "@/components/maps/StatBar";
 import TradeInfo from "@/components/maps/TradeInfo";
 import ResultTable from "@/components/maps/ResultTable";
 import Pager from "@/components/maps/Pager";
 import SearchInput from "@/components/maps/SearchInput"; 
+import StationModal from "@/components/maps/StationModal";
 
 // 문자열 정규화 유틸(한글 IME 안정)
 const norm = (s: string) => {
   const n = typeof (s as any).normalize === "function" ? s.normalize("NFC") : s;
   return n.toLowerCase().trim();
 };
+
+
 
 export default function PricePage() {
   // 내부 상태 기반 (URL 동기화 제거)
@@ -26,6 +31,9 @@ export default function PricePage() {
 
   // 데이터 훅 (지역 변경 시 목록 재조회 / 평균/전국평균 계산 포함)
   const { averages, stations, selectedAvg, nationAvg } = usePricePageData(selectedRegion);
+
+    const [selectedStation, setSelectedStation] = useState<Station | null>(null);
+
 
   // 지역 바뀌면 1페이지로 리셋
   useEffect(() => {
@@ -55,7 +63,7 @@ export default function PricePage() {
   }, [filtered, page, size]);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 p-4">
+    <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 p-5">
       {/* 좌측 지도 */}
       <div className="col-span-1 lg:col-span-3 border rounded p-2 relative">
         {averages.loading && <div className="p-3 text-gray-500">지도를 불러오는 중…</div>}
@@ -120,6 +128,8 @@ export default function PricePage() {
           items={pagedItems}
           loading={stations.loading}
           error={stations.error}
+          onSelect={(s) => setSelectedStation(s)}   
+
         />
 
         <Pager
@@ -128,6 +138,16 @@ export default function PricePage() {
           total={total}
           onChange={setPage}
         />
+
+
+        {selectedStation && (
+        <StationModal
+          station={selectedStation}
+          nationAvg={nationAvg}
+          onClose={() => setSelectedStation(null)}
+        />
+    )}
+    
       </div>
     </div>
   );

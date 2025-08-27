@@ -1,17 +1,17 @@
 import { useState, useCallback } from "react";
-import { AuthApi, SignupReq } from "@/api/authApi";
+import { AuthApi, RegisterReq } from "@/api/authApi";
 
 export function useSignup() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   /** 회원가입 */
-  const submit = useCallback(async (v: SignupReq): Promise<boolean> => {
+  const submit = useCallback(async (v: RegisterReq): Promise<boolean> => {
     if (loading) return false;
     setLoading(true);
     setError(null);
     try {
-      await AuthApi.signup(v);
+      await AuthApi.register(v);
       return true;
     } catch (e: any) {
       setError(e?.message ?? "회원가입에 실패했습니다.");

@@ -13,3 +13,5 @@ export interface FacilityKpi {
   productionKg: number;     // 실제 생산량
   maxPredictedKg: number;   // 최대 예측 생산량
 }
+
+
