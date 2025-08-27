@@ -11,7 +11,6 @@ export default function FacilityPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [selectedFacility, setSelectedFacility] = useState("");
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
 
   const pageSize = 20;
@@ -33,7 +32,7 @@ export default function FacilityPage() {
     }
 
     if (selectedFacility) {
-      result = result.filter((f) => f.facilityName === selectedFacility);
+      result = result.filter((f) => f.facilityName  === selectedFacility);
     }
 
     return result;
@@ -44,18 +43,12 @@ export default function FacilityPage() {
 
   // 현재 페이지 데이터
   const paginatedItems = useMemo(() => {
+    if (totalPages === 0) return []; 
     const startIdx = (currentPage - 1) * pageSize;
     return filteredItems.slice(startIdx, startIdx + pageSize);
-  }, [filteredItems, currentPage]);
+  }, [filteredItems, currentPage, totalPages]);
 
-  // 체크박스 토글 핸들러
-  const toggleSelect = (facId: number) => {
-    setSelectedIds((prev) =>
-      prev.includes(facId) ? prev.filter((id) => id !== facId) : [...prev, facId]
-    );
-  };
-
-  // 엑셀 다운로드
+  // 엑셀 다운로드 (현재 필터링된 데이터 전체)
   const handleExportExcel = () => {
     if (!filteredItems.length) {
       alert("엑셀로 내보낼 데이터가 없습니다.");
@@ -70,18 +63,18 @@ export default function FacilityPage() {
   if (loading) return <p className="p-4">불러오는 중...</p>;
   if (error) return <p className="p-4 text-red-500">{error}</p>;
 
-  const facilityNames = Array.from(new Set(data.map((f) => f.facilityName)));
+  // 드롭다운에 들어갈 설비명 목록
+  const facilityNames = Array.from(new Set(data.map((f) => f.facilityName )));
 
   // 페이지네이션 버튼 그룹
   const currentGroup = Math.floor((currentPage - 1) / maxPageButtons);
   const startPage = currentGroup * maxPageButtons + 1;
   const endPage = Math.min(startPage + maxPageButtons - 1, totalPages);
-
   return (
     <div className="p-4 sm:p-6">
       <h1 className="text-lg sm:text-xl font-bold mb-4">설비 목록</h1>
 
-      {/* 필터바 */}
+      {/*필터바 */}
       <FacilityFilterBar
         startDate={startDate}
         endDate={endDate}
@@ -93,16 +86,13 @@ export default function FacilityPage() {
         onExportExcel={handleExportExcel}
       />
 
-      {/* 테이블 (반응형 스크롤) */}
+      {/*테이블 */}
       <div className="overflow-x-auto">
-        <FacilityTable
-          items={paginatedItems}
-          selectedIds={selectedIds}
-          onToggleSelect={toggleSelect}
-        />
+      <FacilityTable items={paginatedItems} />
       </div>
 
-      {/* 페이지네이션 (반응형) */}
+       {/* 페이지네이션: totalPages > 0 일 때만 */}
+    {totalPages > 0 && (
       <div className="flex flex-wrap justify-center gap-2 mt-4">
         <button
           onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
@@ -137,6 +127,7 @@ export default function FacilityPage() {
           다음
         </button>
       </div>
-    </div>
-  );
+    )}
+  </div>
+);
 }

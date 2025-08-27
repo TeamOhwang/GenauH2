@@ -32,7 +32,7 @@ public class Facility {
     public enum ElectrolysisType {
         PEM, ALK, SOEC
     }
-
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @EqualsAndHashCode.Include

@@ -11,6 +11,7 @@ const Login = lazy(() => import("@/pages/Login"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
 const Price = lazy(() => import("@/pages/Price"));
 const FacilityPage = lazy(() => import("@/pages/FacilityPage"));
+const EquipmentList = lazy(() => import("@/pages/EquipmentList"));
 const Setting = lazy(() => import("@/pages/Setting"));
 const Admin = lazy(() => import("@/pages/Admin"));
 const About = lazy(() => import("@/pages/About"));
@@ -58,8 +59,10 @@ export default function AppRouter() {
             <Route path={PATHS.dashboard} element={<Dashboard />} />
             <Route path={PATHS.price} element={<Price />} />
             <Route path={PATHS.facilityPage} element={<FacilityPage />} /> 
+            <Route path={PATHS.equipmentList} element={<EquipmentList />} /> 
             <Route path={PATHS.setting} element={<Setting />} />
-            {/* <Route path={PATHS.changePassword} element={<ChangePassword />} /> */}
+
+            
           </Route>
 
           <Route element={<ProtectedRoute require="SUPERVISOR"><Outlet /></ProtectedRoute>}>

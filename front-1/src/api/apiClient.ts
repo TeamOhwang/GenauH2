@@ -28,7 +28,7 @@ export const AUTH_ENDPOINTS = {
   regionAverages: "/trade/list",
   allStations: "/api/region-price",
   stationsByRegion: "/api/region-price/by-region",
-  predictAll: "/predict/all",
+  predictAll: "/predict/allsumid",
   
 } as const;
 

@@ -1,3 +1,4 @@
+// src/components/LoginForm.tsx
 import { useState, FormEvent } from "react";
 import type { LoginValues } from "@/hooks/useLogin";
 import Button from "./ui/Button";
@@ -19,7 +20,10 @@ export default function LoginForm({ loading = false, error, onSubmit }: Props) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full max-w-xs">
+    <form
+      onSubmit={handleSubmit}
+      className="flex flex-col gap-4 w-full max-w-xs"
+    >
       <input
         type="email"
         placeholder="이메일"
