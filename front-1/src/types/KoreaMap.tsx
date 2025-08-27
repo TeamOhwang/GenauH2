@@ -123,7 +123,7 @@ export const KoreaMap = memo(function KoreaMap({
     <div className="w-full h-[700px]"> 
       <ComposableMap
         projection="geoMercator"
-        projectionConfig={{ center: [128.0, 36.], scale: 5000 }}
+        projectionConfig={{ center: [128.0, 35.9], scale: 5000 }}
         style={{ width: "100%", height: "100%" }}
       >
         <Geographies geography={geoUrl}>

@@ -14,18 +14,23 @@ export default function StationModal({
   const regionAvg = station.avgPriceOfRegion ?? 0;
   const natAvg = nationAvg ?? 0;
 
+  // 비교 기준: 지역 평균
+  const diffPercent = regionAvg
+    ? (((station.price - regionAvg) / regionAvg) * 100).toFixed(1)
+    : "0";
+
   const data = {
-    labels: ["충전소", "지역 평균", "전국 평균"],
+    labels: ["충전소 가격", "지역 평균"],
     datasets: [
       {
-        data: [station.price, regionAvg, natAvg],
-        backgroundColor: ["#3b82f6", "#10b981", "#f59e0b"],
+        data: [station.price, regionAvg],
+        backgroundColor: ["#3b82f6", "#10b981"],
         borderWidth: 1,
       },
     ],
   };
 
-  // 퍼센트 표시 플러그인
+  // 중앙 퍼센트 표시 플러그인
   const plugins = [
     {
       id: "centerText",
@@ -34,16 +39,15 @@ export default function StationModal({
         const ctx = chart.ctx;
         ctx.restore();
 
-        const dataset = chart.data.datasets[0].data;
-        const total = dataset.reduce((a: number, b: number) => a + b, 0);
-        const value = dataset[0]; // 충전소 가격
-        const percent = total ? ((value / total) * 100).toFixed(1) : "0";
-
         ctx.font = "bold 18px sans-serif";
         ctx.fillStyle = "#111";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText(`${percent}%`, width / 2, height / 2);
+        ctx.fillText(
+          `${diffPercent}%`,
+          width / 2,
+          height / 2
+        );
 
         ctx.save();
       },
@@ -68,6 +72,9 @@ export default function StationModal({
             <p>충전소 가격: <b>{station.price.toLocaleString()} 원/kg</b></p>
             <p>지역 평균: <b>{regionAvg.toLocaleString()} 원/kg</b></p>
             <p>전국 평균: <b>{natAvg.toLocaleString()} 원/kg</b></p>
+            <p>
+              평균 대비: <b>{diffPercent}%</b> {station.price > regionAvg ? "더 높음" : "더 낮음"}
+            </p>
           </div>
 
           <div className="mt-6 flex justify-end">

@@ -46,10 +46,10 @@ export default function ResultTable(props: {
               지역
             </th>
             <th className="px-3 py-2 text-right font-semibold text-gray-700">
-              수소 1kg 매입가격
+              수소 1kg판매가
             </th>
             <th className="px-3 py-2 text-right font-semibold text-gray-700">
-              지역 평균매입가
+              지역 평균판매가
             </th>
           </tr>
         </thead>
