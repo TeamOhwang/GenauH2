@@ -1,3 +1,4 @@
+import FacilityPage from "@/pages/FacilityPage";
 
 export const PATHS = {
     home: "/home",
@@ -7,7 +8,7 @@ export const PATHS = {
     user: "/user",
     dashboard: "/dashboard",
     detailed: "/detailed",
-    facilityKpiPage: "/facilitykpi",
+    facilityPage: "/facilityPage",
     price: "/price",
     setting: "/setting",
     forbidden: "/403",

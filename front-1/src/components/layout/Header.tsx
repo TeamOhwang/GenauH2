@@ -4,6 +4,7 @@ import { NavLink } from "react-router-dom";
 import { PATHS, roleHome, type Role } from "@/routes/paths";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { authToken } from "@/stores/authStorage";
+import { LogOut, LoaderCircle } from "lucide-react";
 
 export default function Header() {
   const role = useAuthStore((s) => s.role) as Role | null;
@@ -44,14 +45,14 @@ export default function Header() {
 
       {/* 우측: 이메일(임시) + 로그아웃 */}
       <div className="ml-auto mr-4 flex items-center gap-3">
-        <span className="font-semibold text-gray-600">{email ?? "로그인 필요"}</span>
+        <span className="font-light text-gray-600">{email ?? "로그인 필요"}</span>
         <button
           onClick={handleLogout}
           disabled={pending}
           className="px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
           aria-label="로그아웃"
         >
-          {pending ? "로그아웃 중…" : "로그아웃"}
+          {pending ? <LoaderCircle className="animate-spin" /> : <LogOut className="w-5 h-5" />}
         </button>
       </div>
     </header>

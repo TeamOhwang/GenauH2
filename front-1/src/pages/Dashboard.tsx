@@ -40,7 +40,7 @@ export default function Dashboard() {
         monthlyData: monthlyData.length,
     });
 
-    const solaData = buildSolaData(plant1, plant2, plant3, currentHour, weeklyData, monthlyData);
+    const solaData = buildSolaData(plant1, plant2, plant3, currentHour, weeklyData);
     console.log('  - 생성된 solaData:', solaData);
 
     // 탭별 차트 옵션 선택
@@ -92,7 +92,7 @@ export default function Dashboard() {
                 <DashboardCharts
                     solaData={solaData}
                     activeTimeFrame={activeTimeFrame}
-                    selectedPlant={selectedPlant === "all" ? "plant1" : selectedPlant}
+                    selectedPlant={selectedPlant}
                     chartOptions={chartOptions}
                     h2Data={h2Data}
                     chart1Title={currentData.chart1Title}

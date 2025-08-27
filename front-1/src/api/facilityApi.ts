@@ -1,36 +1,27 @@
-import apiClient, { unwrap } from "@/api/apiClient";
-import type { Facility, FacilityKpi } from "@/domain/graph/facility";
-import type { FacilityDTO, FacilityKpiDTO } from "@/domain/graph/facilityDTO";
+import apiClient, { AUTH_ENDPOINTS, unwrap } from "@/api/apiClient";
 
-const PATHS = {
-  facilitiesByUser: (userId: number) => `/gh/users/${userId}/facilities`,
-  facilityKpis: "/gh/hydrogen/aggregate",
-} as const;
+export type FacilityReq = {
+  facId: number;
+  orgId: number;
+  name: string;
+  type: "PEM" | "ALK" | "SOEC";
+  maker?: string;
+  model?: string;
+  powerKw: string;
+  h2Rate: string;
+  specKwh: string;
+  purity?: string;
+  pressure?: string;
+  location?: string;
+  install?: string;   // YYYY-MM-DD
+  created?: string;   // ISO datetime
+};
 
-/** 유저 ID 기준 설비 목록 조회 */
-export async function fetchFacilities(userId: number): Promise<Facility[]> {
-  const res = await apiClient.get(PATHS.facilitiesByUser(userId));
-  const dtos = unwrap<FacilityDTO[]>(res) ?? [];
-  return dtos.map((dto) => ({
-    facilityId: dto.facilityId,
-    name: dto.name,
-    orgId: dto.orgId,
-    modelNo: dto.modelNo,
-  }));
-}
 
-/** 설비 KPI 데이터 조회 */
-export async function fetchFacilityKpis(params: {
-  facilityIds: number[];
-  startDate: string;
-  endDate: string;
-}): Promise<FacilityKpi[]> {
-  const res = await apiClient.get(PATHS.facilityKpis, { params });
-  const dtos = unwrap<FacilityKpiDTO[]>(res) ?? [];
-  return dtos.map((dto) => ({
-    facilityId: dto.facilityId,
-    facilityName: dto.facilityName,
-    productionKg: dto.productionKg,
-    maxPredictedKg: dto.predictedMaxKg, // DTO → Domain 변환
-  }));
+export const FacilityApi = {
+  /** orgId 기준 설비 조회 */
+  async listByOrg(orgId: number): Promise<FacilityReq[]> {
+    const res = await apiClient.get(AUTH_ENDPOINTS.list, { params: { orgId } });
+    return unwrap<FacilityReq[]>(res) ?? [];
+  },
 }
