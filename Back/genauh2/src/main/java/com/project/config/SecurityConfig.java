@@ -62,6 +62,9 @@ public class SecurityConfig {
 
             	    // 테스트용 엔드포인트 허용
             	    .requestMatchers("/test/**").permitAll()
+
+                    // [수정] 새로 추가한 수소 탱크 API 경로 허용
+                    .requestMatchers("/storage/**").permitAll()
             	    
             	    // 나머지는 인증 필요 (비밀번호 리셋 요청은 여기에 포함됨)
             	    .anyRequest().authenticated()

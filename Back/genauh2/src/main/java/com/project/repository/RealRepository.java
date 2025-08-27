@@ -9,6 +9,10 @@ import com.project.entity.Real;
 import java.sql.Timestamp; // Timestamp import 추가
 import java.util.List;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+
 @Repository
 public interface RealRepository extends JpaRepository<Real, Long> {
 
@@ -55,4 +59,20 @@ public interface RealRepository extends JpaRepository<Real, Long> {
     @Modifying
     @Query(value = "DELETE FROM production_real WHERE DATE(ts) = :date", nativeQuery = true)
     int deleteProductionRealByDate(@Param("date") String date);
+
+    /**
+ * 특정 발전소의 지정된 기간 동안의 총 수소 생산량(productionKg)을 합산하여 반환합니다.
+ * @param plantId 발전소 ID
+ * @param startDate 시작 일시
+ * @param endDate 종료 일시
+ * @return 총 수소 생산량 합계
+ */
+    @Query("SELECT SUM(r.productionKg) FROM Real r WHERE r.plantId = :plantId AND r.ts BETWEEN :startDate AND :endDate")
+    BigDecimal sumProductionKgByPlantIdAndTsBetween(
+        @Param("plantId") String plantId,
+        @Param("startDate") LocalDateTime startDate,
+        @Param("endDate") LocalDateTime endDate
+);
+
+
 }

@@ -19,9 +19,7 @@ const norm = (s: string) => {
 };
 
 
-
 export default function PricePage() {
-  // 내부 상태 기반 (URL 동기화 제거)
   const [page, setPage] = useState(1);   // 1-base
   const [size, setSize] = useState(20);  // 기본 20개
   const [q, setQ] = useState("");        // 검색어

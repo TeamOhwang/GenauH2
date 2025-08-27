@@ -1,4 +1,3 @@
-// src/types/react-simple-maps.d.ts
 declare module "react-simple-maps" {
   import * as React from "react";
   import type { FeatureCollection } from "geojson";
@@ -8,6 +7,7 @@ declare module "react-simple-maps" {
     projectionConfig?: Record<string, any>;
     width?: number;
     height?: number;
+    
   }
   export const ComposableMap: React.FC<ComposableMapProps>;
 
