@@ -7,6 +7,7 @@ export default function Setting() {
     const [smsNotification, setSmsNotification] = useState(true);
     const [isEmailOpen, setIsEmailOpen] = useState(false);
     const [isSmsOpen, setIsSmsOpen] = useState(false);
+    const [isPasswordOpen, setIsPasswordOpen] = useState(false);
     
     // 이메일과 SMS 계정 목록 상태 추가
     const [emailAccounts, setEmailAccounts] = useState<string[]>([]);
@@ -15,6 +16,9 @@ export default function Setting() {
     // 입력값 상태 추가
     const [emailInput, setEmailInput] = useState("");
     const [smsInput, setSmsInput] = useState("");
+    const [currentPassword, setCurrentPassword] = useState("");
+    const [newPassword, setNewPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
 
     const handleEmailButtonClick = () => {
         console.log("이메일 추가 클릭");
@@ -73,11 +77,31 @@ export default function Setting() {
         }
     };
 
+    const handlePasswordChange = () => {
+        setIsPasswordOpen(!isPasswordOpen);
+        if (isPasswordOpen) {
+            setCurrentPassword("");
+            setNewPassword("");
+            setConfirmPassword("");
+        }
+        console.log("비밀번호 변경");
+    };
+
     return (
         <div className="flex flex-col gap-4">
             <div className="bg-white p-4 rounded-lg shadow-md">
                 <p className="text-xl font-bold">비밀번호 변경</p>
-                <Button type="submit">비밀번호 변경</Button>
+                {!isPasswordOpen && (
+                    <button onClick={handlePasswordChange}>비밀번호 변경</button>
+                )}
+                {isPasswordOpen && (
+                    <div className="flex flex-col gap-5 w-1/6 m-4">
+                        <input type="password" placeholder="현재 비밀번호" />
+                        <input type="password" placeholder="새 비밀번호" />
+                        <input type="password" placeholder="새 비밀번호 확인" />
+                        <button type="submit" onClick={handlePasswordChange}>비밀번호 변경</button>
+                    </div>
+                )}
                 <span className="text-sm text-red-500"></span>
             </div>
             

@@ -2,9 +2,8 @@
 import { NavLink } from "react-router-dom";
 import { PATHS } from "@/routes/paths";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { ChartLine, DollarSign, LayoutDashboard, Settings } from "lucide-react"
 
-type Role = "USER" | "SUPERVISOR" | null;
-const roleHome = (r: Role) => (r === "SUPERVISOR" ? PATHS.admin : PATHS.dashboard);
 
 export default function Sidebar() {
     const role = useAuthStore((s) => s.role);
@@ -17,10 +16,10 @@ export default function Sidebar() {
 
     // USER 전용 메뉴
     const userMenu = [
-        { label: "대시보드", to: PATHS.dashboard },
-        { label: "상세 데이터", to: PATHS.detailed },
-        { label: "수소 가격 정보", to: PATHS.price },
-        { label: "설정", to: PATHS.setting },
+        { label: "대시보드", to: PATHS.dashboard, icon: <LayoutDashboard /> },
+        { label: "상세 데이터", to: PATHS.detailed, icon: <ChartLine /> },
+        { label: "수소 가격 정보", to: PATHS.price, icon: <DollarSign /> },
+        { label: "설정", to: PATHS.setting, icon: <Settings /> },
     ];
 
     // ADMIN 전용 메뉴 (필요시 추가)
@@ -32,13 +31,13 @@ export default function Sidebar() {
 
     return (
         <aside className="w-64 bg-white shadow-md p-4 h-full">
-            <nav className="space-y-3 mt-5">
+            <nav className="space-y-3">
                 {menu.map((item) => (
                     <NavLink
                         key={item.to}
                         to={item.to}
                         className={({ isActive }) =>
-                            `block px-3 py-2 rounded-lg transition-colors ${
+                            `flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                                 isActive 
                                     ? "text-blue-600 bg-blue-50" 
                                     : "text-gray-700 hover:text-blue-500 hover:bg-gray-50"
@@ -47,6 +46,7 @@ export default function Sidebar() {
                             fontWeight: isActive ? 900 : 500
                         })}
                     >
+                        {item.icon}
                         {item.label}
                     </NavLink>
                 ))}
