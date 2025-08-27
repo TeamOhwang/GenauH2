@@ -71,6 +71,7 @@ export default function SignupModal({ onClose }: Props) {
     try {
       setVerifying(true);
       const ok = await validateBiz(userInfo.bizRegNo);
+      console.log(ok);
       if (ok) {
         alert("사업자등록번호 확인 완료");
         setBizVerified(true);
