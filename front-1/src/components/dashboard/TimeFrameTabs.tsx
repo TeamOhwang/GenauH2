@@ -18,7 +18,7 @@ export default function TimeFrameTabs({ activeTimeFrame, onTimeFrameChange }: Ti
     };
 
     return (
-        <div className="flex space-x-2 mb-6">
+        <div className="flex space-x-2">
             {timeFrames.map((timeFrame) => (
                 <button
                     key={timeFrame}

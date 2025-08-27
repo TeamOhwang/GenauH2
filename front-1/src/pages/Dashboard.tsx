@@ -66,19 +66,24 @@ export default function Dashboard() {
     return (
         <div className="h-full overflow-auto scrollbar-hide">
             <div className="m-6">
-                {/* 헤더 */}
-                <DashboardHeader
-                    title={currentData.title}
-                    isUpdating={isUpdating}
-                    lastUpdateTime={lastUpdateTime}
-                    onRefresh={refreshData}
-                />
-
-                {/* 탭 버튼들 */}
-                <TimeFrameTabs
-                    activeTimeFrame={activeTimeFrame}
-                    onTimeFrameChange={setActiveTimeFrame}
-                />
+                {/* 헤더 - 모든 요소를 일렬로 정렬 */}
+                <div className="flex items-center justify-between mb-6">
+                    {/* 왼쪽: 제목과 타임프레임 탭 */}
+                    <div className="flex items-center space-x-6">
+                        <h1 className="text-2xl font-bold text-gray-800">대시보드</h1>
+                        <TimeFrameTabs
+                            activeTimeFrame={activeTimeFrame}
+                            onTimeFrameChange={setActiveTimeFrame}
+                        />
+                    </div>
+                    
+                    {/* 오른쪽: 실시간 정보와 갱신 버튼 */}
+                    <DashboardHeader
+                        isUpdating={isUpdating}
+                        lastUpdateTime={lastUpdateTime}
+                        onRefresh={refreshData}
+                    />
+                </div>
 
                 {/* 통계 카드들 */}
                 <DashboardStats stats={currentData.stats} />
