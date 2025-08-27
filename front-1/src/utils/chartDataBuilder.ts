@@ -89,7 +89,6 @@ export function buildSolaData(
             plant3: buildDailyPlantChartData(plant3, currentHour),
         },
         weekly: {
-            all: buildWeeklyPlantChartData(weeklyData),
             plant1: buildWeeklyPlantChartData(weeklyData),  
             plant2: buildWeeklyPlantChartData(weeklyData),  
             plant3: buildWeeklyPlantChartData(weeklyData),  
@@ -476,38 +475,6 @@ export function buildChartOptions(): Record<Plant, ChartOptions> {
 // 주간 차트를 위한 별도 옵션 생성
 export function buildWeeklyChartOptions(): Record<string, ChartOptions> {
     return {
-        all: {
-            responsive: true,
-            scales: {
-                y: {
-                    type: "linear",
-                    display: true,
-                    position: "left",
-                    min: 0,
-                    max: 20000,
-                    ticks: {
-                        stepSize: 1000,
-                        callback: (value: number) => `${value}kWh`,
-                    },
-                    grid: {
-                        drawOnChartArea: true,
-                    },
-                },
-            },
-            plugins: {
-                legend: {
-                    position: "bottom",
-                },
-                tooltip: {
-                    mode: "index",
-                    intersect: false,
-                },
-            },
-            interaction: {
-                mode: "index",
-                intersect: false,
-            },
-        },
         plant1: {
             responsive: true,
             scales: {

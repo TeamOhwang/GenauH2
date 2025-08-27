@@ -10,13 +10,14 @@ export default function Sidebar() {
     const role = useAuthStore((s) => s.role);
 
     // 공통(최상단) – 대시보드는 역할에 따라 목적지 다르게
-    const commonTop = [{ 
-        label: "대시보드", 
-        to: role === "SUPERVISOR" ? PATHS.admin : PATHS.dashboard 
-    }];
+    // const commonTop = [{ 
+    //     label: "대시보드", 
+    //     to: role === "SUPERVISOR" ? PATHS.admin : PATHS.dashboard 
+    // }];
 
     // USER 전용 메뉴
     const userMenu = [
+        { label: "대시보드", to: PATHS.dashboard },
         { label: "상세 데이터", to: PATHS.detailed },
         { label: "수소 가격 정보", to: PATHS.price },
         { label: "설정", to: PATHS.setting },
@@ -24,14 +25,14 @@ export default function Sidebar() {
 
     // ADMIN 전용 메뉴 (필요시 추가)
     const adminMenu = [
-        { label: "관리자 홈", to: PATHS.admin },
+        { label: "관리자 페이지", to: PATHS.admin },
     ];
 
-    const menu = role === "SUPERVISOR" ? [...commonTop, ...adminMenu] : [...commonTop, ...userMenu];
+    const menu = role === "SUPERVISOR" ? [ ...adminMenu] : [ ...userMenu];
 
     return (
         <aside className="w-64 bg-white shadow-md p-4 h-full">
-            <nav className="space-y-3 mt-10">
+            <nav className="space-y-3 mt-5">
                 {menu.map((item) => (
                     <NavLink
                         key={item.to}
