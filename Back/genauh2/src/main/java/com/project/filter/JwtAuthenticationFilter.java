@@ -85,6 +85,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return true;
         }
         
+        // 비밀번호 리셋 관련 경로 (공개 API - 인증 없이 접근 가능)
+        // 토큰 검증 API
+        if (path.contains("/validate-reset-token/")) {
+            return true;
+        }
+        
+        // 비밀번호 리셋 실행 API
+        if (path.equals("/gh/user/reset-password") ||
+            path.equals("/demo/user/reset-password") ||
+            path.equals("/user/reset-password") ||
+            path.endsWith("/user/reset-password")) {
+            return true;
+        }
+        
         // 기타 정적 리소스나 헬스체크 등
         if (path.startsWith("/health") || 
             path.startsWith("/actuator") ||
