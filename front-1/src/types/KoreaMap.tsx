@@ -119,70 +119,75 @@ export const KoreaMap = memo(function KoreaMap({
     refs.setReference(virtualEl as any);
   }, [virtualEl, refs]);
 
- return (
-    <div className="w-full h-[700px]"> 
-      <ComposableMap
-        projection="geoMercator"
-        projectionConfig={{ center: [128.0, 35.9], scale: 5000 }}
-        style={{ width: "100%", height: "100%" }}
-      >
-        <Geographies geography={geoUrl}>
-          {({ geographies }: { geographies: GeoFeature[] }) =>
-            geographies.map((geo) => {
-              const { code, label } = pickRegionFromProps(geo.properties);
-              const avg = code ? avgByCode[code] : undefined;
-              const isSelected = !!selectedRegion && code === selectedRegion;
+return (
+  <div className="w-full h-[800px] flex justify-center items-center">
+    <ComposableMap
+      projection="geoMercator"
+      projectionConfig={{ center: [128, 36.2], scale: 4600 }}
+      style={{ width: "100%", height: "100%" }} 
+    >
+      <Geographies geography={geoUrl}>
+        {({ geographies }: { geographies: GeoFeature[] }) =>
+          geographies.map((geo) => {
+            const { code, label } = pickRegionFromProps(geo.properties);
+            const avg = code ? avgByCode[code] : undefined;
+            const isSelected = !!selectedRegion && code === selectedRegion;
 
-              return (
-                <g
-                  key={geo.rsmKey ?? (geo.id as string) ?? JSON.stringify(geo.properties)}
-                  style={{ cursor: code ? "pointer" : "default" }}
-                >
-                  <Geography
-                    geography={geo}
-                    fill={colorize(avg, isSelected)}
-                    stroke="#fff"                
-                    strokeWidth={0.8}            
-                    tabIndex={-1}
-                    style={{
-                      default: { outline: "none" },
-                      hover:   { outline: "none" },
-                      pressed: { outline: "none" },
-                    } as any}
-                    onClick={() => handleClick(code ?? undefined)}
-                    onMouseEnter={(e: any) => {
-                      setHover({ label, avg });
-                      scheduleMove(e);
-                      setOpen(true);
-                    }}
-                    onMouseMove={scheduleMove}
-                    onMouseLeave={() => {
-                      setOpen(false);
-                      setHover(null);
-                    }}
-                  />
-                </g>
-              );
-            })
-          }
-        </Geographies>
-      </ComposableMap>
-      <FloatingPortal>
-        {open && hover && (
-          <div
-            ref={refs.setFloating}
-            style={{ position: strategy, left: x ?? 0, top: y ?? 0 }}
-            className="z-50 pointer-events-none bg-white/95 backdrop-blur text-xs shadow-md border rounded px-2 py-1"
-            role="tooltip"
-            aria-live="polite"
-          >
-            <div className="font-medium">{hover.label}</div>
-            <div className="text-gray-600">
-              {typeof hover.avg === "number" ? `${hover.avg.toLocaleString()} 원` : "데이터 없음"}
-            </div>
+            return (
+              <g
+                key={geo.rsmKey || (geo.id as string)}
+                style={{ cursor: code ? "pointer" : "default" }}
+              >
+                <Geography
+                  geography={geo}
+                  fill={colorize(avg, isSelected)}
+                  stroke="#fff"
+                  strokeWidth={0.8}
+                  tabIndex={-1}
+                  style={{
+                    default: { outline: "none" },
+                    hover: { outline: "none" },
+                    pressed: { outline: "none" },
+                  } as any}
+                  onClick={() => handleClick(code ?? undefined)}
+                  onMouseEnter={(e: any) => {
+                    setHover({ label, avg });
+                    scheduleMove(e);
+                    setOpen(true);
+                  }}
+                  onMouseMove={scheduleMove}
+                  onMouseLeave={() => {
+                    setOpen(false);
+                    setHover(null);
+                  }}
+                />
+              </g>
+            );
+          })
+        }
+      </Geographies>
+    </ComposableMap>
+
+    {/* 툴팁 */}
+    <FloatingPortal>
+      {open && hover && (
+        <div
+          ref={refs.setFloating}
+          style={{ position: strategy, left: x ?? 0, top: y ?? 0 }}
+          className="z-50 pointer-events-none bg-white/95 backdrop-blur text-xs shadow-md border rounded px-2 py-1"
+          role="tooltip"
+          aria-live="polite"
+        >
+          <div className="font-semibold">{hover.label}</div>
+          <div className="text-gray-600">
+            {typeof hover.avg === "number"
+              ? `${hover.avg.toLocaleString()} 원`
+              : "데이터 없음"}
           </div>
-        )}
-      </FloatingPortal>
-    </div>
-  );
+        </div>
+      )}
+    </FloatingPortal>
+  </div>
+);
+
 });
