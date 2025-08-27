@@ -193,7 +193,7 @@ public class OrganizationService {
         }).orElse(null);
     }
 
-    // 사용자 비밀번호 변경
+    // 사용자 비밀번호 변경 (관리자용)
     public boolean updateUserPassword(Long orgId, String newPassword) {
         Optional<Organization> orgOpt = organizationRepository.findById(orgId);
 
@@ -209,6 +209,110 @@ public class OrganizationService {
         }
 
         return false;
+    }
+
+    /**
+     * 사용자의 현재 비밀번호 확인
+     * @param orgId 조직 ID
+     * @param currentPassword 확인할 현재 비밀번호
+     * @return 비밀번호 일치 여부
+     */
+    @Transactional(readOnly = true)
+    public boolean verifyPassword(Long orgId, String currentPassword) {
+        System.out.println("=== 비밀번호 확인 시작 ===");
+        System.out.println("조직 ID: " + orgId);
+        
+        try {
+            Optional<Organization> orgOpt = organizationRepository.findById(orgId);
+            
+            if (orgOpt.isPresent()) {
+                Organization organization = orgOpt.get();
+                System.out.println("사용자 찾음: " + organization.getEmail());
+                System.out.println("사용자 상태: " + organization.getStatus());
+                
+                // ACTIVE 상태인 사용자만 비밀번호 확인 가능
+                if (organization.getStatus() != Organization.Status.ACTIVE) {
+                    System.out.println("비활성 상태 사용자 - 비밀번호 확인 불가");
+                    return false;
+                }
+                
+                boolean passwordMatch = passwordEncoder.matches(currentPassword, organization.getPasswordHash());
+                System.out.println("비밀번호 매칭 결과: " + passwordMatch);
+                
+                return passwordMatch;
+            } else {
+                System.out.println("사용자를 찾을 수 없음");
+                return false;
+            }
+        } catch (Exception e) {
+            System.err.println("비밀번호 확인 중 오류 발생: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * 사용자 본인의 비밀번호 변경 (현재 비밀번호 확인 후 변경)
+     * @param orgId 조직 ID
+     * @param currentPassword 현재 비밀번호
+     * @param newPassword 새 비밀번호
+     * @return 변경 성공 여부
+     */
+    @Transactional
+    public boolean changeUserPassword(Long orgId, String currentPassword, String newPassword) {
+        System.out.println("=== 사용자 비밀번호 변경 시작 ===");
+        System.out.println("조직 ID: " + orgId);
+        
+        try {
+            Optional<Organization> orgOpt = organizationRepository.findById(orgId);
+            
+            if (orgOpt.isPresent()) {
+                Organization organization = orgOpt.get();
+                System.out.println("사용자 찾음: " + organization.getEmail());
+                System.out.println("사용자 상태: " + organization.getStatus());
+                
+                // ACTIVE 상태인 사용자만 비밀번호 변경 가능
+                if (organization.getStatus() != Organization.Status.ACTIVE) {
+                    System.out.println("비활성 상태 사용자 - 비밀번호 변경 불가");
+                    return false;
+                }
+                
+                // 현재 비밀번호 확인
+                boolean currentPasswordMatch = passwordEncoder.matches(currentPassword, organization.getPasswordHash());
+                System.out.println("현재 비밀번호 확인 결과: " + currentPasswordMatch);
+                
+                if (!currentPasswordMatch) {
+                    System.out.println("현재 비밀번호가 일치하지 않음");
+                    return false;
+                }
+                
+                // 새 비밀번호와 현재 비밀번호가 같은지 확인
+                if (passwordEncoder.matches(newPassword, organization.getPasswordHash())) {
+                    System.out.println("새 비밀번호가 현재 비밀번호와 동일함");
+                    throw new RuntimeException("새 비밀번호는 현재 비밀번호와 다르게 설정해주세요.");
+                }
+                
+                // 새 비밀번호로 변경
+                String encodedNewPassword = passwordEncoder.encode(newPassword);
+                organization.setPasswordHash(encodedNewPassword);
+                organization.setUpdatedAt(LocalDateTime.now());
+                
+                organizationRepository.save(organization);
+                System.out.println("비밀번호 변경 완료");
+                
+                return true;
+            } else {
+                System.out.println("사용자를 찾을 수 없음");
+                return false;
+            }
+        } catch (RuntimeException e) {
+            // 비즈니스 로직 예외는 그대로 던짐
+            throw e;
+        } catch (Exception e) {
+            System.err.println("비밀번호 변경 중 오류 발생: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
     }
 
     // 사용자 정지
@@ -316,23 +420,7 @@ public class OrganizationService {
         }
     }
 
-    // Entity를 DTO로 변환
-    private OrganizationDTO convertToDTO(Organization organization) {
-        return new OrganizationDTO(
-                organization.getOrgId(),
-                organization.getEmail(),
-                organization.getRole(),
-                organization.getPhoneNum(),
-                organization.getStatus(),
-                organization.isEmailNotification(),
-                organization.isSmsNotification(),
-                organization.getOrgName(),
-                organization.getName(),
-                organization.getBizRegNo(),
-                organization.getCreatedAt(),
-                organization.getUpdatedAt());
-    }
-     // 알림 설정 조회
+    // 알림 설정 조회
     @Transactional(readOnly = true)
     public OrganizationDTO getNotificationSettings(Long orgId) {
         return organizationRepository.findById(orgId)
@@ -359,4 +447,20 @@ public class OrganizationService {
         return convertToDTO(updatedOrg);
     }
 
+    // Entity를 DTO로 변환
+    private OrganizationDTO convertToDTO(Organization organization) {
+        return new OrganizationDTO(
+                organization.getOrgId(),
+                organization.getEmail(),
+                organization.getRole(),
+                organization.getPhoneNum(),
+                organization.getStatus(),
+                organization.isEmailNotification(),
+                organization.isSmsNotification(),
+                organization.getOrgName(),
+                organization.getName(),
+                organization.getBizRegNo(),
+                organization.getCreatedAt(),
+                organization.getUpdatedAt());
+    }
 }

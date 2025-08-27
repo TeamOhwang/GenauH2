@@ -7,9 +7,12 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -18,12 +21,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.project.dto.NotificationSettingsDTO; // 추가
-import org.springframework.security.core.Authentication; // 추가
-import org.springframework.security.core.context.SecurityContextHolder; // 추가
-import org.springframework.web.bind.annotation.PatchMapping; // 추가
-
 import com.project.dto.LoginRequestDTO;
+import com.project.dto.NotificationSettingsDTO;
 import com.project.dto.OrganizationDTO;
 import com.project.entity.Organization;
 import com.project.security.TokenProvider;
@@ -82,7 +81,7 @@ public class OrganizationController {
     @PostMapping("/register")
     public ResponseEntity<Map<String, Object>> register(@RequestBody Map<String, String> request) {
         Map<String, Object> response = new HashMap<>();
-        
+
         try {
             String orgName = request.get("orgName");
             String name = request.get("name");
@@ -99,13 +98,14 @@ public class OrganizationController {
             }
 
             // INVITED 상태로 회원 생성
-            OrganizationDTO created = organizationService.createPendingUser(orgName, name, bizRegNo, email, password, phoneNum);
+            OrganizationDTO created = organizationService.createPendingUser(orgName, name, bizRegNo, email, password,
+                    phoneNum);
 
             response.put("success", true);
             response.put("data", created);
             response.put("message", "회원가입이 완료되었습니다. 관리자 승인을 기다려주세요.");
             return ResponseEntity.ok(response);
-            
+
         } catch (RuntimeException e) {
             response.put("success", false);
             response.put("message", e.getMessage());
@@ -119,7 +119,8 @@ public class OrganizationController {
 
     // 관리자용 회원가입 승인 요청 목록 조회
     @GetMapping("/pending")
-    public ResponseEntity<Map<String, Object>> getPendingUsers(@RequestHeader(value = "Authorization", required = false) String token) {
+    public ResponseEntity<Map<String, Object>> getPendingUsers(
+            @RequestHeader(value = "Authorization", required = false) String token) {
         Map<String, Object> response = new HashMap<>();
 
         try {
@@ -134,7 +135,7 @@ public class OrganizationController {
             response.put("data", pendingUsers);
             response.put("message", "승인 대기 중인 회원 목록을 조회했습니다.");
             return ResponseEntity.ok(response);
-            
+
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "승인 대기 목록 조회 중 오류가 발생했습니다.");
@@ -144,8 +145,7 @@ public class OrganizationController {
 
     // 관리자용 회원가입 승인/거부
     @PutMapping("/{orgId}/approve")
-    public ResponseEntity<Map<String, Object>> approveUser(
-            @PathVariable Long orgId,
+    public ResponseEntity<Map<String, Object>> approveUser(@PathVariable Long orgId,
             @RequestBody Map<String, String> request,
             @RequestHeader(value = "Authorization", required = false) String token) {
 
@@ -159,7 +159,7 @@ public class OrganizationController {
             }
 
             String action = request.get("action"); // "approve" 또는 "reject"
-            
+
             if ("approve".equals(action)) {
                 // ACTIVE 상태로 변경
                 OrganizationDTO updatedUser = organizationService.updateUserStatus(orgId, Organization.Status.ACTIVE);
@@ -171,7 +171,8 @@ public class OrganizationController {
                 }
             } else if ("reject".equals(action)) {
                 // SUSPENDED 상태로 변경 (거부)
-                OrganizationDTO updatedUser = organizationService.updateUserStatus(orgId, Organization.Status.SUSPENDED);
+                OrganizationDTO updatedUser = organizationService.updateUserStatus(orgId,
+                        Organization.Status.SUSPENDED);
                 if (updatedUser != null) {
                     response.put("success", true);
                     response.put("data", updatedUser);
@@ -183,7 +184,7 @@ public class OrganizationController {
             response.put("success", false);
             response.put("message", "사용자를 찾을 수 없습니다.");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-            
+
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "승인 처리 중 오류가 발생했습니다.");
@@ -281,8 +282,7 @@ public class OrganizationController {
 
     // 사용자 역할 업데이트 (관리자 권한 필요)
     @PutMapping("/{orgId}/role")
-    public ResponseEntity<Map<String, Object>> updateUserRole(
-            @PathVariable Long orgId,
+    public ResponseEntity<Map<String, Object>> updateUserRole(@PathVariable Long orgId,
             @RequestBody Map<String, String> request,
             @RequestHeader(value = "Authorization", required = false) String token) {
 
@@ -326,8 +326,7 @@ public class OrganizationController {
 
     // 사용자 상태 업데이트
     @PutMapping("/{orgId}/status")
-    public ResponseEntity<Map<String, Object>> updateUserStatus(
-            @PathVariable Long orgId,
+    public ResponseEntity<Map<String, Object>> updateUserStatus(@PathVariable Long orgId,
             @RequestBody Map<String, String> request,
             @RequestHeader(value = "Authorization", required = false) String token) {
 
@@ -345,20 +344,20 @@ public class OrganizationController {
             // String을 Enum으로 변환
             Organization.Status status;
             switch (statusStr.toUpperCase()) {
-                case "ACTIVE":
-                case "활성":
-                    status = Organization.Status.ACTIVE;
-                    break;
-                case "SUSPENDED":
-                case "정지":
-                    status = Organization.Status.SUSPENDED;
-                    break;
-                case "INVITED":
-                case "초대됨":
-                    status = Organization.Status.INVITED;
-                    break;
-                default:
-                    status = Organization.Status.ACTIVE;
+            case "ACTIVE":
+            case "활성":
+                status = Organization.Status.ACTIVE;
+                break;
+            case "SUSPENDED":
+            case "정지":
+                status = Organization.Status.SUSPENDED;
+                break;
+            case "INVITED":
+            case "초대됨":
+                status = Organization.Status.INVITED;
+                break;
+            default:
+                status = Organization.Status.ACTIVE;
             }
 
             OrganizationDTO updatedUser = organizationService.updateUserStatus(orgId, status);
@@ -380,10 +379,9 @@ public class OrganizationController {
         }
     }
 
-    // 사용자 비밀번호 변경 (관리자 권한 필요)
+    // 관리자용 사용자 비밀번호 변경 (관리자 권한 필요)
     @PutMapping("/{orgId}/password")
-    public ResponseEntity<Map<String, Object>> updateUserPassword(
-            @PathVariable Long orgId,
+    public ResponseEntity<Map<String, Object>> updateUserPassword(@PathVariable Long orgId,
             @RequestBody Map<String, String> request,
             @RequestHeader(value = "Authorization", required = false) String token) {
 
@@ -422,10 +420,136 @@ public class OrganizationController {
         }
     }
 
+    // 현재 비밀번호 확인 API
+    @PostMapping("/verify-password")
+    public ResponseEntity<Map<String, Object>> verifyPassword(@RequestBody Map<String, String> request,
+            @RequestHeader(value = "Authorization", required = false) String token) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // 토큰 검증 및 사용자 정보 가져오기
+            if (token == null || !token.startsWith("Bearer ")) {
+                response.put("success", false);
+                response.put("message", "인증 토큰이 필요합니다.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
+
+            String actualToken = token.substring(7);
+            String userId = tokenProvider.validateAndGetUserId(actualToken);
+
+            if (userId == null) {
+                response.put("success", false);
+                response.put("message", "유효하지 않은 토큰입니다.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
+
+            String currentPassword = request.get("currentPassword");
+
+            if (currentPassword == null || currentPassword.trim().isEmpty()) {
+                response.put("success", false);
+                response.put("message", "현재 비밀번호를 입력해주세요.");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            // 비밀번호 확인
+            boolean isValidPassword = organizationService.verifyPassword(Long.parseLong(userId), currentPassword);
+
+            if (isValidPassword) {
+                response.put("success", true);
+                response.put("message", "비밀번호가 확인되었습니다.");
+            } else {
+                response.put("success", false);
+                response.put("message", "현재 비밀번호가 올바르지 않습니다.");
+            }
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "비밀번호 확인 중 오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    // 사용자 본인 비밀번호 변경 API
+    @PostMapping("/change-password")
+    public ResponseEntity<Map<String, Object>> changePassword(@RequestBody Map<String, String> request,
+            @RequestHeader(value = "Authorization", required = false) String token) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // 토큰 검증 및 사용자 정보 가져오기
+            if (token == null || !token.startsWith("Bearer ")) {
+                response.put("success", false);
+                response.put("message", "인증 토큰이 필요합니다.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
+
+            String actualToken = token.substring(7);
+            String userId = tokenProvider.validateAndGetUserId(actualToken);
+
+            if (userId == null) {
+                response.put("success", false);
+                response.put("message", "유효하지 않은 토큰입니다.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
+
+            String currentPassword = request.get("currentPassword");
+            String newPassword = request.get("newPassword");
+            String confirmPassword = request.get("confirmPassword");
+
+            // 입력값 검증
+            if (currentPassword == null || currentPassword.trim().isEmpty()) {
+                response.put("success", false);
+                response.put("message", "현재 비밀번호를 입력해주세요.");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            if (newPassword == null || newPassword.trim().isEmpty()) {
+                response.put("success", false);
+                response.put("message", "새 비밀번호를 입력해주세요.");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            if (!newPassword.equals(confirmPassword)) {
+                response.put("success", false);
+                response.put("message", "새 비밀번호와 비밀번호 확인이 일치하지 않습니다.");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            // 새 비밀번호 유효성 검사 (예: 최소 길이 등)
+            if (newPassword.length() < 6) {
+                response.put("success", false);
+                response.put("message", "새 비밀번호는 최소 6자 이상이어야 합니다.");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            // 비밀번호 변경
+            boolean changeResult = organizationService.changeUserPassword(Long.parseLong(userId), currentPassword,
+                    newPassword);
+
+            if (changeResult) {
+                response.put("success", true);
+                response.put("message", "비밀번호가 성공적으로 변경되었습니다.");
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("success", false);
+                response.put("message", "현재 비밀번호가 올바르지 않습니다.");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "비밀번호 변경 중 오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
     // 사용자 삭제 (관리자 권한 필요)
     @DeleteMapping("/delete")
-    public ResponseEntity<Map<String, Object>> deleteUsers(
-            @RequestBody Map<String, Object> request,
+    public ResponseEntity<Map<String, Object>> deleteUsers(@RequestBody Map<String, Object> request,
             @RequestHeader(value = "Authorization", required = false) String token) {
 
         Map<String, Object> response = new HashMap<>();
@@ -471,6 +595,44 @@ public class OrganizationController {
         }
     }
 
+    // 현재 사용자의 알림 설정 조회 API
+    @GetMapping("/notification-settings")
+    public ResponseEntity<Map<String, Object>> getNotificationSettings() {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            Long orgId = getAuthenticatedUserId(); // JWT 토큰에서 사용자 ID 추출
+            OrganizationDTO settings = organizationService.getNotificationSettings(orgId);
+
+            response.put("success", true);
+            response.put("data", settings);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    // 알림 설정 업데이트 API
+    @PatchMapping("/notification-settings")
+    public ResponseEntity<Map<String, Object>> updateNotificationSettings(
+            @RequestBody NotificationSettingsDTO settingsDTO) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            Long orgId = getAuthenticatedUserId(); // JWT 토큰에서 사용자 ID 추출
+            OrganizationDTO updatedUser = organizationService.updateNotificationSettings(orgId, settingsDTO);
+
+            response.put("success", true);
+            response.put("message", "알림 설정이 업데이트되었습니다.");
+            response.put("data", updatedUser);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
     // 관리자 토큰 검증 헬퍼 메서드
     private OrganizationDTO validateAdminToken(String token, Map<String, Object> response) {
         try {
@@ -506,61 +668,23 @@ public class OrganizationController {
 
     // 관리자 권한 확인 헬퍼 메서드
     private boolean isAdmin(OrganizationDTO user) {
-        return user.getRole() != null &&
-                (user.getRole().equals(Organization.Role.SUPERVISOR) ||
-                        "SUPERVISOR".equals(user.getRole().toString()));
-    }
-
-     //  현재 사용자의 알림 설정 조회 API
-    @GetMapping("/notification-settings")
-    public ResponseEntity<Map<String, Object>> getNotificationSettings() {
-        Map<String, Object> response = new HashMap<>();
-        try {
-            Long orgId = getAuthenticatedUserId(); // JWT 토큰에서 사용자 ID 추출
-            OrganizationDTO settings = organizationService.getNotificationSettings(orgId);
-            
-            response.put("success", true);
-            response.put("data", settings);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-
-    // 알림 설정 업데이트 API
-    @PatchMapping("/notification-settings")
-    public ResponseEntity<Map<String, Object>> updateNotificationSettings(@RequestBody NotificationSettingsDTO settingsDTO) {
-        Map<String, Object> response = new HashMap<>();
-        try {
-            Long orgId = getAuthenticatedUserId(); // JWT 토큰에서 사용자 ID 추출
-            OrganizationDTO updatedUser = organizationService.updateNotificationSettings(orgId, settingsDTO);
-            
-            response.put("success", true);
-            response.put("message", "알림 설정이 업데이트되었습니다.");
-            response.put("data", updatedUser);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
+        return user.getRole() != null && (user.getRole().equals(Organization.Role.SUPERVISOR)
+                || "SUPERVISOR".equals(user.getRole().toString()));
     }
 
     // JWT 토큰에서 사용자(조직) ID를 추출하는 헬퍼 메소드
     private Long getAuthenticatedUserId() {
         // SecurityContext에서 인증 정보 가져오기
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        
+
         // 인증 정보가 없거나, 인증되지 않았거나, 익명 사용자인 경우 예외 발생
-        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
+        if (authentication == null || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getPrincipal())) {
             throw new SecurityException("인증된 사용자가 아닙니다.");
         }
-        
+
         // Principal에서 사용자 ID(문자열)를 가져와 Long으로 변환
         String userIdStr = (String) authentication.getPrincipal();
         return Long.parseLong(userIdStr);
     }
 }
-                
