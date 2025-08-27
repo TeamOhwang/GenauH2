@@ -105,9 +105,9 @@ const url = `/cloud/nts-businessman/v1/status?serviceKey=${API_KEY}&returnType=J
   );
 
   console.log("payload", { b_no: [cleanBizNo] });
-  console.log("response", res.data);
+  console.log("response", res);
 
-  const valid = res.data?.data?.[0]?.valid === "01";
+  const valid = res.data?.data?.[0]?.tax_type_cd === "01";
   return { valid, raw: res.data };
 }
 

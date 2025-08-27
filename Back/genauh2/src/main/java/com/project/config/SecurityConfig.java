@@ -44,23 +44,28 @@ public class SecurityConfig {
             
             // URL별 접근 권한 설정
             .authorizeHttpRequests(authz -> authz
-                // 인증 없이 접근 가능한 경로들
-                .requestMatchers("OPTIONS", "/**").permitAll()  // OPTIONS 요청 허용 (중요!)
-                .requestMatchers("/demo/user/login").permitAll()
-                .requestMatchers("/demo/user/register").permitAll()
-                .requestMatchers("/user/login").permitAll()
-                .requestMatchers("/user/register").permitAll()
-                .requestMatchers("/api/public/**").permitAll()
-                .requestMatchers("/ws/**").permitAll()
-                .requestMatchers("/error").permitAll()
-                .requestMatchers("/alert/**").permitAll()
+            	    // 인증 없이 접근 가능한 경로들
+            	    .requestMatchers("OPTIONS", "/**").permitAll()  // OPTIONS 요청 허용 (중요!)
+            	    .requestMatchers("/demo/user/login").permitAll()
+            	    .requestMatchers("/demo/user/register").permitAll()
+            	    .requestMatchers("/user/login").permitAll()
+            	    .requestMatchers("/user/register").permitAll()
+            	    
+            	    // 비밀번호 리셋 관련 경로 추가 (인증 불필요)
+            	    .requestMatchers("/user/reset-password").permitAll()  // 비밀번호 리셋 실행
+            	    .requestMatchers("/user/validate-reset-token/**").permitAll()  // 토큰 검증
+            	    
+            	    .requestMatchers("/api/public/**").permitAll()
+            	    .requestMatchers("/ws/**").permitAll()
+            	    .requestMatchers("/error").permitAll()
+            	    .requestMatchers("/alert/**").permitAll()
 
-                // 테스트용 엔드포인트 허용
-                .requestMatchers("/test/**").permitAll()
-                
-                // 나머지는 인증 필요
-                .anyRequest().authenticated()
-            )
+            	    // 테스트용 엔드포인트 허용
+            	    .requestMatchers("/test/**").permitAll()
+            	    
+            	    // 나머지는 인증 필요 (비밀번호 리셋 요청은 여기에 포함됨)
+            	    .anyRequest().authenticated()
+            	)
             
             // JWT 필터 추가
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

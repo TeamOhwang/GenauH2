@@ -1,4 +1,3 @@
-// src/components/layout/Sidebar.tsx
 import { NavLink } from "react-router-dom";
 import { PATHS } from "@/routes/paths";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -8,16 +7,10 @@ import { ChartLine, DollarSign, LayoutDashboard, Settings, ShieldUser } from "lu
 export default function Sidebar() {
     const role = useAuthStore((s) => s.role);
 
-    // 공통(최상단) – 대시보드는 역할에 따라 목적지 다르게
-    // const commonTop = [{ 
-    //     label: "대시보드", 
-    //     to: role === "SUPERVISOR" ? PATHS.admin : PATHS.dashboard 
-    // }];
 
-    // USER 전용 메뉴
     const userMenu = [
         { label: "대시보드", to: PATHS.dashboard, icon: <LayoutDashboard /> },
-        { label: "상세 데이터", to: PATHS.detailed, icon: <ChartLine /> },
+        { label: "상세 데이터", to: PATHS.facilityPage, icon: <ChartLine /> },
         { label: "수소 가격 정보", to: PATHS.price, icon: <DollarSign /> },
         { label: "설정", to: PATHS.setting, icon: <Settings /> },
     ];

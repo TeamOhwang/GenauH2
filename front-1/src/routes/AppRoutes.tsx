@@ -1,4 +1,3 @@
-// src/router/AppRouter.tsx
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import RootLayout from "@/layouts/RootLayout";
@@ -7,10 +6,11 @@ import { PATHS, roleHome, type Role } from "./paths";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { authToken } from "@/stores/authStorage";
 
+
 const Login = lazy(() => import("@/pages/Login"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
 const Price = lazy(() => import("@/pages/Price"));
-const FacilityKpiPage = lazy(() => import("@/pages/FacilityKpiPage"));
+const FacilityPage = lazy(() => import("@/pages/FacilityPage"));
 const Setting = lazy(() => import("@/pages/Setting"));
 const Admin = lazy(() => import("@/pages/Admin"));
 const About = lazy(() => import("@/pages/About"));
@@ -57,7 +57,7 @@ export default function AppRouter() {
           <Route element={<ProtectedRoute require="USER"><Outlet /></ProtectedRoute>}>
             <Route path={PATHS.dashboard} element={<Dashboard />} />
             <Route path={PATHS.price} element={<Price />} />
-            <Route path={PATHS.facilityKpiPage} element={<FacilityKpiPage />} /> 
+            <Route path={PATHS.facilityPage} element={<FacilityPage />} /> 
             <Route path={PATHS.setting} element={<Setting />} />
           </Route>
 

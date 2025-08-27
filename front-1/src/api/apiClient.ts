@@ -28,6 +28,8 @@ export const AUTH_ENDPOINTS = {
   regionAverages: "/trade/list",
   allStations: "/api/region-price",
   stationsByRegion: "/api/region-price/by-region",
+  list: "/plant/list",
+  
 } as const;
 
 /* ======================== 헤더 유틸 함수 ======================== */
