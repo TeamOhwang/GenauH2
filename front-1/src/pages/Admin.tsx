@@ -9,6 +9,7 @@ import RegiFrom from "@/components/UserRegiForm";
 import { useAdmin } from "@/hooks/useAdmin";
 import { Select } from "@radix-ui/react-select";
 import { useEffect, useState } from "react";
+import * as React from "react";
 
 // 사용자 타입 정의
 interface User {
@@ -330,8 +331,8 @@ export default function Admin() {
             </thead>
             <tbody>
               {filteredUsers.map((u) => (
-                <>
-                  <tr key={u.orgId}>
+                <React.Fragment key={u.orgId}>
+                  <tr>
                     <td>{u.orgName}</td>
                     <td>{u.email}</td>
                     <td>{u.name}</td>
@@ -476,7 +477,7 @@ export default function Admin() {
                       </td>
                     </tr>
                   )}
-                </>
+                </React.Fragment>
               ))}
             </tbody>
           </table>
