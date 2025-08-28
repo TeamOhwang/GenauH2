@@ -12,6 +12,14 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
+import com.project.dto.HourlyHydrogenProductionDTO;
+import com.project.entity.Real;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -63,4 +71,42 @@ public class HydrogenStorageService {
                 .build();
     }
     
+
+    /**
+ * 특정 발전소의 오늘 하루 동안 시간대별 수소 생산량을 조회합니다. (그래프용)
+ *
+ * @param plantId 조회할 발전소 ID
+ * @return 0시부터 23시까지의 시간별 생산량 DTO 리스트
+ */
+public List<HourlyHydrogenProductionDTO> getHourlyProductionForToday(String plantId) {
+    // 1. 조회 기간 설정 (오늘 00:00:00 ~ 23:59:59)
+    LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
+    LocalDateTime endOfToday = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);
+
+    // 2. Repository를 통해 오늘 하루 동안의 생산량 데이터를 모두 조회
+    List<Real> todayProductionData = realRepository.findByPlantIdAndTsBetween(plantId, startOfToday, endOfToday);
+
+    // 3. 0시~23시까지 시간별로 생산량을 합산하기 위한 Map 초기화 (시간, 생산량)
+    Map<Integer, BigDecimal> hourlyHydrogenProductionMap = IntStream.range(0, 24).boxed()
+            .collect(Collectors.toMap(hour -> hour, hour -> BigDecimal.ZERO));
+
+    // 4. 조회된 데이터를 시간대별로 합산
+    for (Real data : todayProductionData) {
+        int hour = data.getTs().getHour();
+        BigDecimal production = data.getProductionKg();
+
+        if (production != null) {
+            hourlyHydrogenProductionMap.merge(hour, production, BigDecimal::add);
+        }
+    }
+
+    // 5. Map의 내용을 DTO 리스트로 변환하고 시간순으로 정렬하여 반환
+    return hourlyHydrogenProductionMap.entrySet().stream()
+            .map(entry -> new HourlyHydrogenProductionDTO(entry.getKey(), entry.getValue()))
+            .sorted(Comparator.comparingInt(HourlyHydrogenProductionDTO::getHour))
+            .collect(Collectors.toList());
+}
+
+
+
 }

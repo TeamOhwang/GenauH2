@@ -9,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.project.service.PredictService;
 import com.project.dto.PredictDTO;
-import com.project.dto.SumRes;
 
 @RestController
 @RequestMapping("/predict")

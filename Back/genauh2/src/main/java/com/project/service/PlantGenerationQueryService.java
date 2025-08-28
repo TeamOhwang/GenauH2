@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -21,13 +20,10 @@ import org.springframework.stereotype.Service;
 import com.project.dto.DailyTotal;
 import com.project.dto.DashboardSummaryDTO;
 import com.project.dto.HourlyAvg;
-import com.project.dto.HourlyHydrogenProductionDTO;
 import com.project.dto.MonthlyTotal;
 import com.project.dto.PeriodSummaryDTO;
 import com.project.dto.WeeklyTotal;
-import com.project.entity.Facility;
 import com.project.entity.PlantGeneration;
-import com.project.repository.FacilityRepository;
 import com.project.repository.PlantGenerationRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -39,7 +35,6 @@ import lombok.extern.slf4j.Slf4j;
 public class PlantGenerationQueryService {
 
     private final PlantGenerationRepository repo;
-    private final FacilityRepository facilityRepository;
 
     /** 원시 시계열(엔티티 그대로) */
     public List<PlantGeneration> getRawSeries(String plantId, LocalDate start, LocalDate end, int limit) {
@@ -231,76 +226,6 @@ public class PlantGenerationQueryService {
         return result;
     }
 
-    /** 시간대별 수소 생산량 */
-    public List<HourlyHydrogenProductionDTO> getHourlyHydrogenProduction(LocalDate start, LocalDate end) {
-        LocalDate s = (start != null) ? start : LocalDate.now().minusDays(30);
-        LocalDate e = (end != null) ? end : LocalDate.now();
-
-        // 1. Facilities 테이블에서 secNominalKwhPerKg 값을 가져옵니다.
-        Optional<Facility> facilityOpt = facilityRepository.findById(1L);
-        if (facilityOpt.isEmpty()) {
-            System.out.println("❌ Facilities 데이터 없음: facilityId=\"1\"");
-            return new ArrayList<>();
-        }
-
-        double secNominalKwhPerKg = facilityOpt.get().getSpecKwh().doubleValue();
-        System.out.println("✅ secNominalKwhPerKg: " + secNominalKwhPerKg);
-
-        // 2. DB에서 모든 원시 데이터를 가져옵니다.
-        List<PlantGeneration> rows = repo.findByDateBetween(s, e);
-        System.out.println("전체 PlantGeneration 데이터 수: " + rows.size());
-
-        // 3. 현재 시간 기준 필터링
-        LocalDate today = LocalDate.now();
-        int currentHour = LocalTime.now().getHour();
-
-        // 4. Map을 사용하여 시간별 발전량의 합계를 누적합니다.
-        Map<Integer, Double> hourlyGenSum = new HashMap<>();
-        Map<Integer, Long> hourlyGenCount = new HashMap<>();
-
-        for (PlantGeneration r : rows) {
-            // 특정 발전소(plt001) 데이터만 필터링합니다.
-            if ("plt001".equals(r.getPlantId())) {
-                LocalDate dataDate = r.getDate();
-                int hour = r.getHour();
-
-                // 오늘 데이터인 경우 현재 시간 이후 데이터는 제외
-                if (dataDate.isEqual(today) && hour > currentHour) {
-                    continue;
-                }
-
-                hourlyGenSum.put(hour, hourlyGenSum.getOrDefault(hour, 0.0) + r.getGeneration_Kw());
-                hourlyGenCount.put(hour, hourlyGenCount.getOrDefault(hour, 0L) + 1);
-            }
-        }
-
-        System.out.println("plt001 필터링된 시간대 수: " + hourlyGenSum.size());
-        System.out.println("현재 시간: " + currentHour + "시 (이후 데이터 제외됨)");
-
-        // 5. 합산된 값을 바탕으로 시간대별 평균 수소 생산량을 계산합니다.
-        List<HourlyHydrogenProductionDTO> result = new ArrayList<>();
-        // 현재 시간까지만 계산 (19시 이후는 아예 제외)
-        int maxHour = Math.min(23, currentHour);
-
-        for (int h = 0; h <= maxHour; h++) {
-            double averageGenKw = 0.0;
-            if (hourlyGenCount.containsKey(h) && hourlyGenCount.get(h) > 0) {
-                averageGenKw = hourlyGenSum.get(h) / hourlyGenCount.get(h);
-            }
-
-            // 수소 생산량 계산: 시간당 평균 발전량 / 수소 1kg당 전력 소비량
-            double hydrogenKg = secNominalKwhPerKg > 0 ? (averageGenKw / secNominalKwhPerKg) : 0.0;
-
-            result.add(HourlyHydrogenProductionDTO.builder()
-                    .hour(h)
-                    .hydrogenKg(hydrogenKg)
-                    .build());
-        }
-
-        System.out.println("계산 완료 - 결과 데이터 수: " + result.size());
-        System.out.println("===============================");
-        return result;
-    }
 
     /** 실시간 수소 생산량 비교 */
     public Double calculateRealTimeHydrogenComparison(String plantId) {
