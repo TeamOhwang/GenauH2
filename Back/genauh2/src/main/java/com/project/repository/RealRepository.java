@@ -147,4 +147,10 @@ public interface RealRepository extends JpaRepository<Real, Long> {
         @Query(value = "SELECT ts, idlepowerkw FROM production_real WHERE DATE(ts) = :date ORDER BY ts ASC", nativeQuery = true)
         List<Object[]> findIdlePowerByDate(@Param("date") String date);
 
+        /**
+         * [수정된 부분] 종료 시점을 포함하지 않는 시간 범위로 데이터를 조회하는 메소드 추가
+         */
+        List<Real> findByOrgidAndTsGreaterThanEqualAndTsLessThan(Long orgId, LocalDateTime startDate,
+                        LocalDateTime endDate);
+
 }

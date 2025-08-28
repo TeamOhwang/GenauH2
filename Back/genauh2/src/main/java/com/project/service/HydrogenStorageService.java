@@ -14,6 +14,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId; // ZoneId import 추가
 
 import com.project.dto.HourlyHydrogenProductionDTO;
 import com.project.entity.Real;
@@ -89,13 +90,13 @@ public List<HourlyHydrogenProductionDTO> getHourlyProductionForToday() {
     String userIdStr = (String) authentication.getPrincipal();
     Long orgId = Long.parseLong(userIdStr);
 
-    // 2. 조회 범위를 "오늘 00:00:00" ~ "내일 00:00:00" (미포함)으로 설정
-    LocalDate today = LocalDate.now();
+    // 2. [수정] Asia/Seoul 시간대를 기준으로 조회 범위 설정
+    LocalDate today = LocalDate.now(ZoneId.of("Asia/Seoul"));
     LocalDateTime startOfToday = today.atStartOfDay();
     LocalDateTime startOfTomorrow = today.plusDays(1).atStartOfDay();
 
-    // 3. Repository를 통해 오늘 하루 동안의 모든 생산량 데이터를 조회
-    List<Real> todayProductionData = realRepository.findByOrgidAndTsBetween(orgId, startOfToday, startOfTomorrow);
+    // 3. [수정] 종료 시점을 포함하지 않는 메소드 호출로 변경
+    List<Real> todayProductionData = realRepository.findByOrgidAndTsGreaterThanEqualAndTsLessThan(orgId, startOfToday, startOfTomorrow);
 
     // 4. Java Stream을 사용하여 시간대별로 productionKg를 안전하게 그룹화하고 합산합니다.
     Map<Integer, BigDecimal> hourlyHydrogenProductionMap = todayProductionData.stream()
