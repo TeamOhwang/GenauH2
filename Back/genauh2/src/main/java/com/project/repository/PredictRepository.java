@@ -12,6 +12,14 @@ import java.util.List;
 @Repository
 public interface PredictRepository extends JpaRepository<Predict, String> {
 
+    /**
+     * 특정 날짜의 모든 예측 유휴 전력량 데이터를 타임스탬프와 함께 조회합니다.
+     * @param date 조회할 날짜 (YYYY-MM-DD 형식)
+     * @return 타임스탬프(ts), 유휴 전력량(idlepowerkw)을 담은 Object[] 리스트
+     */
+    @Query(value = "SELECT ts, idlepowerkw FROM production_predict WHERE DATE(ts) = :date ORDER BY ts ASC", nativeQuery = true)
+    List<Object[]> findIdlePowerByDate(@Param("date") String date);
+
     @Modifying
     @Query(value = """
         INSERT INTO production_predict (
@@ -23,12 +31,12 @@ public interface PredictRepository extends JpaRepository<Predict, String> {
             f.orgid,
             pg.plant_id,
             CONCAT(pg.date, ' ', LPAD(pg.hour, 2, '0'), ':00:00') as ts,
-            f.h2_rate as idlepowerkw,
-            ROUND((f.power_kw - 10) / f.spec_kwh, 3) as predictedmaxkg,
-            ROUND((pg.forecast_kwh - 10) / f.spec_kwh, 3) as predictedcurrentkg
+            GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.7), 3)) as idlepowerkw,
+            ROUND((50 + GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.7), 3))), 3) as predictedmaxkg,
+            ROUND((GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.7), 3)) * (0.75 + (RAND() * 0.05)) + 50), 3) as predictedcurrentkg
         FROM facilities f
         INNER JOIN plant_generation pg ON f.facid = pg.facid
-        WHERE f.spec_kwh > 0
+        WHERE f.spec_kwh > 0 AND f.power_kw > 0 AND pg.capacity_kw > 0
     """, nativeQuery = true)
     int insertPredictionsForAllFacilities();
 
@@ -43,13 +51,13 @@ public interface PredictRepository extends JpaRepository<Predict, String> {
             f.orgid,
             pg.plant_id,
             CONCAT(pg.date, ' ', LPAD(pg.hour, 2, '0'), ':00:00') as ts,
-            f.h2_rate as idlepowerkw,
-            ROUND((f.power_kw - 10) / f.spec_kwh, 3) as predictedmaxkg,
-            ROUND((pg.forecast_kwh - 10) / f.spec_kwh, 3) as predictedcurrentkg
+            GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.7), 3)) as idlepowerkw,
+            ROUND((50 + GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.7), 3))), 3) as predictedmaxkg,
+            ROUND((GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.7), 3)) * (0.75 + (RAND() * 0.05)) + 50), 3) as predictedcurrentkg
         FROM facilities f
         INNER JOIN plant_generation pg ON f.facid = pg.facid
         WHERE f.facid = :facId
-          AND f.spec_kwh > 0
+          AND f.spec_kwh > 0 AND f.power_kw > 0 AND pg.capacity_kw > 0
     """, nativeQuery = true)
     int insertPredictionsForFacility(@Param("facId") Long facId);
 
@@ -64,14 +72,14 @@ public interface PredictRepository extends JpaRepository<Predict, String> {
             f.orgid,
             pg.plant_id,
             CONCAT(pg.date, ' ', LPAD(pg.hour, 2, '0'), ':00:00') as ts,
-            f.h2_rate as idlepowerkw,
-            ROUND((f.power_kw - 10) / f.spec_kwh, 3) as predictedmaxkg,
-            ROUND((pg.forecast_kwh - 10) / f.spec_kwh, 3) as predictedcurrentkg
+            GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.7), 3)) as idlepowerkw,
+            ROUND((50 + GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.7), 3))), 3) as predictedmaxkg,
+            ROUND((GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.7), 3)) * (0.75 + (RAND() * 0.05)) + 50), 3) as predictedcurrentkg
         FROM facilities f
         INNER JOIN plant_generation pg ON f.facid = pg.facid
         WHERE pg.date = :date
           AND pg.hour = :hour
-          AND f.spec_kwh > 0
+          AND f.spec_kwh > 0 AND f.power_kw > 0 AND pg.capacity_kw > 0
     """, nativeQuery = true)
     int insertPredictionsByDateTime(@Param("date") String date, @Param("hour") Integer hour);
 

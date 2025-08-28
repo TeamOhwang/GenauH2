@@ -6,11 +6,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.security.core.Authentication; // import 추가
+import org.springframework.security.core.context.SecurityContextHolder; // import 추가
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId; // ZoneId import 추가
 
 import com.project.dto.HourlyHydrogenProductionDTO;
 import com.project.entity.Real;
@@ -72,41 +76,45 @@ public class HydrogenStorageService {
     }
     
 
-    /**
- * 특정 발전소의 오늘 하루 동안 시간대별 수소 생산량을 조회합니다. (그래프용)
- *
- * @param plantId 조회할 발전소 ID
- * @return 0시부터 23시까지의 시간별 생산량 DTO 리스트
+  /**
+ * [최종 해결] 로그인한 사용자가 소유한 모든 발전소의 "오늘" 시간대별 수소 생산량 총합을 조회합니다.
+ * (Java Stream을 사용한 안정적인 집계 방식으로 전면 수정)
+ * @return 0시부터 23시까지의 시간별 총생산량 DTO 리스트
  */
-public List<HourlyHydrogenProductionDTO> getHourlyProductionForToday(String plantId) {
-    // 1. 조회 기간 설정 (오늘 00:00:00 ~ 23:59:59)
-    LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
-    LocalDateTime endOfToday = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);
-
-    // 2. Repository를 통해 오늘 하루 동안의 생산량 데이터를 모두 조회
-    List<Real> todayProductionData = realRepository.findByPlantIdAndTsBetween(plantId, startOfToday, endOfToday);
-
-    // 3. 0시~23시까지 시간별로 생산량을 합산하기 위한 Map 초기화 (시간, 생산량)
-    Map<Integer, BigDecimal> hourlyHydrogenProductionMap = IntStream.range(0, 24).boxed()
-            .collect(Collectors.toMap(hour -> hour, hour -> BigDecimal.ZERO));
-
-    // 4. 조회된 데이터를 시간대별로 합산
-    for (Real data : todayProductionData) {
-        int hour = data.getTs().getHour();
-        BigDecimal production = data.getProductionKg();
-
-        if (production != null) {
-            hourlyHydrogenProductionMap.merge(hour, production, BigDecimal::add);
-        }
+public List<HourlyHydrogenProductionDTO> getHourlyProductionForToday() {
+    // 1. 현재 로그인한 사용자의 orgId 가져오기
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
+        throw new SecurityException("인증된 사용자가 아닙니다.");
     }
+    String userIdStr = (String) authentication.getPrincipal();
+    Long orgId = Long.parseLong(userIdStr);
 
-    // 5. Map의 내용을 DTO 리스트로 변환하고 시간순으로 정렬하여 반환
-    return hourlyHydrogenProductionMap.entrySet().stream()
-            .map(entry -> new HourlyHydrogenProductionDTO(entry.getKey(), entry.getValue()))
-            .sorted(Comparator.comparingInt(HourlyHydrogenProductionDTO::getHour))
-            .collect(Collectors.toList());
+    // 2. [수정] Asia/Seoul 시간대를 기준으로 조회 범위 설정
+    LocalDate today = LocalDate.now(ZoneId.of("Asia/Seoul"));
+    LocalDateTime startOfToday = today.atStartOfDay();
+    LocalDateTime startOfTomorrow = today.plusDays(1).atStartOfDay();
+
+    // 3. [수정] 종료 시점을 포함하지 않는 메소드 호출로 변경
+    List<Real> todayProductionData = realRepository.findByOrgidAndTsGreaterThanEqualAndTsLessThan(orgId, startOfToday, startOfTomorrow);
+
+    // 4. Java Stream을 사용하여 시간대별로 productionKg를 안전하게 그룹화하고 합산합니다.
+    Map<Integer, BigDecimal> hourlyHydrogenProductionMap = todayProductionData.stream()
+        .filter(data -> data.getProductionKg() != null) // null 값 데이터는 제외
+        .collect(Collectors.groupingBy(
+            data -> data.getTs().getHour(), // 시간을 기준으로 그룹화
+            Collectors.reducing(BigDecimal.ZERO, Real::getProductionKg, BigDecimal::add) // 각 그룹의 productionKg를 합산
+        ));
+
+    // 5. 0시부터 23시까지의 전체 DTO 리스트를 생성하여 반환 (데이터가 없는 시간은 0으로 채움)
+    return IntStream.range(0, 24)
+        .mapToObj(hour -> {
+            BigDecimal production = hourlyHydrogenProductionMap.getOrDefault(hour, BigDecimal.ZERO);
+            return new HourlyHydrogenProductionDTO(hour, production);
+        })
+        .sorted(Comparator.comparingInt(HourlyHydrogenProductionDTO::getHour))
+        .collect(Collectors.toList());
 }
-
 
 
 }
