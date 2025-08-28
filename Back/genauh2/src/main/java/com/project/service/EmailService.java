@@ -29,8 +29,8 @@ public class EmailService {
             helper.setTo(toEmail);
             helper.setSubject("[GENAUH2] 비밀번호 재설정 요청");
             
-            // 비밀번호 리셋 링크 생성 (프론트엔드 URL)
-            String resetLink = "http://localhost:5174/reset-password?token=" + resetToken;
+            // 프론트엔드 경로로 수정
+            String resetLink = "http://localhost:5174/changePassword?token=" + resetToken;
             
             String htmlContent = createPasswordResetEmailTemplate(userName, resetLink, resetToken);
             helper.setText(htmlContent, true);

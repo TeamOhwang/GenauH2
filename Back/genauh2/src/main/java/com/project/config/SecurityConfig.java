@@ -55,6 +55,8 @@ public class SecurityConfig {
             	    .requestMatchers("/user/reset-password").permitAll()  // 비밀번호 리셋 실행
             	    .requestMatchers("/user/validate-reset-token/**").permitAll()  // 토큰 검증
             	    
+            	    .requestMatchers("/user/password-reset-page").permitAll()  // 비밀번호 리셋 페이지 추가
+            	    
             	    .requestMatchers("/api/public/**").permitAll()
             	    .requestMatchers("/ws/**").permitAll()
             	    .requestMatchers("/error").permitAll()

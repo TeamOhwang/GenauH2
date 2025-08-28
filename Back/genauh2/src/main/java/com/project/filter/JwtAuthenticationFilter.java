@@ -99,6 +99,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return true;
         }
         
+        if (path.equals("/gh/user/password-reset-page") ||
+        	    path.equals("/demo/user/password-reset-page") ||
+        	    path.equals("/user/password-reset-page") ||
+        	    path.endsWith("/user/password-reset-page")) {
+        	    return true;
+        	}
+        
         // 기타 정적 리소스나 헬스체크 등
         if (path.startsWith("/health") || 
             path.startsWith("/actuator") ||
