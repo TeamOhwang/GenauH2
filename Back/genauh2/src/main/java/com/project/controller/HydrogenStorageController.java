@@ -1,7 +1,6 @@
 package com.project.controller;
 
 import com.project.dto.HydrogenTankStatusDTO; // 수소탱크 채우기
-import com.project.entity.Real;
 import com.project.dto.HourlyHydrogenProductionDTO; // 시간대별 수소 생산량
 import com.project.service.HydrogenStorageService;
 import lombok.RequiredArgsConstructor;
