@@ -170,38 +170,37 @@ public interface PredictRepository extends JpaRepository<Predict, String> {
     
     /// 사업자 id 기준으로 등록된 설비id 가져오고, 수소생산량, 최대수소생산량 집계합
     @Query(value = """
-		SELECT 
-		    t.orgId,
-		    t.facId,
-		    t.facilityName,
-		    t.ts,
-		    t.totalMaxKg,
-		    t.totalCurrentKg,
-		    @cumulativeMax := @cumulativeMax + t.totalMaxKg AS cumulativeMax,
-		    @cumulativeCurrent := @cumulativeCurrent + t.totalCurrentKg AS cumulativeCurrent
-		FROM (
-		    SELECT 
-		        p.orgid AS orgId,
-		        p.facid AS facId,
-		        f.name AS facilityName,
-		        p.ts AS ts,
-		        SUM(p.predictedmaxkg) AS totalMaxKg,
-		        SUM(p.predictedcurrentkg) AS totalCurrentKg
-		    FROM production_predict p
-		    LEFT JOIN facilities f ON p.facid = f.facid
-		    WHERE p.orgid = :orgId
-		    GROUP BY p.orgid, p.facid, f.name, p.ts
-		    ORDER BY p.ts ASC
-		) t
-		CROSS JOIN (SELECT @cumulativeMax := 0, @cumulativeCurrent := 0) vars
-		ORDER BY t.ts ASC;
-
-    	    """, nativeQuery = true)
-    	List<Object[]> sumGetByData(@Param("orgId") Long orgId);
-
+            SELECT 
+                t.orgId,
+                t.facId,
+                t.facilityName,
+                t.ts,
+                t.totalMaxKg,
+                t.totalCurrentKg,
+                @cumulativeMax := @cumulativeMax + t.totalMaxKg AS cumulativeMax,
+                @cumulativeCurrent := @cumulativeCurrent + t.totalCurrentKg AS cumulativeCurrent
+            FROM (
+                SELECT 
+                    p.orgid AS orgId,
+                    p.facid AS facId,
+                    f.name AS facilityName,
+                    p.ts AS ts,
+                    SUM(p.predictedmaxkg) AS totalMaxKg,
+                    SUM(p.predictedcurrentkg) AS totalCurrentKg
+                FROM production_predict p
+                LEFT JOIN facilities f ON p.facid = f.facid
+                WHERE p.orgid = :orgId
+                  AND (:start IS NULL OR p.ts >= :start)
+                  AND (:end IS NULL OR p.ts <= :end)
+                GROUP BY p.orgid, p.facid, f.name, p.ts
+                ORDER BY p.ts ASC
+            ) t
+            CROSS JOIN (SELECT @cumulativeMax := 0, @cumulativeCurrent := 0) vars
+            """, nativeQuery = true)
+        List<Object[]> sumGetByData(@Param("orgId") Long orgId,
+                                    @Param("start") String start,
+                                    @Param("end") String end);
+    }
     
     
     
-    
-    
-}

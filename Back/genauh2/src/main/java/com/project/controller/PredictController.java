@@ -114,9 +114,12 @@ public class PredictController {
     
     /// 사업자 id 기준으로 등록된 설비id 가져오고, 수소생산량, 최대수소생산량 집계합
     @GetMapping("/allsumid")
-    public ResponseEntity<List<Map<String,Object>>> sumGetByData(@RequestParam("orgId") Long orgId) {
-        List<Map<String,Object>> data = predictService.sumGetByData(orgId);
-        return ResponseEntity.ok(data);
+    public ResponseEntity<List<Map<String, Object>>> getKpis(
+            @RequestParam Long orgId,
+            @RequestParam(required = false) String start,
+            @RequestParam(required = false) String end) {
+
+        return ResponseEntity.ok(predictService.getKpis(orgId, start, end));
     }
     
     

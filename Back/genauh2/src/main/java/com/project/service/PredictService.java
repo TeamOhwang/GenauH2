@@ -113,12 +113,12 @@ public class PredictService {
     
     /// 사업자 id 기준으로 등록된 설비id 가져오고, 수소생산량, 최대수소생산량 집계합
     @Transactional(readOnly = true)
-    public List<Map<String,Object>> sumGetByData(Long orgId) {
-        List<Object[]> rows = predictRepository.sumGetByData(orgId);
+    public List<Map<String, Object>> getKpis(Long orgId, String start, String end) {
+        List<Object[]> rows = predictRepository.sumGetByData(orgId, start, end);
 
-        List<Map<String,Object>> result = new ArrayList<>();
+        List<Map<String, Object>> result = new ArrayList<>();
         for (Object[] row : rows) {
-            Map<String,Object> map = new HashMap<>();
+            Map<String, Object> map = new HashMap<>();
             map.put("orgId", row[0]);
             map.put("facId", row[1]);
             map.put("facilityName", row[2]);
