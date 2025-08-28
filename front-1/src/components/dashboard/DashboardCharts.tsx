@@ -66,9 +66,6 @@ export default function DashboardCharts({
                         onChange={(e) => onPlantChange(e.target.value as Plant)}
                         className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                        {activeTimeFrame === "weekly" && (
-                            <option value="all">전체</option>
-                        )}
                         <option value="plant1">발전소 1 (1.2MW)</option>
                         <option value="plant2">발전소 2 (800kW)</option>
                         <option value="plant3">발전소 3 (500kW)</option>

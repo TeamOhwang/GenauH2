@@ -19,8 +19,6 @@ export interface ChartData {
     }>;
 }
 
-
-
 export interface SolaDataStructure {
     [timeFrame: string]: {
         [plant: string]: ChartData;
@@ -105,7 +103,7 @@ export function buildSolaData(
 function buildDailyPlantChartData(plantData: any[], currentHour: number): ChartData {
     // 입력 데이터 검증
     if (!plantData || !Array.isArray(plantData)) {
-        console.warn('🔧 buildDailyPlantChartData: plantData가 유효하지 않습니다.');
+        // console.warn('🔧 buildDailyPlantChartData: plantData가 유효하지 않습니다.');
         return {
             labels: [],
             datasets: [],
@@ -114,7 +112,7 @@ function buildDailyPlantChartData(plantData: any[], currentHour: number): ChartD
 
     // currentHour 검증
     if (currentHour < 0 || currentHour > 24) {
-        console.warn(`🔧 buildDailyPlantChartData: currentHour(${currentHour})가 유효하지 않습니다.`);
+        // console.warn(`🔧 buildDailyPlantChartData: currentHour(${currentHour})가 유효하지 않습니다.`);
         currentHour = Math.min(Math.max(currentHour, 0), 24);
     }
     
@@ -166,17 +164,17 @@ function buildDailyPlantChartData(plantData: any[], currentHour: number): ChartD
 
 // 주간 차트 데이터 생성 (요일별) - 막대 차트 + 라인
 function buildWeeklyPlantChartData(plantData: any[]): ChartData {
-    console.log('🔧 buildWeeklyPlantChartData 시작:');
-    console.log('  - 입력 데이터:', plantData);
-    console.log('  - 데이터 길이:', plantData.length);
+    // console.log('🔧 buildWeeklyPlantChartData 시작:');
+    // console.log('  - 입력 데이터:', plantData);
+    // console.log('  - 데이터 길이:', plantData.length);
     
-    if (plantData.length === 0) {
-        console.warn('⚠️ 주간 데이터가 비어있음');
-        return {
-            labels: [],
-            datasets: []
-        };
-    }
+    // if (plantData.length === 0) {
+    //     console.warn('⚠️ 주간 데이터가 비어있음');
+    //     return {
+    //         labels: [],
+    //         datasets: []
+    //     };
+    // }
 
     const currentDate = new Date();
 
@@ -235,18 +233,18 @@ function buildWeeklyPlantChartData(plantData: any[]): ChartData {
         ],
     };
     
-    console.log('  - 생성된 차트 데이터:', result);
-    console.log('  - 라벨:', labels);
-    console.log('  - 발전량 데이터:', generationData);
-    console.log('  - 예측량 데이터:', forecastData);
+    // console.log('  - 생성된 차트 데이터:', result);
+    // console.log('  - 라벨:', labels);
+    // console.log('  - 발전량 데이터:', generationData);
+    // console.log('  - 예측량 데이터:', forecastData);
     return result as ChartData;
 }
 
 // 월간 차트 데이터 생성 (주별) - 바 차트
 function buildMonthlyPlantChartData(plantData: any[]): ChartData {
-    console.log('🔧 buildMonthlyPlantChartData 시작:');
-    console.log('  - 입력 데이터:', plantData);
-    console.log('  - 데이터 길이:', plantData.length);
+    // console.log('🔧 buildMonthlyPlantChartData 시작:');
+    // console.log('  - 입력 데이터:', plantData);
+    // console.log('  - 데이터 길이:', plantData.length);
     
     if (plantData.length === 0) {
         console.warn('⚠️ 월간 데이터가 비어있음');
@@ -333,11 +331,11 @@ function buildMonthlyPlantChartData(plantData: any[]): ChartData {
         }
     });
 
-    console.log('  - 생성된 주차별 데이터:', {
-        labels,
-        generationData,
-        forecastData
-    });
+    // console.log('  - 생성된 주차별 데이터:', {
+    //     labels,
+    //     generationData,
+    //     forecastData
+    // });
 
     return {
         labels: labels,
@@ -368,107 +366,6 @@ function buildMonthlyPlantChartData(plantData: any[]): ChartData {
                 borderWidth: 1       // 통일된 테두리
             }
         ],
-    };
-}
-
-export function buildChartOptions(): Record<Plant, ChartOptions> {
-    return {
-        plant1: {
-            responsive: true,
-            scales: {
-                y: {
-                    type: "linear",
-                    display: true,
-                    position: "left",
-                    min: 0,
-                    max: 1300,
-                    ticks: {
-                        stepSize: 100,
-                        callback: (value: number) => `${value}kW`,
-                    },
-                    grid: {
-                        drawOnChartArea: true,
-                    },
-                },
-            },
-            plugins: {
-                legend: {
-                    position: "bottom",
-                },
-                tooltip: {
-                    mode: "index",
-                    intersect: false,
-                },
-            },
-            interaction: {
-                mode: "index",
-                intersect: false,
-            },
-        },
-        plant2: {
-            responsive: true,
-            scales: {
-                y: {
-                    type: "linear",
-                    display: true,
-                    position: "left",
-                    min: 0,
-                    max: 800,
-                    ticks: {
-                        stepSize: 100,
-                        callback: (value: number) => `${value}kW`,
-                    },
-                    grid: {
-                        drawOnChartArea: true,
-                    },
-                },
-            },
-            plugins: {
-                legend: {
-                    position: "bottom",
-                },
-                tooltip: {
-                    mode: "index",
-                    intersect: false,
-                },
-            },
-            interaction: {
-                mode: "index",
-                intersect: false,
-            },
-        },
-        plant3: {
-            responsive: true,
-            scales: {
-                y: {
-                    type: "linear",
-                    display: true,
-                    position: "left",
-                    min: 0,
-                    max: 500,
-                    ticks: {
-                        stepSize: 100,
-                        callback: (value: number) => `${value}kW`,
-                    },
-                    grid: {
-                        drawOnChartArea: true,
-                    },
-                },
-            },
-            plugins: {
-                legend: {
-                    position: "bottom",
-                },
-                tooltip: {
-                    mode: "index",
-                    intersect: false,
-                },
-            },
-            interaction: {
-                mode: "index",
-                intersect: false,
-            },
-        }
     };
 }
 
@@ -613,7 +510,7 @@ export function buildMonthlyChartOptions(): Record<Plant, ChartOptions> {
                         label: function(context: any) {
                             const label = context.dataset.label || '';
                             const value = context.parsed.y;
-                            if (value === null) return null;
+                            if (value === null || value === undefined || value < 0) return `${label}: 0.00kWh`;
                             return `${label}: ${value.toFixed(2)}kWh`;
                         }
                     }
@@ -658,7 +555,7 @@ export function buildMonthlyChartOptions(): Record<Plant, ChartOptions> {
                         label: function(context: any) {
                             const label = context.dataset.label || '';
                             const value = context.parsed.y;
-                            if (value === null) return null;
+                            if (value === null || value === undefined || value < 0) return `${label}: 0.00kWh`;
                             return `${label}: ${value.toFixed(2)}kWh`;
                         }
                     }
@@ -703,7 +600,7 @@ export function buildMonthlyChartOptions(): Record<Plant, ChartOptions> {
                         label: function(context: any) {
                             const label = context.dataset.label || '';
                             const value = context.parsed.y;
-                            if (value === null) return null;
+                            if (value === null || value === undefined || value < 0) return `${label}: 0.00kWh`;
                             return `${label}: ${value.toFixed(2)}kWh`;
                         }
                     }
@@ -754,7 +651,7 @@ export function buildDailyChartOptions(): Record<Plant, ChartOptions> {
                         label: function(context: any) {
                             const label = context.dataset.label || '';
                             const value = context.parsed.y;
-                            if (value === null) return null;
+                            if (value === null || value === undefined || value < 0) return `${label}: 0.00kWh`;
                             return `${label}: ${value.toFixed(2)}kWh`;
                         }
                     }
@@ -799,7 +696,7 @@ export function buildDailyChartOptions(): Record<Plant, ChartOptions> {
                         label: function(context: any) {
                             const label = context.dataset.label || '';
                             const value = context.parsed.y;
-                            if (value === null) return null;
+                            if (value === null || value === undefined || value < 0) return `${label}: 0.00kWh`;
                             return `${label}: ${value.toFixed(2)}kWh`;
                         }
                     }
@@ -844,7 +741,7 @@ export function buildDailyChartOptions(): Record<Plant, ChartOptions> {
                         label: function(context: any) {
                             const label = context.dataset.label || '';
                             const value = context.parsed.y;
-                            if (value === null) return null;
+                            if (value === null || value === undefined || value < 0) return `${label}: 0.00kWh`;
                             return `${label}: ${value.toFixed(2)}kWh`;
                         }
                     }
@@ -901,12 +798,12 @@ export function buildH2Data(currentHour?: number) {
 
 // 월간 탭용 주차별 수소 생산량 데이터 생성
 export function buildMonthlyH2Data(plantData: any[]): ChartData {
-    console.log('🔧 buildMonthlyH2Data 시작:');
-    console.log('  - 입력 데이터:', plantData);
-    console.log('  - 데이터 길이:', plantData.length);
+    // console.log('🔧 buildMonthlyH2Data 시작:');
+    // console.log('  - 입력 데이터:', plantData);
+    // console.log('  - 데이터 길이:', plantData.length);
     
     if (plantData.length === 0) {
-        console.warn('⚠️ 월간 수소 데이터가 비어있음');
+        // console.warn('⚠️ 월간 수소 데이터가 비어있음');
         return {
             labels: [],
             datasets: []
@@ -975,11 +872,6 @@ export function buildMonthlyH2Data(plantData: any[]): ChartData {
         }
     });
 
-    console.log('  - 생성된 주차별 수소 데이터:', {
-        labels,
-        productionData,
-        forecastData
-    });
 
     return {
         labels: labels,
@@ -1007,12 +899,23 @@ export function buildMonthlyH2Data(plantData: any[]): ChartData {
     };
 }
 
-export function buildTimeFrameData() {
+export function buildTimeFrameData(plant1?: any[], plant2?: any[], plant3?: any[], currentHour?: number) {
+
+    const dailyErrorRate = calDailyErrorRate(
+        [plant1 ?? [], plant2 ?? [], plant3 ?? []],
+        currentHour ?? 0
+    )
+
+
     return {
         daily: {
             title: "데일리 모니터링",
             stats: [
-                { label: "유휴 전력 오차", value: "40,689", diff: "목표 대비" },
+                { 
+                    label: "유휴 전력 오차율",
+                    value:  `${dailyErrorRate.toFixed(2)}%`,
+                    diff: "전일 대비" 
+                },
                 { label: "수소 생산 달성률", value: "40,689", diff: "목표 대비" },
                 { label: "전력 효율", value: "78.1%", diff: "전일 대비" },
                 { label: "설비 가동률", value: "80%", diff: "전일 대비" },
@@ -1043,4 +946,35 @@ export function buildTimeFrameData() {
             chart2Title: "주차별 수소 생산량"
         }
     };
+}
+
+export function calDailyErrorRate(plantDataArr: any[][], currentHour: number): number {
+    
+    const allData = plantDataArr.flat(); // 3대 설비 데이터 합치기
+
+    const validData = allData.filter(item => item.hour !== null && item.hour <= currentHour);
+
+    const grouped: { [hour: number]: { actual: number, forecast: number } } = {};
+
+    validData.forEach(item => {
+        const hour = item.hour;
+        if (!grouped[hour]) {
+            grouped[hour] = { actual: 0, forecast: 0 };
+        }
+
+        grouped[hour].actual += Math.max(0, Number(item.generation_Kw) - 300);
+        grouped[hour].forecast += Math.max(0, Number(item.forecast_Kwh) - 300);
+    })
+
+    let totalActual = 0;
+    let totalError = 0;
+
+    Object.values(grouped).forEach(({ actual, forecast }) => {
+        totalActual += actual;
+        totalError += Math.abs(actual - forecast);
+    })
+
+    if (totalActual === 0) return 0;
+
+    return (totalError / totalActual) * 100;
 }

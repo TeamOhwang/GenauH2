@@ -100,7 +100,7 @@ export default function Setting() {
     const handleChangePassword = () => {
         console.log("비밀번호 변경 클릭");
         requestPasswordResetApi().then((res: any) => {
-            setIsPasswordReset(isPasswordReset);
+            setIsPasswordReset(!isPasswordReset);
             console.log(res);
         });
     }

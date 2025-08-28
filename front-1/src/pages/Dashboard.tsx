@@ -1,7 +1,6 @@
 import { useDashboardData } from "@/hooks/useDashboardData";
 import {
     buildSolaData,
-    buildChartOptions,
     buildDailyChartOptions,
     buildWeeklyChartOptions,
     buildMonthlyChartOptions,
@@ -31,17 +30,17 @@ export default function Dashboard() {
     } = useDashboardData();
 
     // 차트 데이터 및 옵션 생성
-    console.log('🎯 Dashboard 차트 데이터 생성 시작');
-    console.log('  - 일간 데이터:', { plant1: plant1.length, plant2: plant2.length, plant3: plant3.length });
-    console.log('  - 주간 데이터:', {
-        weeklyData: weeklyData.length,
-    });
-    console.log('  - 월간 데이터:', {
-        monthlyData: monthlyData.length,
-    });
+    // console.log('🎯 Dashboard 차트 데이터 생성 시작');
+    // console.log('  - 일간 데이터:', { plant1: plant1.length, plant2: plant2.length, plant3: plant3.length });
+    // console.log('  - 주간 데이터:', {
+    //     weeklyData: weeklyData.length,
+    // });
+    // console.log('  - 월간 데이터:', {
+    //     monthlyData: monthlyData.length,
+    // });
 
     const solaData = buildSolaData(plant1, plant2, plant3, currentHour, weeklyData);
-    console.log('  - 생성된 solaData:', solaData);
+    // console.log('  - 생성된 solaData:', solaData);
 
     // 탭별 차트 옵션 선택
     const getChartOptions = () => {
@@ -52,14 +51,12 @@ export default function Dashboard() {
                 return buildWeeklyChartOptions();
             case "monthly":
                 return buildMonthlyChartOptions();
-            default:
-                return buildChartOptions();
         }
     };
 
     const chartOptions = getChartOptions();
     const h2Data = buildH2Data(currentHour);
-    const timeFrameData = buildTimeFrameData();
+    const timeFrameData = buildTimeFrameData(plant1, plant2, plant3, currentHour);
 
     const currentData = timeFrameData[activeTimeFrame];
 

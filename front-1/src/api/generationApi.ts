@@ -7,7 +7,7 @@ export const GENERATION_ENDPOINTS = {
     // getHourlyAvg: "/generation/hourly-avg",
     // getSummary: "/generation/summary",
     // getDetailed: "/generation/detailed",
-    getHourlyHydrogen: "/generation/hourly-hydrogen",
+    getHourlyHydrogenProduction: "/storage/hourly-hydrogen-production",
 }
 
 // 원시 데이터 조회
@@ -34,6 +34,11 @@ export async function getDailyGenerationApi(plantId: string, startDate: string, 
         console.error('❌ getDailyGenerationApi 오류:', error);
         throw error;
     }
+}
+
+export async function getHourlyHydrogenProductionApi(plantId: string) {
+    const res = await apiClient.get(GENERATION_ENDPOINTS.getHourlyHydrogenProduction, { params: { plantId: plantId } });
+    return res.data ?? [];
 }
 
 // 시간별 평균 데이터 조회
