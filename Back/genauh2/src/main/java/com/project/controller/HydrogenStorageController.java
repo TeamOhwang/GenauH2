@@ -1,6 +1,7 @@
 package com.project.controller;
 
 import com.project.dto.HydrogenTankStatusDTO; // 수소탱크 채우기
+import com.project.entity.Real;
 import com.project.dto.HourlyHydrogenProductionDTO; // 시간대별 수소 생산량
 import com.project.service.HydrogenStorageService;
 import lombok.RequiredArgsConstructor;
@@ -34,16 +35,14 @@ public class HydrogenStorageController {
     }
 
     /**
-     * [신규 추가] 특정 발전소의 오늘 하루 동안의 시간별 수소 생산량 데이터를 조회합니다. (그래프용)
-     * @param plantId 조회할 발전소 ID
-     * @return 시간별 수소 생산량 DTO 리스트
-     */
-    @GetMapping("/hourly-hydrogen-production")
-    public ResponseEntity<List<HourlyHydrogenProductionDTO>> getHourlyHydrogenProduction(
-            @RequestParam(value = "plantId") String plantId) {
-
-        List<HourlyHydrogenProductionDTO> hourlyData = hydrogenStorageService.getHourlyProductionForToday(plantId);
-        return ResponseEntity.ok(hourlyData);
-    }
+ * [수정] 로그인한 사용자가 소유한 모든 발전소의 오늘 하루 동안의 시간별 수소 생산량 데이터를 조회합니다. (그래프용)
+ * @return 시간별 수소 생산량 DTO 리스트
+ */
+@GetMapping("/hourly-hydrogen-production")
+public ResponseEntity<List<HourlyHydrogenProductionDTO>> getHourlyHydrogenProduction() {
+    // [수정] 파라미터 없이 서비스 호출
+    List<HourlyHydrogenProductionDTO> hourlyData = hydrogenStorageService.getHourlyProductionForToday();
+    return ResponseEntity.ok(hourlyData);
+}
     
 }

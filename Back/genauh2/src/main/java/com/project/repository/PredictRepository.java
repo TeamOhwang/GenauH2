@@ -12,6 +12,14 @@ import java.util.List;
 @Repository
 public interface PredictRepository extends JpaRepository<Predict, String> {
 
+    /**
+     * 특정 날짜의 모든 예측 유휴 전력량 데이터를 타임스탬프와 함께 조회합니다.
+     * @param date 조회할 날짜 (YYYY-MM-DD 형식)
+     * @return 타임스탬프(ts), 유휴 전력량(idlepowerkw)을 담은 Object[] 리스트
+     */
+    @Query(value = "SELECT ts, idlepowerkw FROM production_predict WHERE DATE(ts) = :date ORDER BY ts ASC", nativeQuery = true)
+    List<Object[]> findIdlePowerByDate(@Param("date") String date);
+
     @Modifying
     @Query(value = """
         INSERT INTO production_predict (

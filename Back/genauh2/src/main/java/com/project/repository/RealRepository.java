@@ -5,14 +5,19 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+
 import com.project.entity.Real;
-import java.sql.Timestamp; // Timestamp import 추가
-import java.util.List;
+
+import com.project.repository.RealRepository;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.sql.Timestamp; // Timestamp import 추가
+import java.util.List;
 
-import com.project.entity.Real; // Real 엔티티 import 추가
+
+
 
 
 @Repository
@@ -77,12 +82,22 @@ public interface RealRepository extends JpaRepository<Real, Long> {
 );
 
 /**
- * 특정 발전소의 지정된 기간 동안의 모든 실제 생산량(Real) 엔티티를 조회합니다.
- * @param plantId 발전소 ID
+ * [신규 추가] 특정 조직(orgId)의 지정된 기간 동안의 모든 실제 생산량(Real) 엔티티를 조회합니다.
+ * @param orgId 조직 ID
  * @param startDate 시작 일시
  * @param endDate 종료 일시
  * @return Real 엔티티 리스트
  */
-List<Real> findByPlantIdAndTsBetween(String plantId, LocalDateTime startDate, LocalDateTime endDate);
+List<Real> findByOrgidAndTsBetween(Long orgId, LocalDateTime startDate, LocalDateTime endDate);
+
+
+/**
+ * 특정 날짜의 모든 실제 유휴 전력량 데이터를 타임스탬프와 함께 조회합니다.
+ * @param date 조회할 날짜 (YYYY-MM-DD 형식)
+ * @return 타임스탬프(ts), 유휴 전력량(idlepowerkw)을 담은 Object[] 리스트
+ */
+@Query(value = "SELECT ts, idlepowerkw FROM production_real WHERE DATE(ts) = :date ORDER BY ts ASC", nativeQuery = true)
+List<Object[]> findIdlePowerByDate(@Param("date") String date);
+
 
 }
