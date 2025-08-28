@@ -12,6 +12,8 @@ import java.util.List;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import com.project.entity.Real; // Real 엔티티 import 추가
+
 
 @Repository
 public interface RealRepository extends JpaRepository<Real, Long> {
@@ -74,5 +76,13 @@ public interface RealRepository extends JpaRepository<Real, Long> {
         @Param("endDate") LocalDateTime endDate
 );
 
+/**
+ * 특정 발전소의 지정된 기간 동안의 모든 실제 생산량(Real) 엔티티를 조회합니다.
+ * @param plantId 발전소 ID
+ * @param startDate 시작 일시
+ * @param endDate 종료 일시
+ * @return Real 엔티티 리스트
+ */
+List<Real> findByPlantIdAndTsBetween(String plantId, LocalDateTime startDate, LocalDateTime endDate);
 
 }

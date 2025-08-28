@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.project.repository.PredictRepository;
 import com.project.dto.PredictDTO;
-import com.project.dto.SumRes;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;

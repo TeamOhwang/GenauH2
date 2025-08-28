@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class DataRefreshScheduler {
 
-    private final PlantGenerationQueryService plantGenerationQueryService;
 
     // 매시 00분마다 실행 (예: 1:00, 2:00, 3:00...)
     @Scheduled(cron = "0 0 * * * *")
