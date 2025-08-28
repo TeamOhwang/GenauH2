@@ -6,7 +6,6 @@ import { PATHS, roleHome, type Role } from "./paths";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { authToken } from "@/stores/authStorage";
 
-
 const Login = lazy(() => import("@/pages/Login"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
 const Price = lazy(() => import("@/pages/Price"));
@@ -16,6 +15,9 @@ const Setting = lazy(() => import("@/pages/Setting"));
 const Admin = lazy(() => import("@/pages/Admin"));
 const About = lazy(() => import("@/pages/About"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
+
+// 통합된 ChangePassword 컴포넌트 (일반 모드 + 이메일 리셋 모드 지원)
+const ChangePassword = lazy(() => import("@/pages/ChangePassword"));
 
 function RoleHomeRedirect() {
   const role = useAuthStore((s) => s.role) as Role | null;
@@ -48,6 +50,12 @@ export default function AppRouter() {
           }
         />
 
+        {/* 비밀번호 변경 페이지 - URL 파라미터에 따라 모드 자동 판단 */}
+        <Route
+          path={PATHS.changePassword}
+          element={<ChangePassword />}
+        />
+
         <Route element={<RootLayout />}>
           <Route path={PATHS.about} element={<About />} />
 
@@ -61,8 +69,6 @@ export default function AppRouter() {
             <Route path={PATHS.facilityPage} element={<FacilityPage />} /> 
             <Route path={PATHS.equipmentList} element={<EquipmentList />} /> 
             <Route path={PATHS.setting} element={<Setting />} />
-
-            
           </Route>
 
           <Route element={<ProtectedRoute require="SUPERVISOR"><Outlet /></ProtectedRoute>}>

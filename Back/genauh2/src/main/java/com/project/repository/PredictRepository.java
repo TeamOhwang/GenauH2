@@ -7,7 +7,6 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
 import com.project.dto.FacilityKpiDto;
 import com.project.dto.PredictDTO;
 import com.project.entity.Predict;
@@ -17,6 +16,7 @@ import java.util.List;
 
 @Repository
 public interface PredictRepository extends JpaRepository<Predict, String> {
+
 
     @Modifying
     @Query(value = """
@@ -29,12 +29,12 @@ public interface PredictRepository extends JpaRepository<Predict, String> {
             f.orgid,
             pg.plant_id,
             CONCAT(pg.date, ' ', LPAD(pg.hour, 2, '0'), ':00:00') as ts,
-            f.h2_rate as idlepowerkw,
-            ROUND((f.power_kw - 10) / f.spec_kwh, 3) as predictedmaxkg,
-            ROUND((pg.forecast_kwh - 10) / f.spec_kwh, 3) as predictedcurrentkg
+            GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.7), 3)) as idlepowerkw,
+            ROUND((50 + GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.7), 3))), 3) as predictedmaxkg,
+            ROUND((GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.7), 3)) * (0.75 + (RAND() * 0.05)) + 50), 3) as predictedcurrentkg
         FROM facilities f
         INNER JOIN plant_generation pg ON f.facid = pg.facid
-        WHERE f.spec_kwh > 0
+        WHERE f.spec_kwh > 0 AND f.power_kw > 0 AND pg.capacity_kw > 0
     """, nativeQuery = true)
     int insertPredictionsForAllFacilities();
 
@@ -49,13 +49,13 @@ public interface PredictRepository extends JpaRepository<Predict, String> {
             f.orgid,
             pg.plant_id,
             CONCAT(pg.date, ' ', LPAD(pg.hour, 2, '0'), ':00:00') as ts,
-            f.h2_rate as idlepowerkw,
-            ROUND((f.power_kw - 10) / f.spec_kwh, 3) as predictedmaxkg,
-            ROUND((pg.forecast_kwh - 10) / f.spec_kwh, 3) as predictedcurrentkg
+            GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.7), 3)) as idlepowerkw,
+            ROUND((50 + GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.7), 3))), 3) as predictedmaxkg,
+            ROUND((GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.7), 3)) * (0.75 + (RAND() * 0.05)) + 50), 3) as predictedcurrentkg
         FROM facilities f
         INNER JOIN plant_generation pg ON f.facid = pg.facid
         WHERE f.facid = :facId
-          AND f.spec_kwh > 0
+          AND f.spec_kwh > 0 AND f.power_kw > 0 AND pg.capacity_kw > 0
     """, nativeQuery = true)
     int insertPredictionsForFacility(@Param("facId") Long facId);
 
@@ -70,14 +70,14 @@ public interface PredictRepository extends JpaRepository<Predict, String> {
             f.orgid,
             pg.plant_id,
             CONCAT(pg.date, ' ', LPAD(pg.hour, 2, '0'), ':00:00') as ts,
-            f.h2_rate as idlepowerkw,
-            ROUND((f.power_kw - 10) / f.spec_kwh, 3) as predictedmaxkg,
-            ROUND((pg.forecast_kwh - 10) / f.spec_kwh, 3) as predictedcurrentkg
+            GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.7), 3)) as idlepowerkw,
+            ROUND((50 + GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.7), 3))), 3) as predictedmaxkg,
+            ROUND((GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.7), 3)) * (0.75 + (RAND() * 0.05)) + 50), 3) as predictedcurrentkg
         FROM facilities f
         INNER JOIN plant_generation pg ON f.facid = pg.facid
         WHERE pg.date = :date
           AND pg.hour = :hour
-          AND f.spec_kwh > 0
+          AND f.spec_kwh > 0 AND f.power_kw > 0 AND pg.capacity_kw > 0
     """, nativeQuery = true)
     int insertPredictionsByDateTime(@Param("date") String date, @Param("hour") Integer hour);
 
@@ -206,6 +206,7 @@ public interface PredictRepository extends JpaRepository<Predict, String> {
                     0 AS productionKg,
                     SUM(p.predictedMaxKg) AS predictedMaxKg
                 FROM production_predict p
+
                 GROUP BY p.plant_id, p.ts
             ) t
                 ON pg.plant_id = t.plant_id
@@ -213,26 +214,8 @@ public interface PredictRepository extends JpaRepository<Predict, String> {
             GROUP BY o.orgId, f.facId, f.name, t.ts
             /*#pageable*/
             """,
-        countQuery = """
-            SELECT COUNT(*) 
-            FROM (
-                SELECT f.facId, t.ts
-                FROM organizations o
-                JOIN facilities f ON o.orgId = f.orgId
-                LEFT JOIN plant_generation pg ON f.facId = pg.facId
-                LEFT JOIN (
-                    SELECT r.plant_id, r.ts FROM production_real r
-                    UNION
-                    SELECT p.plant_id, p.ts FROM production_predict p
-                ) t ON pg.plant_id = t.plant_id
-                WHERE o.orgId = :orgId
-                GROUP BY f.facId, t.ts
-            ) sub
-            """,
-        nativeQuery = true
-    )
-    Page<FacilityKpiDto> findKpiByOrgId(
-        @Param("orgId") Long orgId,
-        Pageable pageable
-    );
+        nativeQuery = true ) Page<FacilityKpiDto> 
+    findKpiByOrgId( @Param("orgId") Long orgId, Pageable pageable );
+
+
 }

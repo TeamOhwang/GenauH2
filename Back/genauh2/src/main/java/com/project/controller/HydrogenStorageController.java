@@ -1,6 +1,7 @@
 package com.project.controller;
 
-import com.project.dto.HydrogenTankStatusDTO;
+import com.project.dto.HydrogenTankStatusDTO; // 수소탱크 채우기
+import com.project.dto.HourlyHydrogenProductionDTO; // 시간대별 수소 생산량
 import com.project.service.HydrogenStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -8,6 +9,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 
 @RestController
@@ -29,5 +32,16 @@ public class HydrogenStorageController {
         HydrogenTankStatusDTO status = hydrogenStorageService.getAccumulatedProduction(plantId);
         return ResponseEntity.ok(status);
     }
+
+    /**
+ * [수정] 로그인한 사용자가 소유한 모든 발전소의 오늘 하루 동안의 시간별 수소 생산량 데이터를 조회합니다. (그래프용)
+ * @return 시간별 수소 생산량 DTO 리스트
+ */
+@GetMapping("/hourly-hydrogen-production")
+public ResponseEntity<List<HourlyHydrogenProductionDTO>> getHourlyHydrogenProduction() {
+    // [수정] 파라미터 없이 서비스 호출
+    List<HourlyHydrogenProductionDTO> hourlyData = hydrogenStorageService.getHourlyProductionForToday();
+    return ResponseEntity.ok(hourlyData);
+}
     
 }

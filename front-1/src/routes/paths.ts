@@ -12,20 +12,13 @@ export const PATHS = {
     equipmentList: "/equipmentList",
     price: "/price",
     setting: "/setting",
-    // changePassword: "/changePassword", // 비밀번호 페이지 테스트
+    changePassword: "/changePassword", // 비밀번호 변경 (일반 모드 + 리셋 모드 통합)
     forbidden: "/403",
     notFound: "*",
 } as const;
 
-
-
-
-
 export type Role = "USER" | "SUPERVISOR";
 export const roleHome = (r: Role) => {
-
-  const result = r === "SUPERVISOR" ? PATHS.admin : PATHS.dashboard;
-
-  
-  return result;
+    const result = r === "SUPERVISOR" ? PATHS.admin : PATHS.dashboard;
+    return result;
 };

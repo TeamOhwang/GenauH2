@@ -89,7 +89,7 @@ public class RealController {
     /**
      * 모든 실제 생산 결과 조회
      */
-    @GetMapping("/results/all")
+    @GetMapping("/all")
     public ResponseEntity<List<RealDTO>> getAllProductionRealResults() {
         try {
             List<RealDTO> results = realService.getAllProductionReal();
@@ -128,7 +128,7 @@ public class RealController {
     /**
      * 특정 기간 내의 실제 생산 결과를 조회 (startDate, endDate 선택 사항)
      */
-    @GetMapping("/results/date-range")
+    @GetMapping("/range")
     public ResponseEntity<List<RealDTO>> getProductionRealByDateRange(
             @RequestParam(value = "startDate", required = false) String startDate,
             @RequestParam(value = "endDate", required = false) String endDate) {

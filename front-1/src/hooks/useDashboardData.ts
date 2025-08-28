@@ -13,19 +13,19 @@ const PLANT_CAPACITIES = {
 // plantId를 실제 백엔드에서 사용하는 값으로 매핑
 const getPlantIdForBackend = (plant: Plant): string => {
     switch (plant) {
-        case 'all': return '';
         case 'plant1': return 'plt001';
         case 'plant2': return 'plt002';
         case 'plant3': return 'plt003';
-        default: return 'all';
+        default: return 'plt001';
     }
 };
 
 export function useDashboardData() {
-    const { getRawGeneration, getDailyGeneration } = useGeneration();
+    const { getRawGeneration, getDailyGeneration, getHourlyHydrogenProduction } = useGeneration();
     const [activeTimeFrame, setActiveTimeFrame] = useState<TimeFrame>("daily");
     const [selectedPlant, setSelectedPlant] = useState<Plant>("plant1");
     const [data, setData] = useState<any[]>([]);
+    const [hourlyHydrogenProduction, setHourlyHydrogenProduction] = useState<any[]>([]);
     const [weeklyData, setWeeklyData] = useState<any[]>([]);
     const [monthlyData, setMonthlyData] = useState<any[]>([]);
     const [currentHour, setCurrentHour] = useState(new Date().getHours());
@@ -52,6 +52,9 @@ export function useDashboardData() {
 
             const result = await getRawGeneration(today, today);
             // console.log('📊 일간 데이터 조회 결과:', result);
+            
+            //수소 생산량 데이터 조회
+            const hourlyHydrogenProduction = await getHourlyHydrogenProduction();
 
             if (result) {
                 setData(result);
@@ -59,6 +62,11 @@ export function useDashboardData() {
                 setCurrentDate(today);
                 setLastUpdateTime(now);
             }
+
+            if (hourlyHydrogenProduction) {
+                setHourlyHydrogenProduction(hourlyHydrogenProduction);
+            }
+
 
             // 주간 데이터도 함께 조회 (현재 주 + 지난 주)
             // console.log('📅 주간 데이터 계산 시작...');
@@ -207,6 +215,7 @@ export function useDashboardData() {
         plant1,
         plant2,
         plant3,
+        hourlyHydrogenProduction,
 
         // 주간 데이터
         weeklyData,
@@ -218,5 +227,6 @@ export function useDashboardData() {
         setActiveTimeFrame,
         setSelectedPlant,
         refreshData,
+
     };
 }
