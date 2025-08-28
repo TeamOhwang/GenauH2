@@ -12,13 +12,6 @@ import java.util.List;
 @Repository
 public interface PredictRepository extends JpaRepository<Predict, String> {
 
-    /**
-     * 특정 날짜의 모든 예측 유휴 전력량 데이터를 타임스탬프와 함께 조회합니다.
-     * @param date 조회할 날짜 (YYYY-MM-DD 형식)
-     * @return 타임스탬프(ts), 유휴 전력량(idlepowerkw)을 담은 Object[] 리스트
-     */
-    @Query(value = "SELECT ts, idlepowerkw FROM production_predict WHERE DATE(ts) = :date ORDER BY ts ASC", nativeQuery = true)
-    List<Object[]> findIdlePowerByDate(@Param("date") String date);
 
     @Modifying
     @Query(value = """
@@ -197,8 +190,8 @@ public interface PredictRepository extends JpaRepository<Predict, String> {
                 FROM production_predict p
                 LEFT JOIN facilities f ON p.facid = f.facid
                 WHERE p.orgid = :orgId
-                  AND (:start IS NULL OR p.ts >= :start)
-                  AND (:end IS NULL OR p.ts <= :end)
+                AND (:start IS NULL OR p.ts >= :start)
+                AND (:end IS NULL OR p.ts <= :end)
                 GROUP BY p.orgid, p.facid, f.name, p.ts
                 ORDER BY p.ts ASC
             ) t
@@ -207,6 +200,14 @@ public interface PredictRepository extends JpaRepository<Predict, String> {
         List<Object[]> sumGetByData(@Param("orgId") Long orgId,
                                     @Param("start") String start,
                                     @Param("end") String end);
+
+    /**
+     * 특정 날짜의 모든 예측 유휴 전력량 데이터를 타임스탬프와 함께 조회합니다.
+     * @param date 조회할 날짜 (YYYY-MM-DD 형식)
+     * @return 타임스탬프(ts), 유휴 전력량(idlepowerkw)을 담은 Object[] 리스트
+     */
+        @Query(value = "SELECT ts, idlepowerkw FROM production_predict WHERE DATE(ts) = :date ORDER BY ts ASC", nativeQuery = true)
+        List<Object[]> findIdlePowerByDate(@Param("date") String date);
     }
     
     
