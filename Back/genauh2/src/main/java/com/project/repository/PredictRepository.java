@@ -1,13 +1,18 @@
 package com.project.repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import com.project.dto.FacilityKpiDto;
 import com.project.dto.PredictDTO;
 import com.project.entity.Predict;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -168,39 +173,66 @@ public interface PredictRepository extends JpaRepository<Predict, String> {
     
     
     
-    /// 사업자 id 기준으로 등록된 설비id 가져오고, 수소생산량, 최대수소생산량 집계합
-    @Query(value = """
+
+    /// 사업자 id 기준으로 등록된 설비 + 예측/실제 생산량 집계합 (페이지네이션 지원)
+    @Query(
+        value = """
             SELECT 
-                t.orgId,
-                t.facId,
-                t.facilityName,
-                t.ts,
-                t.totalMaxKg,
-                t.totalCurrentKg,
-                @cumulativeMax := @cumulativeMax + t.totalMaxKg AS cumulativeMax,
-                @cumulativeCurrent := @cumulativeCurrent + t.totalCurrentKg AS cumulativeCurrent
-            FROM (
+                o.orgId        AS orgId,
+                f.facId        AS facId,
+                f.name         AS facilityName,
+                t.ts           AS ts,
+                COALESCE(SUM(t.productionKg), 0)   AS productionKg,
+                COALESCE(SUM(t.predictedMaxKg), 0) AS predictedMaxKg
+            FROM organizations o
+            JOIN facilities f 
+                ON o.orgId = f.orgId
+            LEFT JOIN plant_generation pg 
+                ON f.facId = pg.facId
+            LEFT JOIN (
                 SELECT 
-                    p.orgid AS orgId,
-                    p.facid AS facId,
-                    f.name AS facilityName,
-                    p.ts AS ts,
-                    SUM(p.predictedmaxkg) AS totalMaxKg,
-                    SUM(p.predictedcurrentkg) AS totalCurrentKg
+                    r.plant_id,
+                    r.ts,
+                    SUM(r.productionKg) AS productionKg,
+                    0 AS predictedMaxKg
+                FROM production_real r
+                GROUP BY r.plant_id, r.ts
+
+                UNION ALL
+
+                SELECT 
+                    p.plant_id,
+                    p.ts,
+                    0 AS productionKg,
+                    SUM(p.predictedMaxKg) AS predictedMaxKg
                 FROM production_predict p
-                LEFT JOIN facilities f ON p.facid = f.facid
-                WHERE p.orgid = :orgId
-                  AND (:start IS NULL OR p.ts >= :start)
-                  AND (:end IS NULL OR p.ts <= :end)
-                GROUP BY p.orgid, p.facid, f.name, p.ts
-                ORDER BY p.ts ASC
+                GROUP BY p.plant_id, p.ts
             ) t
-            CROSS JOIN (SELECT @cumulativeMax := 0, @cumulativeCurrent := 0) vars
-            """, nativeQuery = true)
-        List<Object[]> sumGetByData(@Param("orgId") Long orgId,
-                                    @Param("start") String start,
-                                    @Param("end") String end);
-    }
-    
-    
-    
+                ON pg.plant_id = t.plant_id
+            WHERE o.orgId = :orgId
+            GROUP BY o.orgId, f.facId, f.name, t.ts
+            /*#pageable*/
+            """,
+        countQuery = """
+            SELECT COUNT(*) 
+            FROM (
+                SELECT f.facId, t.ts
+                FROM organizations o
+                JOIN facilities f ON o.orgId = f.orgId
+                LEFT JOIN plant_generation pg ON f.facId = pg.facId
+                LEFT JOIN (
+                    SELECT r.plant_id, r.ts FROM production_real r
+                    UNION
+                    SELECT p.plant_id, p.ts FROM production_predict p
+                ) t ON pg.plant_id = t.plant_id
+                WHERE o.orgId = :orgId
+                GROUP BY f.facId, t.ts
+            ) sub
+            """,
+        nativeQuery = true
+    )
+    Page<FacilityKpiDto> findKpiByOrgId(
+        @Param("orgId") Long orgId,
+        Pageable pageable
+    );
+}

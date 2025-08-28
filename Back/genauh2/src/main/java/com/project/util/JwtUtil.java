@@ -25,15 +25,16 @@ public class JwtUtil {
     }
     
     // JWT 토큰 생성
-    public String generateToken(String email, String role, String userId) {
+    public String generateToken(String orgId,String role,String email) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("email", email);
+        claims.put("orgId", orgId);
         claims.put("role", role);
-        claims.put("userId", userId);
+        claims.put("email", email);
+
         
         return Jwts.builder()
                 .setClaims(claims)
-                .setSubject(email)
+                .setSubject(orgId) 
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS512)
@@ -119,11 +120,11 @@ public class JwtUtil {
                     .parseClaimsJws(token)
                     .getBody();
             
-            String email = claims.get("email", String.class);
+            String orgId = claims.get("orgId", String.class);
             String role = claims.get("role", String.class);
-            String userId = claims.get("userId", String.class);
+            String email = claims.get("email", String.class);
             
-            return generateToken(email, role, userId);
+            return generateToken(orgId,role,email);
         } catch (Exception e) {
             return null;
         }

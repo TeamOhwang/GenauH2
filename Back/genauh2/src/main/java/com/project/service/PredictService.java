@@ -1,11 +1,15 @@
 package com.project.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.project.repository.PredictRepository;
+import com.project.dto.FacilityKpiDto;
 import com.project.dto.PredictDTO;
-import com.project.dto.SumRes;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
@@ -113,26 +117,10 @@ public class PredictService {
     
     /// 사업자 id 기준으로 등록된 설비id 가져오고, 수소생산량, 최대수소생산량 집계합
     @Transactional(readOnly = true)
-    public List<Map<String, Object>> getKpis(Long orgId, String start, String end) {
-        List<Object[]> rows = predictRepository.sumGetByData(orgId, start, end);
-
-        List<Map<String, Object>> result = new ArrayList<>();
-        for (Object[] row : rows) {
-            Map<String, Object> map = new HashMap<>();
-            map.put("orgId", row[0]);
-            map.put("facId", row[1]);
-            map.put("facilityName", row[2]);
-            map.put("ts", row[3]);
-            map.put("totalMaxKg", row[4]);
-            map.put("totalCurrentKg", row[5]);
-            map.put("cumulativeMax", row[6]);
-            map.put("cumulativeCurrent", row[7]);
-            result.add(map);
-        }
-        return result;
+    public Page<FacilityKpiDto> getFacilityKpis(Long orgId, Pageable pageable) {
+    	System.out.println("서비스에 전달된 orgId = " + orgId);
+        return predictRepository.findKpiByOrgId(orgId, pageable);
     }
 }
-    
-    
     
     

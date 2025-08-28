@@ -29,7 +29,7 @@ export const AUTH_ENDPOINTS = {
   allStations: "/api/region-price",
   stationsByRegion: "/api/region-price/by-region",
   predictAll: "/predict/allsumid",
-  
+  facilityKpis: (orgId: number) => `/predict/${orgId}/kpis`, 
 } as const;
 
 /* ======================== 헤더 유틸 함수 ======================== */
@@ -96,7 +96,7 @@ const notifyQueue = (err: unknown | null, token?: string) => {
 /* ======================== Axios 인스턴스 ======================== */
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 30000,
   withCredentials: true,
 });
 
