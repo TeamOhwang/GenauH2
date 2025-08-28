@@ -36,9 +36,20 @@ export async function getDailyGenerationApi(plantId: string, startDate: string, 
     }
 }
 
-export async function getHourlyHydrogenProductionApi(plantId: string) {
-    const res = await apiClient.get(GENERATION_ENDPOINTS.getHourlyHydrogenProduction, { params: { plantId: plantId } });
-    return res.data ?? [];
+export async function getHourlyHydrogenProductionApi() {
+    console.log('🌐 generationApi.getHourlyHydrogenProductionApi 호출');
+    console.log('  - URL:', GENERATION_ENDPOINTS.getHourlyHydrogenProduction);
+    console.log('  - plantId:', plantId);
+    
+    try {
+        const res = await apiClient.get(GENERATION_ENDPOINTS.getHourlyHydrogenProduction);
+        console.log('  - API 응답 상태:', res.status);
+        console.log('  - API 응답 데이터:', res.data);
+        return res.data ?? [];
+    } catch (error) {
+        console.error('❌ getHourlyHydrogenProductionApi 오류:', error);
+        throw error;
+    }
 }
 
 // 시간별 평균 데이터 조회

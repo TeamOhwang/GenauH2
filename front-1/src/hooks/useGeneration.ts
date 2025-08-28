@@ -71,14 +71,18 @@ export function useGeneration() {
         }
     }, [])
 
-    const getHourlyHydrogenProduction = useCallback(async (plantId: string) => {
+    const getHourlyHydrogenProduction = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
-            const data = await getHourlyHydrogenProductionApi(plantId);
+            console.log('🔧 useGeneration.getHourlyHydrogenProduction 호출');
+            
+            const data = await getHourlyHydrogenProductionApi();
+            console.log('  - 수소 생산량 데이터:', data);
             return data;
         }
         catch (e: any) {
+            console.error('❌ getHourlyHydrogenProduction 오류:', e);
             setError(e?.message ?? "시간별 수소 생산량 조회 실패");
             return null;
         } finally {

@@ -760,26 +760,47 @@ export function buildDailyChartOptions(): Record<Plant, ChartOptions> {
     };
 }
 
-export function buildH2Data(currentHour?: number) {
+export function buildH2Data(currentHour?: number, hourlyHydrogenProduction?: any[]) {
+    console.log('🔧 buildH2Data 디버깅 시작');
+    console.log('  - currentHour:', currentHour);
+    console.log('  - hourlyHydrogenProduction:', hourlyHydrogenProduction);
+    console.log('  - 데이터 길이:', hourlyHydrogenProduction?.length || 0);
+    
+    if (hourlyHydrogenProduction && hourlyHydrogenProduction.length > 0) {
+        console.log('  - 첫 번째 데이터 샘플:', hourlyHydrogenProduction[0]);
+        console.log('  - 데이터 키들:', Object.keys(hourlyHydrogenProduction[0] || {}));
+    }
+    
     // 24시간 데이터 생성
     const timeLabels = Array.from({ length: 25 }, (_, i) => `${i}시`);
     
-    // 수소 생산량 데이터 (태양광 발전량과 연관된 패턴)
+    // 수소 생산량 데이터 (실제 데이터 또는 기본값)
     const productionData = timeLabels.map((_, index) => {
         // 현재 시간 이후는 null로 설정
         if (currentHour && index > currentHour) {
             return null;
         }
+
+        // 실제 데이터에서 해당 시간의 수소 생산량 찾기
+        const h2Data = hourlyHydrogenProduction?.find(item => {
+            if (!item) return false;
+            
+            // 다양한 필드명으로 시도 (백엔드 응답에 따라 조정)
+            const hour = item.hour ?? item.hour_of_day ?? item.timestamp;
+            return hour === index;
+        });
         
-        // 태양광 발전량이 높은 시간대(10-16시)에 수소 생산량도 높음
-        if (index >= 10 && index <= 16) {
-            return Math.floor(Math.random() * 50) + 100; // 100-150 kg
-        } else if (index >= 7 && index <= 9 || index >= 17 && index <= 19) {
-            return Math.floor(Math.random() * 30) + 50; // 50-80 kg
-        } else {
-            return Math.floor(Math.random() * 20) + 10; // 10-30 kg
+        if (h2Data) {
+            const production = h2Data.productionKg ?? 0;
+            console.log(`  - ${index}시 수소 생산량:`, production);
+            return production;
         }
+        
+        // 데이터가 없으면 0으로 설정
+        return 0;
     });
+    
+    console.log('  - 생성된 수소 생산량 데이터:', productionData);
     
     return {
         labels: timeLabels,
@@ -899,7 +920,7 @@ export function buildMonthlyH2Data(plantData: any[]): ChartData {
     };
 }
 
-export function buildTimeFrameData(plant1?: any[], plant2?: any[], plant3?: any[], currentHour?: number) {
+export function buildTimeFrameData(plant1?: any[], plant2?: any[], plant3?: any[], currentHour?: number, hourlyHydrogenProduction?: any[]) {
 
     const dailyErrorRate = calDailyErrorRate(
         [plant1 ?? [], plant2 ?? [], plant3 ?? []],

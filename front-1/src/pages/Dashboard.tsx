@@ -22,6 +22,7 @@ export default function Dashboard() {
         plant3,
         weeklyData,
         monthlyData,
+        hourlyHydrogenProduction,
         lastUpdateTime,
         isUpdating,
         setActiveTimeFrame,
@@ -55,7 +56,7 @@ export default function Dashboard() {
     };
 
     const chartOptions = getChartOptions();
-    const h2Data = buildH2Data(currentHour);
+    const h2Data = buildH2Data(currentHour, hourlyHydrogenProduction);
     const timeFrameData = buildTimeFrameData(plant1, plant2, plant3, currentHour);
 
     const currentData = timeFrameData[activeTimeFrame];

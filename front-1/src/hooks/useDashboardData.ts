@@ -52,7 +52,9 @@ export function useDashboardData() {
 
             const result = await getRawGeneration(today, today);
             // console.log('📊 일간 데이터 조회 결과:', result);
-            const hourlyHydrogenProduction = await getHourlyHydrogenProduction(getPlantIdForBackend(selectedPlant));
+            
+            //수소 생산량 데이터 조회
+            const hourlyHydrogenProduction = await getHourlyHydrogenProduction();
 
             if (result) {
                 setData(result);
@@ -213,6 +215,7 @@ export function useDashboardData() {
         plant1,
         plant2,
         plant3,
+        hourlyHydrogenProduction,
 
         // 주간 데이터
         weeklyData,
@@ -224,5 +227,6 @@ export function useDashboardData() {
         setActiveTimeFrame,
         setSelectedPlant,
         refreshData,
+
     };
 }
