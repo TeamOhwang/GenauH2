@@ -1,11 +1,13 @@
 package com.project.controller;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.project.service.RealService;
+import com.project.dto.HourlyProductionDTO;
 import com.project.dto.RealDTO;
 
 @RestController
@@ -135,6 +137,36 @@ public class RealController {
         try {
             List<RealDTO> results = realService.getProductionRealByDateRange(startDate, endDate);
             return ResponseEntity.ok(results);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/hourly-production/{orgId}")
+    public ResponseEntity<List<HourlyProductionDTO>> getHourlyProduction(@PathVariable Long orgId) {
+        try {
+            List<HourlyProductionDTO> results = realService.getHourlyProduction(orgId);
+            return ResponseEntity.ok(results);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/six-month-production/{orgId}")
+    public ResponseEntity<BigDecimal> getSixMonthProduction(@PathVariable Long orgId) {
+        try {
+            BigDecimal result = realService.getSixMonthProduction(orgId);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/total-production/{orgId}")
+    public ResponseEntity<BigDecimal> getTotalProduction(@PathVariable Long orgId) {
+        try {
+            BigDecimal result = realService.getTotalProduction(orgId);
+            return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
         }

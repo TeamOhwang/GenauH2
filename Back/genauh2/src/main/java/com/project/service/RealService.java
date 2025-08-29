@@ -3,15 +3,23 @@ package com.project.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import com.project.repository.RealRepository;
+import com.project.dto.HourlyProductionDTO;
 import com.project.dto.RealDTO;
 import com.project.entity.Real;
+
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
+//import java.time.LocalTime;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.*;
+
 
 @Service
 @Transactional
@@ -133,6 +141,28 @@ public class RealService {
 
         List<Object[]> rawResults = realRepository.findByTsBetween(finalStartDate, finalEndDate);
         return convertToDto(rawResults);
+    }
+
+    @Transactional(readOnly = true)
+    public List<HourlyProductionDTO> getHourlyProduction(Long orgId) {
+        LocalDateTime start = LocalDate.now().atStartOfDay();
+        LocalDateTime end = LocalDateTime.now().plusDays(1).toLocalDate().atStartOfDay();
+        List<Object[]> results = realRepository.findHourlyProductionByOrgId(orgId, start, end);
+        return results.stream()
+                .map(result -> new HourlyProductionDTO((Integer) result[0], (BigDecimal) result[1]))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public BigDecimal getSixMonthProduction(Long orgId) {
+        LocalDateTime end = LocalDateTime.now();
+        LocalDateTime start = end.minusMonths(6);
+        return realRepository.findTotalProductionByOrgIdForLastSixMonths(orgId, start, end);
+    }
+
+    @Transactional(readOnly = true)
+    public BigDecimal getTotalProduction(Long orgId) {
+        return realRepository.findTotalProductionByOrgId(orgId);
     }
 
     /**
