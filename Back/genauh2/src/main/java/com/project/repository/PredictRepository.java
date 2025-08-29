@@ -180,43 +180,61 @@ public interface PredictRepository extends JpaRepository<Predict, String> {
                 o.orgId        AS orgId,
                 f.facId        AS facId,
                 f.name         AS facilityName,
-                t.ts           AS ts,
-                COALESCE(SUM(t.productionKg), 0)   AS productionKg,
-                COALESCE(SUM(t.predictedMaxKg), 0) AS predictedMaxKg
+                COALESCE(r.ts, p.ts) AS ts,
+                COALESCE(r.productionKg, 0)   AS productionKg,
+                COALESCE(p.predictedMaxKg, 0) AS predictedMaxKg
             FROM organizations o
             JOIN facilities f 
                 ON o.orgId = f.orgId
-            LEFT JOIN plant_generation pg 
+            JOIN plant_generation pg 
                 ON f.facId = pg.facId
             LEFT JOIN (
-                SELECT 
-                    r.plant_id,
-                    r.ts,
-                    SUM(r.productionKg) AS productionKg,
-                    0 AS predictedMaxKg
-                FROM production_real r
-                GROUP BY r.plant_id, r.ts
-
-                UNION ALL
-
-                SELECT 
-                    p.plant_id,
-                    p.ts,
-                    0 AS productionKg,
-                    SUM(p.predictedMaxKg) AS predictedMaxKg
-                FROM production_predict p
-
-                GROUP BY p.plant_id, p.ts
-            ) t
-                ON pg.plant_id = t.plant_id
+                SELECT plant_id, ts, SUM(productionKg) AS productionKg
+                FROM production_real
+                GROUP BY plant_id, ts
+            ) r
+                ON pg.plant_id = r.plant_id
+            LEFT JOIN (
+                SELECT plant_id, ts, SUM(predictedMaxKg) AS predictedMaxKg
+                FROM production_predict
+                GROUP BY plant_id, ts
+            ) p
+                ON pg.plant_id = p.plant_id AND r.ts = p.ts
             WHERE o.orgId = :orgId
-            GROUP BY o.orgId, f.facId, f.name, t.ts
+            ORDER BY ts ASC
             /*#pageable*/
             """,
-        nativeQuery = true ) Page<FacilityKpiDto> 
-    findKpiByOrgId( @Param("orgId") Long orgId, Pageable pageable );
-
-
+        countQuery = """
+            SELECT COUNT(*)
+            FROM (
+                SELECT COALESCE(r.ts, p.ts) AS ts, f.facId
+                FROM organizations o
+                JOIN facilities f 
+                    ON o.orgId = f.orgId
+                JOIN plant_generation pg 
+                    ON f.facId = pg.facId
+                LEFT JOIN (
+                    SELECT plant_id, ts
+                    FROM production_real
+                    GROUP BY plant_id, ts
+                ) r
+                    ON pg.plant_id = r.plant_id
+                LEFT JOIN (
+                    SELECT plant_id, ts
+                    FROM production_predict
+                    GROUP BY plant_id, ts
+                ) p
+                    ON pg.plant_id = p.plant_id AND r.ts = p.ts
+                WHERE o.orgId = :orgId
+                GROUP BY f.facId, ts
+            ) sub
+            """,
+        nativeQuery = true
+    )
+    Page<FacilityKpiDto> findKpiByOrgId(
+            @Param("orgId") Long orgId,
+            Pageable pageable
+    );
 
    /**
          * 특정 날짜의 모든 실제 유휴 전력량 데이터를 타임스탬프와 함께 조회합니다.
