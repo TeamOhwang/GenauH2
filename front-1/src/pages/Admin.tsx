@@ -81,7 +81,7 @@ export default function Admin() {
     getUsers().then(setUsers);
   }, [getUsers])
 
-  if (loading) return <div className="h-full p-6"><p className="text-center text-lg">로딩 중...</p></div>;
+  // if (loading) return <div className="h-full p-6"><p className="text-center text-lg">로딩 중...</p></div>;
   if (error) return <div className="h-full p-6"><p className="text-center text-lg text-red-600">오류: {error}</p></div>;
 
   const filteredUsers = users.filter(u => {
@@ -200,7 +200,7 @@ export default function Admin() {
     <div className="h-full p-6">
       <div className="flex ">
         <p className="text-2xl font-bold mb-6">관리자 페이지</p>
-        <button onClick={() => setIsOpen(true)} className="bg-blue-500 text-white px-3 py-2 rounded-md w-24 h-10 mx-3">회원 추가</button>
+        <button onClick={() => setIsOpen(true)} className="bg-blue-500 dark:bg-blue-700 text-white px-3 py-2 rounded-md w-24 h-10 mx-3">회원 추가</button>
         <Modal isOpen={isOpen} onClose={() => setIsOpen(false)}>
           회원 등록
           <RegiFrom />
@@ -270,21 +270,21 @@ export default function Admin() {
 
       {/* 요약 통계 */}
       <div className="flex gap-6 mb-6">
-        <Card className="flex-1 text-center">
+        <Card className="flex-1 text-center dark:bg-gray-800">
           <CardContent>
-            <p className="text-green-600 text-2xl font-bold">{users.filter(u => u.status === "ACTIVE").length}</p>
+            <p className="text-green-600 dark:text-green-500 text-2xl font-bold">{users.filter(u => u.status === "ACTIVE").length}</p>
             <p>활성화된 계정</p>
           </CardContent>
         </Card>
-        <Card className="flex-1 text-center">
+        <Card className="flex-1 text-center dark:bg-gray-800">
           <CardContent>
-            <p className="text-red-600 text-2xl font-bold">{users.filter(u => u.status === "SUSPENDED").length}</p>
+            <p className="text-red-600 dark:text-red-500 text-2xl font-bold">{users.filter(u => u.status === "SUSPENDED").length}</p>
             <p>비활성화된 계정</p>
           </CardContent>
         </Card>
-        <Card className="flex-1 text-center">
+        <Card className="flex-1 text-center dark:bg-gray-800">
           <CardContent>
-            <p className="text-gray-800 text-2xl font-bold">{users.length}</p>
+            <p className="text-gray-800 dark:text-gray-200 text-2xl font-bold">{users.length}</p>
             <p>전체 계정</p>
           </CardContent>
         </Card>
@@ -292,15 +292,15 @@ export default function Admin() {
 
       <div className="flex flex-col h-2/3 w-full bg-white dark:bg-gray-800 rounded-2xl shadow overflow-y-scroll scrollbar-hide">
         {/* 검색  + 필터 */}
-        <div className="flex mb-4 sticky top-0 bg-white z-10 pb-4 mb-4 border-b pt-3 px-3">
+        <div className="flex mb-4 sticky top-0 bg-white dark:bg-gray-800 z-10 pb-4 mb-4 border-b dark:border-gray-700 pt-3 px-3">
           <Input
             placeholder="소속, 이메일, 이름, 사업자번호로 검색..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-1/3 rounded-3xl bg-gray-200"
+            className="w-1/3 rounded-3xl bg-gray-200 dark:bg-gray-700"
           />
           <Select onValueChange={(val) => setStatusFilter(val as any)} defaultValue="ALL">
-            <SelectTrigger className="w-[120px] rounded-3xl mx-3">
+            <SelectTrigger className="w-[120px] rounded-3xl mx-3 dark:bg-gray-700">
               <SelectValue placeholder="계정 상태" />
             </SelectTrigger>
             <SelectContent>
@@ -319,7 +319,7 @@ export default function Admin() {
         ) : (
           <table className="m-5">
             <thead>
-              <tr className="border-b border-gray-300" >
+              <tr className="border-b border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-300" >
                 <th className="text-center py-2">소속</th>
                 <th className="text-center py-2">이메일(ID)</th>
                 <th className="text-center py-2">이름</th>
@@ -332,47 +332,45 @@ export default function Admin() {
             <tbody>
               {filteredUsers.map((u) => (
                 <React.Fragment key={u.orgId}>
-                  <tr>
-                    <td>{u.orgName}</td>
-                    <td>{u.email}</td>
-                    <td>{u.name}</td>
-                    <td className="text-left">{u.bizRegNo}</td>
+                  <tr className="text-gray-800 dark:text-gray-300">
+                    <td className="text-center">{u.orgName}</td>
+                    <td className="text-center">{u.email}</td>
+                    <td className="text-center">{u.name}</td>
+                    <td className="text-center">{u.bizRegNo}</td>
                     <td className="text-center">{u.updatedAt.split("T")[0]}</td>
                     <td className="text-center">
-                      <div className="w-20 mx-auto">
-                        <Button
+                        <button
                           onClick={() => handleStatusChange(u.orgId, u.status, u.orgName || u.email)}
                           style={{
-                            backgroundColor: "white",
                             color: u.status === "ACTIVE" ? "rgb(16, 185, 53)" : "rgb(236, 45, 45)",
                             border: u.status === "ACTIVE" ? "1px solid rgb(16, 185, 53)" : "1px solid rgb(214, 15, 15)",
                             fontWeight: "bold",
                             width: "100px",
                             textAlign: "center"
                           }}
+                          className="bg-white dark:bg-gray-700 rounded-md px-3 py-1"
                         >
                           {u.status === "ACTIVE" ? "활성화" : "비활성화"}
-                        </Button>
-                      </div>
+                        </button>
                     </td>
                     <td className="text-center">
-                      <Button onClick={() => handleFacilityOpen(u.orgId, u.orgId)}>시설 관리</Button>
+                      <button onClick={() => handleFacilityOpen(u.orgId, u.orgId)} className="bg-blue-500 dark:bg-blue-600 text-white px-3 py-1 rounded-md mx-3 hover:bg-blue-600 dark:hover:bg-blue-500">시설 관리</button>
                     </td>
                   </tr>
                   {openFacilityUserId === u.orgId && (
                     <tr>
-                      <td colSpan={7} className="bg-blue-50 p-4">
-                        <div className="text-center bg-white rounded-2xl shadow p-4">
+                      <td colSpan={7} className="bg-blue-50 dark:bg-gray-800 p-4">
+                        <div className="text-center bg-white dark:bg-gray-700 rounded-2xl shadow p-4 text-gray-800 dark:text-gray-300">
                           <div className="flex items-center w-full">
                             <div className="flex-1"></div>
                             <div className="flex-1 text-center">
                               <h4 className="font-semibold mb-3 text-lg">[ 시설 정보 ]</h4>
                             </div>
                             <div className="flex flex-1 justify-end">
-                              <button onClick={() => setFacilityOpen(true)} className="py-2 rounded-md w-24 mx-3 border">시설 추가</button>
+                              <button onClick={() => setFacilityOpen(true)} className="py-2 rounded-md w-24 mx-3 border dark:border-gray-500 dark:bg-gray-600">시설 추가</button>
                             </div>
                           </div>
-                          <Modal isOpen={facilityOpen} onClose={() => setFacilityOpen(false)}>
+                          <Modal isOpen={facilityOpen} onClose={() => setFacilityOpen(false)} width="w-1/2">
                             <FacilitiesFrom
                               orgId={u.orgId}
                               onSuccess={async () => {
@@ -446,15 +444,16 @@ export default function Admin() {
                                         <td className="px-4 py-2">{facility.specKwh || 'N/A'}</td>
                                         <td className="px-4 py-2">{facility.install || 'N/A'}</td>
                                         <td className="px-4 py-2 text-center">
-                                          <Button
+                                          <button
                                             onClick={() => {
                                               setSelectedFacility(facility);
                                               setEditFacilityOpen(true);
                                             }}
-                                            style={{ backgroundColor: "#3b82f6", color: "white", fontSize: "12px", padding: "4px 8px", marginRight: "8px" }}
+                                            style={{ color: "white", fontSize: "12px", padding: "4px 8px", marginRight: "8px" }}
+                                            className="bg-blue-500 dark:bg-blue-400 rounded-md"
                                           >
                                             편집
-                                          </Button>
+                                          </button>
                                           <Button
                                             onClick={() => handleDeleteFacility(facility, u.orgId)}
                                             style={{ backgroundColor: "#ef4444", color: "white", fontSize: "12px", padding: "4px 8px" }}
@@ -467,7 +466,7 @@ export default function Admin() {
                                   </tbody>
                                 </table>
                               ) : (
-                                <div className="text-center py-4 text-gray-500">
+                                <div className="text-center py-4 text-gray-500 dark:text-gray-400">
                                   <p>등록된 시설이 없습니다.</p>
                                 </div>
                               )}
