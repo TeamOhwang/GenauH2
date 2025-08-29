@@ -43,14 +43,14 @@ const defaultStart = () =>
 const defaultEnd = () => new Date(); // 현재
 
 export const FacilityApi = {
+  /** ✅ org 단위 전체 조회 */
   async listByOrg(params: {
-    orgId: number | null;   // orgId는 null 가능
+    orgId: number | null;
     start?: string;
     end?: string;
     page?: number;
     size?: number;
   }): Promise<PageResponse<FacilityKpi>> {
-    // orgId 없으면 API 호출하지 않고 빈 데이터 반환
     if (!params.orgId) {
       return {
         content: [],
@@ -61,11 +61,9 @@ export const FacilityApi = {
       };
     }
 
-    // start/end 기본값 보장
     const startDate = params.start ? new Date(params.start) : defaultStart();
     const endDate = params.end ? new Date(params.end) : defaultEnd();
 
-    // 요청 파라미터 구성
     const cleanParams: Record<string, any> = {
       page: params.page ?? 0,
       size: params.size ?? 12,
@@ -73,13 +71,13 @@ export const FacilityApi = {
       end: toDateTime(endDate),
     };
 
-    console.log("📤 FacilityApi 요청 URL:",
+    console.log(
+      "FacilityApi 전체 조회 URL:",
       AUTH_ENDPOINTS.facilityKpis(params.orgId),
       cleanParams
     );
 
-    // API 호출
-    const res = await apiClient.get<PageResponse<any>>(
+    const res = await apiClient.get<PageResponse<FacilityKpi>>(
       AUTH_ENDPOINTS.facilityKpis(params.orgId),
       { params: cleanParams }
     );
@@ -92,7 +90,65 @@ export const FacilityApi = {
       number: cleanParams.page,
     };
 
-    // DTO 변환
+    return {
+      content: (raw.content ?? []).map((item: any) => ({
+        orgId: Number(item.orgId ?? 0),
+        facId: Number(item.facId ?? 0),
+        facilityName: String(item.facilityName ?? ""),
+        ts: item.ts ? new Date(String(item.ts)).toISOString() : "",
+        predictedMaxKg: isNaN(Number(item.predictedMaxKg))
+          ? 0
+          : Number(item.predictedMaxKg),
+        productionKg: isNaN(Number(item.productionKg))
+          ? 0
+          : Number(item.productionKg),
+      })),
+      totalPages: raw.totalPages ?? 0,
+      totalElements: raw.totalElements ?? 0,
+      size: raw.size ?? cleanParams.size,
+      number: raw.number ?? cleanParams.page,
+    };
+  },
+
+  /** ✅ 특정 설비 단위 조회 (orgId + facId) */
+  async listByFacility(params: {
+    orgId: number;
+    facId: number;
+    start?: string;
+    end?: string;
+    page?: number;
+    size?: number;
+  }): Promise<PageResponse<FacilityKpi>> {
+    const startDate = params.start ? new Date(params.start) : defaultStart();
+    const endDate = params.end ? new Date(params.end) : defaultEnd();
+
+    const cleanParams: Record<string, any> = {
+      page: params.page ?? 0,
+      size: params.size ?? 12,
+      start: toDateTime(startDate),
+      end: toDateTime(endDate),
+      facId: params.facId, // ✅ facId 파라미터 추가
+    };
+
+    console.log(
+      "FacilityApi 단일 설비 조회 URL:",
+      AUTH_ENDPOINTS.facilityKpis(params.orgId),
+      cleanParams
+    );
+
+    const res = await apiClient.get<PageResponse<FacilityKpi>>(
+      AUTH_ENDPOINTS.facilityKpis(params.orgId),
+      { params: cleanParams }
+    );
+
+    const raw = res.data ?? {
+      content: [],
+      totalPages: 0,
+      totalElements: 0,
+      size: cleanParams.size,
+      number: cleanParams.page,
+    };
+
     return {
       content: (raw.content ?? []).map((item: any) => ({
         orgId: Number(item.orgId ?? 0),
