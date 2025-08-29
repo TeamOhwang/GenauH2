@@ -4,6 +4,7 @@ import com.project.entity.Organization;
 import com.project.entity.Real;
 import com.project.repository.OrganizationRepository;
 import com.project.repository.RealRepository;
+import com.project.service.EmailService;
 import com.project.service.Sms.SmsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,7 @@ public class ProductionAlarmService {
     private final RealRepository realRepository;
     private final OrganizationRepository organizationRepository;
     private final SmsService smsService;
+    private final EmailService emailService; // EmailService 주입
     private final DedupGuard dedupGuard; // 중복 발송 방지를 위해 추가
 
     /**
@@ -95,6 +97,17 @@ public class ProductionAlarmService {
             }
         } else {
             log.error("알림을 보낼 사용자(orgId={})를 찾을 수 없습니다.", orgId);
+        }
+    }
+
+    /**
+     * 사용자에게 이메일 알림을 발송합니다.
+     */
+    private void sendEmailNotification(Organization user, Real production) {
+        if (user.isEmailNotification() && user.getEmail() != null && !user.getEmail().isEmpty()) {
+            emailService.sendProductionAlertEmail(user.getEmail(), user.getName(), production);
+        } else {
+            log.warn("사용자(orgId={})가 이메일 수신을 동의하지 않았거나 이메일 주소가 없습니다.", user.getOrgId());
         }
     }
 }

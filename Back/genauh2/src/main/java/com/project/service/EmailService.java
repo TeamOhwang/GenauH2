@@ -1,10 +1,15 @@
 package com.project.service;
 
+import java.time.format.DateTimeFormatter;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+
+import com.project.entity.Real;
+
 import lombok.extern.slf4j.Slf4j;
 
 import jakarta.mail.MessagingException;
@@ -156,4 +161,94 @@ public class EmailService {
             </html>
             """.formatted(userName, java.time.LocalDateTime.now().toString());
     }
+
+    /**
+     * 수소 생산량 0 감지 시 알림 이메일을 발송합니다. (새로 추가된 메서드)
+     * @param toEmail 수신자 이메일
+     * @param userName 수신자 이름
+     * @param production 문제가 발생한 생산 데이터
+     */
+    public void sendProductionAlertEmail(String toEmail, String userName, Real production) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(fromEmail);
+            helper.setTo(toEmail);
+            helper.setSubject("[GENAUH2 긴급] 수소 생산 시스템 긴급 알림");
+
+            String htmlContent = createProductionAlertEmailTemplate(userName, production);
+            helper.setText(htmlContent, true);
+
+            mailSender.send(message);
+            log.info("✅ 생산량 0 감지 알림 이메일 전송 성공: {}", toEmail);
+
+        } catch (MessagingException e) {
+            log.error("❌ 생산량 0 감지 알림 이메일 전송 실패: {}", e.getMessage());
+        }
+    }
+
+     /**
+     * 생산량 0 감지 알림을 위한 HTML 이메일 템플릿을 생성합니다. (새로 추가된 메서드)
+     */
+    private String createProductionAlertEmailTemplate(String userName, Real production) {
+        String occurredAt = production.getTs().format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 HH시 mm분"));
+
+        return """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>긴급 알림: 수소 생산 중단 감지</title>
+                <style>
+                    body { font-family: 'Malgun Gothic', Arial, sans-serif; line-height: 1.6; color: #333; }
+                    .container { max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+                    .header { background-color: #dc3545; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+                    .content { padding: 30px; background-color: #f9f9f9; }
+                    .footer { padding: 20px; text-align: center; color: #666; font-size: 12px; }
+                    .highlight { color: #dc3545; font-weight: bold; font-size: 1.2em;}
+                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+                    th { background-color: #f2f2f2; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>🚨 긴급 알림</h1>
+                        <h2>수소 생산 시스템 모니터링</h2>
+                    </div>
+                    <div class="content">
+                        <h3>안녕하세요, %s님.</h3>
+                        <p>모니터링 중인 수소 생산 설비에서 <span class="highlight">생산 중단(생산량 0)</span>이 감지되었습니다.</p>
+                        <p>즉시 시스템 상태를 확인하고 필요한 조치를 취해주시기 바랍니다.</p>
+                        
+                        <table>
+                            <tr>
+                                <th>감지 시각</th>
+                                <td>%s</td>
+                            </tr>
+                            <tr>
+                                <th>설비 ID</th>
+                                <td>%d</td>
+                            </tr>
+                             <tr>
+                                <th>플랜트 ID</th>
+                                <td>%s</td>
+                            </tr>
+                            <tr>
+                                <th>감지된 생산량</th>
+                                <td class="highlight">0 kg</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="footer">
+                        <p>이 이메일은 GENAUH2 시스템에서 자동으로 발송되었습니다.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """.formatted(userName, occurredAt, production.getFacid(), production.getPlantId());
+    }
+
 }
