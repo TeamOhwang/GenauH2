@@ -26,6 +26,9 @@ export default function FacilityDashboard() {
   const [hoverProd, setHoverProd] = useState<number | null>(null);
   const [hoverPred, setHoverPred] = useState<number | null>(null);
 
+
+  
+
   //  테이블용 skeleton 데이터
   const mappedData = useMemo(() => {
     if (!selectedDay) return [];
@@ -56,10 +59,10 @@ export default function FacilityDashboard() {
     );
   }
 
-  return (
+return (
   <div className="flex bg-slate-900 text-white min-h-screen">
     {/* 왼쪽: KPI + 차트 */}
-    <div className="w-2/3 flex flex-col p-6 space-y-6">
+    <div className="flex flex-col w-2/3 p-6 space-y-6">
       <TopControlBar
         onDateSelect={(s, e, day) => {
           setStart(s);
@@ -84,7 +87,7 @@ export default function FacilityDashboard() {
         </div>
       )}
 
-      {/*날짜 선택 후 데이터 렌더링 */}
+      {/* 날짜 선택 후 데이터 렌더링 */}
       {!loading && !error && selectedDay && (
         <>
           {/* KPI 카드 */}
@@ -101,8 +104,9 @@ export default function FacilityDashboard() {
             />
           </div>
 
-          <div className="bg-slate-800 p-4 rounded-xl flex-1">
-            <FacilityLineChart
+          {/*  차트 높이 = 테이블 높이와 자동 맞춤 */}
+         <div className="bg-slate-800 p-4 rounded-xl flex-1">
+            <FacilityLineChart 
               data={data}
               selectedDay={selectedDay}
               onHover={(prod, pred) => {
@@ -117,7 +121,10 @@ export default function FacilityDashboard() {
 
     {/* 오른쪽: 테이블 */}
     <div className="w-1/3 bg-slate-800 p-4 flex flex-col">
-      <FacilityTable data={mappedData} start={start} end={end} />
+      {/* flex-1 주면 차트랑 자동으로 같은 높이 */}
+      <div className="flex-1">
+        <FacilityTable data={mappedData} start={start} end={end} />
+      </div>
     </div>
   </div>
 );

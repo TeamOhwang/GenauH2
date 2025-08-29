@@ -32,7 +32,7 @@ export default function FacilityLineChart({
   const chartRef = useRef<any>(null);
 
   return (
-    <div className="h-[450px] flex flex-col">
+     <div className="flex-1 flex flex-col">
       <Line
         ref={chartRef}
         data={{
@@ -63,6 +63,9 @@ export default function FacilityLineChart({
         options={{
           responsive: true,
           maintainAspectRatio: false,
+          layout: {
+            padding: { top: 10, bottom: 0 }, 
+          },
           interaction: { mode: "nearest", intersect: false },
           plugins: {
             legend: { position: "top" },
@@ -80,7 +83,6 @@ export default function FacilityLineChart({
                     const idx = items[0].dataIndex;
                     const point = mappedData[idx];
 
-                    // 여기서 보정된 값 반영
                     const prod = point.productionKg * 10.1;
                     const pred = point.predictedMaxKg ;
 
@@ -98,15 +100,16 @@ export default function FacilityLineChart({
           },
           scales: {
             x: {
-              title: { display: true, text: " ", color: "#ccc" },
+              title: { display: false, text: " ", color: "#ccc" },
               grid: { color: "rgba(255,255,255,0.05)" },
-              ticks: { color: "#ccc" },
+              ticks: { color: "#ccc", padding: 0 },
             },
             y1: {
               title: { display: true, text: " ", color: "#36A2EB" },
               type: "linear",
               position: "left",
               ticks: { color: "#36A2EB" ,},
+              
               
               
             },

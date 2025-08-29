@@ -20,8 +20,22 @@ export type PageResponse<T> = {
 };
 
 /** 날짜 → ISO(yyyy-MM-ddTHH:mm:ss) */
-const toDateTime = (date: Date) =>
-  date.toISOString().slice(0, 19);
+const toDateTime = (date: Date) => {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return (
+    date.getFullYear() +
+    "-" +
+    pad(date.getMonth() + 1) +
+    "-" +
+    pad(date.getDate()) +
+    "T" +
+    pad(date.getHours()) +
+    ":" +
+    pad(date.getMinutes()) +
+    ":" +
+    pad(date.getSeconds())
+  );
+};
 
 /** 최근 7일 기본값 */
 const defaultStart = () =>
@@ -59,12 +73,17 @@ export const FacilityApi = {
       end: toDateTime(endDate),
     };
 
+    console.log("📤 FacilityApi 요청 URL:",
+      AUTH_ENDPOINTS.facilityKpis(params.orgId),
+      cleanParams
+    );
+
     // API 호출
     const res = await apiClient.get<PageResponse<any>>(
       AUTH_ENDPOINTS.facilityKpis(params.orgId),
       { params: cleanParams }
     );
-    console.log("ggggggggggggggggggggggggg",res.data);
+
     const raw = res.data ?? {
       content: [],
       totalPages: 0,
@@ -72,8 +91,6 @@ export const FacilityApi = {
       size: cleanParams.size,
       number: cleanParams.page,
     };
-    console.log("rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",raw.content[0])
-   
 
     // DTO 변환
     return {
