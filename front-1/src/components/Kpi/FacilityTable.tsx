@@ -29,7 +29,13 @@ export default function FacilityTable({
       accessorKey: "ts",
       cell: (info) => {
         const value = info.getValue<string>();
-        return value ? new Date(value).toLocaleString("ko-KR", { hour12: false }) : "-";
+        return value
+          ? new Date(value).toLocaleString("ko-KR", {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: false,
+            })
+          : "-";
       },
     },
     { header: "설비명", accessorKey: "facilityName" },
@@ -47,7 +53,6 @@ export default function FacilityTable({
 
   const table = useReactTable({ data, columns, getCoreRowModel: getCoreRowModel() });
 
-  /** 엑셀 다운로드 */
   const exportExcel = async () => {
     try {
       const res = await FacilityApi.listByOrg({
@@ -55,10 +60,10 @@ export default function FacilityTable({
         start,
         end,
         page: 0,
-        size: 5000, // 안전한 제한값
+        size: 5000,
       });
       const buf = exportFacilitiesToExcel(res.content);
-      const fileName = start && end ? `facilities_${start}_${end}.xlsx` : "facilities.xlsx";
+      const fileName = start ? `facilities_${start.slice(0, 10)}.xlsx` : "facilities.xlsx";
       saveAs(new Blob([buf]), fileName);
     } catch (err) {
       console.error("엑셀 다운로드 실패:", err);
@@ -68,7 +73,7 @@ export default function FacilityTable({
   return (
     <div className="text-sm h-full flex flex-col">
       <div className="flex justify-between items-center mb-3">
-        <h3 className="font-bold text-lg">조회기간 데이터</h3>
+        <h3 className="font-bold text-lg">선택된 날짜 데이터</h3>
         <button
           onClick={exportExcel}
           className="px-3 py-1 bg-green-600 hover:bg-green-700 rounded text-white"
@@ -77,14 +82,16 @@ export default function FacilityTable({
         </button>
       </div>
 
-      {/* 테이블 */}
       <div className="flex-1 overflow-y-auto rounded-lg border border-slate-700">
         <table className="w-full border-collapse text-sm">
           <thead className="bg-slate-800 text-white sticky top-0 z-10">
             {table.getHeaderGroups().map((hg) => (
               <tr key={hg.id}>
                 {hg.headers.map((header) => (
-                  <th key={header.id} className="px-3 py-2 border border-slate-700 text-center text-xs font-semibold uppercase">
+                  <th
+                    key={header.id}
+                    className="px-3 py-2 border border-slate-700 text-center text-xs font-semibold uppercase"
+                  >
                     {flexRender(header.column.columnDef.header, header.getContext())}
                   </th>
                 ))}
@@ -95,7 +102,10 @@ export default function FacilityTable({
             {table.getRowModel().rows.map((row) => (
               <tr key={row.id} className="hover:bg-slate-700/50">
                 {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-3 py-2 border border-slate-800 text-center font-mono tabular-nums">
+                  <td
+                    key={cell.id}
+                    className="px-3 py-2 border border-slate-800 text-center font-mono tabular-nums"
+                  >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
@@ -110,27 +120,6 @@ export default function FacilityTable({
             )}
           </tbody>
         </table>
-      </div>
-
-      {/* 페이지네이션 */}
-      <div className="flex justify-center items-center space-x-4 mt-3">
-        <button
-          disabled={page === 0}
-          onClick={() => setPage(page - 1)}
-          className="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          이전
-        </button>
-        <span className="text-xs text-gray-400">
-          {page + 1} / {Math.max(1, totalPages)}
-        </span>
-        <button
-          disabled={page + 1 >= totalPages}
-          onClick={() => setPage(page + 1)}
-          className="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          다음
-        </button>
       </div>
     </div>
   );
