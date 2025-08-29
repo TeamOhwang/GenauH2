@@ -2,9 +2,10 @@ import { addFacilityApi, deleteFacilityApi, getFacilityListApi, getUserListApi, 
 
 export async function createUser(params:{
     orgName: string;
-    name: string;
+    name: string; // ownerName에서 name으로 변경
     bizRegNo: string;
     email: string;
+    phoneNum: string;
     password: string;
 }) {
     return await registerApi(params);

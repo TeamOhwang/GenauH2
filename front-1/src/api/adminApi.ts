@@ -1,26 +1,29 @@
 import apiClient from "./apiClient";
 
 export const ADMIN_ENDPOINTS = {
-    register: "/user/register",
+    // register: "/organization/register", // /user/register에서 /organization/register로 변경
     getUserList: "/user/list",
     updateUserStatus: (userId: string) => `/user/${userId}/status`,
     getFacilityList: "/plant/list",
     addFacility: "/plant/insert",
     updateFacility: "/plant/update",
     deleteFacility: "/plant/delete",
+    getPendings: "/user/pending",
+    approveUser: (orgId: string) => `/user/${orgId}/approve`,
 }
 
 // 회원 등록
-export async function registerApi(params:{
-    orgName: string;
-    name: string;
-    bizRegNo: string;
-    email: string;
-    password: string;
-}) {
-    const res = await apiClient.post(ADMIN_ENDPOINTS.register, params);
-    return (res as any)?.data?.data ?? (res as any)?.data ?? null;
-}
+// export async function registerApi(params:{
+//     orgName: string;
+//     ownerName: string; // ownerName에서 name으로 변경
+//     bizRegNo: string;
+//     email: string;
+//     phoneNum: string;
+//     password: string;
+// }) {
+//     const res = await apiClient.post(ADMIN_ENDPOINTS.register, params);
+//     return (res as any)?.data?.data ?? (res as any)?.data ?? null;
+// }
 
 // 모든 회원 조회
 export async function getUserListApi() {
@@ -173,4 +176,14 @@ export async function deleteFacilityApi(facilityId: string) {
         console.log('=== adminApi.deleteFacilityApi 종료 (에러) ===');
         throw error;
     }
+}
+
+export async function getPendingsApi() {
+    const res = await apiClient.get(ADMIN_ENDPOINTS.getPendings);
+    return res.data ?? [];
+}
+
+export async function approveUserApi(orgId: string, action: "approve" | "reject") {
+    const res = await apiClient.post(ADMIN_ENDPOINTS.approveUser(orgId), { action });
+    return res.data ?? [];
 }

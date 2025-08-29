@@ -3,9 +3,10 @@ import { useCallback, useState } from "react";
 
 type user = {
     orgName: string;
-    name: string;
+    name: string; // ownerName에서 name으로 변경
     bizRegNo: string;
     email: string;
+    phoneNum: string;
     password: string;
 }
 

@@ -6,10 +6,11 @@ type RegiFromProps = { onSuccess?: () => void };
 export default function RegiFrom({ onSuccess }: RegiFromProps) {
     const [form, setFrom] = useState({
         orgName: "", // 회사 이름
-        name: "", // 대표 이름
+        ownerName: "", // 대표 이름
         bizRegNo: "", // 사업자 번호
         email: "", // 아이디
         password: "0000", // 비밀번호
+        phoneNum: "", // 전화번호
     })
 
     const { addUser, loading, error} = useAdmin();
@@ -43,16 +44,16 @@ export default function RegiFrom({ onSuccess }: RegiFromProps) {
             <input
                 type="text"
                 name="orgName"
-                placeholder="조직명"
+                placeholder="회사명"
                 value={form.orgName}
                 onChange={handleChange}
                 className="w-full border rounded px-3 py-2"
             />
             <input
                 type="text"
-                name="name"
+                name="ownerName"
                 placeholder="대표자명"
-                value={form.name}
+                value={form.ownerName}
                 onChange={handleChange}
                 className="w-full border rounded px-3 py-2"
             />
@@ -61,6 +62,14 @@ export default function RegiFrom({ onSuccess }: RegiFromProps) {
                 name="bizRegNo"
                 placeholder="사업자번호"
                 value={form.bizRegNo}
+                onChange={handleChange}
+                className="w-full border rounded px-3 py-2"
+            />
+            <input
+                type="text"
+                name="phoneNum"
+                placeholder="전화번호"
+                value={form.phoneNum}
                 onChange={handleChange}
                 className="w-full border rounded px-3 py-2"
             />
