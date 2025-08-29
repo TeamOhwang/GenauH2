@@ -1,16 +1,20 @@
 package com.project.controller;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.project.service.PredictService;
+
+import org.springframework.data.domain.Sort;
 import com.project.dto.FacilityKpiDto;
 import com.project.dto.PredictDTO;
 
@@ -119,13 +123,16 @@ public class PredictController {
     @GetMapping("/{orgId}/kpis")
     public Page<FacilityKpiDto> getFacilityKpis(
             @PathVariable Long orgId,
-            @PageableDefault(size = 20, sort = "ts") Pageable pageable
+            @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+            @RequestParam("end") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
+            @PageableDefault(size = 20, sort = "ts", direction = Sort.Direction.ASC) Pageable pageable
     ) {
-    	System.out.println("컨트롤러에 들어온 orgId = " + orgId);
-        return predictService.getFacilityKpis(orgId, pageable);
+        System.out.println("컨트롤러에 들어온 orgId = " + orgId);
+        System.out.println("컨트롤러에 들어온 기간 = " + start + " ~ " + end);
+
+        return predictService.getFacilityKpis(orgId, start, end, pageable);
     }
 }
-    
     
     
     

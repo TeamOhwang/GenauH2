@@ -114,10 +114,18 @@ public class PredictService {
     
     /// 사업자 id 기준으로 등록된 설비id 가져오고, 수소생산량, 최대수소생산량 집계합
     @Transactional(readOnly = true)
-    public Page<FacilityKpiDto> getFacilityKpis(Long orgId, Pageable pageable) {
-    	System.out.println("서비스에 전달된 orgId = " + orgId);
-        return predictRepository.findKpiByOrgId(orgId, pageable);
+    public Page<FacilityKpiDto> getFacilityKpis(
+            Long orgId,
+            LocalDateTime start,
+            LocalDateTime end,
+            Pageable pageable
+    ) {
+        System.out.println("서비스에 전달된 orgId = " + orgId);
+        System.out.println("서비스에 전달된 기간 = " + start + " ~ " + end);
+
+        return predictRepository.findByOrgIdWithName(orgId, start, end, pageable);
     }
 }
+
     
     
