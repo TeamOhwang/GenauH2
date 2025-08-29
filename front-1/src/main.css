@@ -67,7 +67,7 @@
 
 /* @font-face {
   font-family: 'Pretendard';
-  src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Thin.woff') format('woff');
+  src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_six@1.1/Pretendard-Thin.woff') format('woff');
   font-weight: 100;
   font-display: swap;
 }
@@ -200,4 +200,61 @@
 /* 다크모드 전환 애니메이션 */
 * {
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* 스크롤바 커스텀 스타일 */
+/* Webkit 브라우저 (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.4);
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.6);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* 다크모드일 때 스크롤바 색상 */
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(75, 85, 99, 0.4);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(75, 85, 99, 0.6);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.4) transparent;
+}
+
+.dark * {
+  scrollbar-color: rgba(75, 85, 99, 0.4) transparent;
+}
+
+/* 스크롤바가 있는 요소에 호버 시에만 스크롤바 표시 */
+.scrollbar-hide::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+
+.scrollbar-hide:hover::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.4);
+}
+
+.dark .scrollbar-hide:hover::-webkit-scrollbar-thumb {
+  background: rgba(75, 85, 99, 0.4);
 }

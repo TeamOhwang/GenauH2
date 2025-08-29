@@ -61,11 +61,11 @@ export default function PricePage() {
   }, [filtered, page, size]);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 p-5">
+    <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 p-5 bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors">
       {/* 좌측 지도 */}
-      <div className="col-span-1 lg:col-span-3 border rounded p-2 relative">
-        {averages.loading && <div className="p-3 text-gray-500">지도를 불러오는 중…</div>}
-        {averages.error && <div className="p-3 text-red-600">{averages.error}</div>}
+      <div className="col-span-1 lg:col-span-3 border border-gray-200 dark:border-gray-700 rounded p-2 relative bg-white dark:bg-gray-800 transition-colors">
+        {averages.loading && <div className="p-3 text-gray-500 dark:text-gray-400">지도를 불러오는 중…</div>}
+        {averages.error && <div className="p-3 text-red-600 dark:text-red-400">{averages.error}</div>}
 
         {averages.data?.length > 0 && (
           <div className="mx-auto w-full">
@@ -80,7 +80,7 @@ export default function PricePage() {
           </div>
         )}
 
-        <div className="absolute bottom-2 left-2 text-xs text-gray-500">
+        <div className="absolute bottom-2 left-2 text-xs text-gray-500 dark:text-gray-400">
           지도 클릭 → 우측 패널이 해당 지역으로 바뀝니다
         </div>
       </div>
@@ -97,10 +97,10 @@ export default function PricePage() {
             }}
             delay={250}
             placeholder="이름으로 검색…"
-            className="flex-1 border rounded px-2 py-1 text-sm"
+            className="flex-1 border border-gray-200 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 transition-colors"
           />
           <select
-            className="border rounded px-2 py-1 text-sm"
+            className="border border-gray-200 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 transition-colors"
             value={size}
             onChange={(e) => {
               setPage(1);

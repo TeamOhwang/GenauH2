@@ -14,7 +14,7 @@ export default function DashboardHeader({
     const realTime = useRealTime();
 
     return (
-        <div className="flex items-center space-x-4 text-sm text-gray-600">
+        <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
             <div className="flex items-center space-x-2">
                 <span>현재 시간:</span>
                 <span className="font-mono font-semibold">
@@ -46,7 +46,7 @@ export default function DashboardHeader({
                 {isUpdating ? '갱신 중...' : '수동 갱신'}
             </button>
             {lastUpdateTime && (
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-gray-500 dark:text-gray-400">
                     마지막 갱신: {lastUpdateTime.toLocaleTimeString('ko-KR')}
                 </div>
             )}

@@ -42,7 +42,7 @@ const Modal = ({
 
             {/* 모달 박스 */}
             <div 
-                className={`relative bg-white rounded-2xl shadow overflow-y-auto p-6 z-10 ${width} ${maxHeight} ${minHeight}`}
+                className={`relative bg-white dark:bg-gray-800 rounded-2xl shadow overflow-y-auto p-6 z-10 scrollbar-hide ${width} ${maxHeight} ${minHeight}`}
             >
                 {/* 닫기 버튼 */}
                 <button

@@ -290,7 +290,7 @@ export default function Admin() {
         </Card>
       </div>
 
-      <div className="flex flex-col h-2/3 w-full bg-white rounded-2xl shadow overflow-y-scroll">
+      <div className="flex flex-col h-2/3 w-full bg-white dark:bg-gray-800 rounded-2xl shadow overflow-y-scroll scrollbar-hide">
         {/* 검색  + 필터 */}
         <div className="flex mb-4 sticky top-0 bg-white z-10 pb-4 mb-4 border-b pt-3 px-3">
           <Input

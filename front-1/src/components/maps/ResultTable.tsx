@@ -28,7 +28,7 @@ export default function ResultTable(props: {
     );
 
   return (
-    <div className="border rounded-lg shadow-sm overflow-hidden">
+    <div className="border rounded-lg shadow-sm overflow-hidden scrollbar-hide">
       <table className="min-w-full table-fixed text-sm">
         <colgroup>
           <col style={{ width: "34%" }} />
