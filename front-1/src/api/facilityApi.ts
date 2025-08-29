@@ -19,13 +19,18 @@ export type PageResponse<T> = {
   number: number; // 현재 페이지 번호
 };
 
-/** 날짜 변환 */
-const toDateTime = (date?: string) =>
-  date ? new Date(date).toISOString().slice(0, 19) : undefined;
+/** 날짜 → ISO(yyyy-MM-ddTHH:mm:ss) */
+const toDateTime = (date: Date) =>
+  date.toISOString().slice(0, 19);
+
+/** 최근 7일 기본값 */
+const defaultStart = () =>
+  new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // 7일 전
+const defaultEnd = () => new Date(); // 현재
 
 export const FacilityApi = {
   async listByOrg(params: {
-    orgId: number | null;   //  orgId는 null 가능
+    orgId: number | null;   // orgId는 null 가능
     start?: string;
     end?: string;
     page?: number;
@@ -42,20 +47,24 @@ export const FacilityApi = {
       };
     }
 
+    // start/end 기본값 보장
+    const startDate = params.start ? new Date(params.start) : defaultStart();
+    const endDate = params.end ? new Date(params.end) : defaultEnd();
+
     // 요청 파라미터 구성
     const cleanParams: Record<string, any> = {
       page: params.page ?? 0,
       size: params.size ?? 12,
+      start: toDateTime(startDate),
+      end: toDateTime(endDate),
     };
-    if (params.start?.trim()) cleanParams.start = toDateTime(params.start);
-    if (params.end?.trim()) cleanParams.end = toDateTime(params.end);
 
     // API 호출
     const res = await apiClient.get<PageResponse<any>>(
       AUTH_ENDPOINTS.facilityKpis(params.orgId),
       { params: cleanParams }
     );
-
+    console.log("ggggggggggggggggggggggggg",res.data);
     const raw = res.data ?? {
       content: [],
       totalPages: 0,
@@ -63,8 +72,8 @@ export const FacilityApi = {
       size: cleanParams.size,
       number: cleanParams.page,
     };
-
-    console.log("📡 FacilityApi.listByOrg orgId:", params.orgId);
+    console.log("rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",raw.content[0])
+   
 
     // DTO 변환
     return {

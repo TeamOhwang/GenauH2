@@ -1,8 +1,8 @@
 import { useReactTable, getCoreRowModel, flexRender, ColumnDef } from "@tanstack/react-table";
 import type { FacilityKpi } from "@/api/facilityApi";
-import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import { FacilityApi } from "@/api/facilityApi";
+import { exportFacilitiesToExcel } from "@/components/Kpi/exportUtils";
 
 type Props = {
   data?: FacilityKpi[];
@@ -35,19 +35,13 @@ export default function FacilityTable({
     { header: "설비명", accessorKey: "facilityName" },
     {
       header: "최대예상(kg)",
-      accessorKey: "predictedMaxKg", 
-      cell: (info) => {
-        const value = info.getValue<number>();
-        return (value ?? 0).toFixed(2);
-      },
+      accessorKey: "predictedMaxKg",
+      cell: (info) => (info.getValue<number>() ?? 0).toFixed(2),
     },
     {
       header: "실제생산(kg)",
-      accessorKey: "productionKg",    
-      cell: (info) => {
-        const value = info.getValue<number>();
-        return (value ?? 0).toFixed(2);
-      },
+      accessorKey: "productionKg",
+      cell: (info) => (info.getValue<number>() ?? 0).toFixed(2),
     },
   ];
 
@@ -61,25 +55,10 @@ export default function FacilityTable({
         start,
         end,
         page: 0,
-        size: 10000, // 충분히 크게
+        size: 5000, // 안전한 제한값
       });
-
-      // 엑셀 헤더 순서/라벨 지정
-        const exportData = res.content.map((item) => ({
-    시간: new Date(item.ts).toLocaleString("ko-KR", { hour12: false }),
-    설비명: item.facilityName,
-    "최대예상(kg)": Number(item.predictedMaxKg ?? 0).toFixed(2),
-    "실제생산(kg)": Number(item.productionKg ?? 0).toFixed(2),
-    }));
-
-      const ws = XLSX.utils.json_to_sheet(exportData);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Facilities");
-
-      const buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-      const fileName =
-        start && end ? `facilities_${start}_${end}.xlsx` : "facilities.xlsx";
-
+      const buf = exportFacilitiesToExcel(res.content);
+      const fileName = start && end ? `facilities_${start}_${end}.xlsx` : "facilities.xlsx";
       saveAs(new Blob([buf]), fileName);
     } catch (err) {
       console.error("엑셀 다운로드 실패:", err);
@@ -88,7 +67,6 @@ export default function FacilityTable({
 
   return (
     <div className="text-sm h-full flex flex-col">
-      {/* 헤더 */}
       <div className="flex justify-between items-center mb-3">
         <h3 className="font-bold text-lg">조회기간 데이터</h3>
         <button
@@ -106,10 +84,7 @@ export default function FacilityTable({
             {table.getHeaderGroups().map((hg) => (
               <tr key={hg.id}>
                 {hg.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className="px-3 py-2 border border-slate-700 text-center text-xs font-semibold uppercase"
-                  >
+                  <th key={header.id} className="px-3 py-2 border border-slate-700 text-center text-xs font-semibold uppercase">
                     {flexRender(header.column.columnDef.header, header.getContext())}
                   </th>
                 ))}
@@ -120,10 +95,7 @@ export default function FacilityTable({
             {table.getRowModel().rows.map((row) => (
               <tr key={row.id} className="hover:bg-slate-700/50">
                 {row.getVisibleCells().map((cell) => (
-                  <td
-                    key={cell.id}
-                    className="px-3 py-2 border border-slate-800 text-center font-mono tabular-nums"
-                  >
+                  <td key={cell.id} className="px-3 py-2 border border-slate-800 text-center font-mono tabular-nums">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}

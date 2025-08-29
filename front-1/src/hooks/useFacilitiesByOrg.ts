@@ -1,6 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
 import { FacilityApi, FacilityKpi, PageResponse } from "@/api/facilityApi";
 
+/** 기본 기간: 최근 7일 */
+const defaultStart = () =>
+  new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+const defaultEnd = () => new Date().toISOString();
+
 export function useFacilitiesByOrg(
   orgId: number | null, // 로그인한 사용자 orgId (null 허용)
   start?: string,
@@ -16,7 +21,6 @@ export function useFacilitiesByOrg(
 
   /** 데이터 패치 함수 */
   const fetchFacilities = useCallback(async () => {
-    // 🚨 orgId가 null/undefined일 때는 호출하지 않음
     if (orgId === null || orgId === undefined) {
       console.warn("⏭ orgId 없음 → 요청 건너뜀");
       setData([]);
@@ -29,10 +33,14 @@ export function useFacilitiesByOrg(
     try {
       console.log("🔥 프론트에서 호출하는 orgId:", orgId);
 
+      // start/end 기본값 보장
+      const startDate = start ?? defaultStart();
+      const endDate = end ?? defaultEnd();
+
       const res: PageResponse<FacilityKpi> = await FacilityApi.listByOrg({
         orgId,
-        start,
-        end,
+        start: startDate,
+        end: endDate,
         page,
         size,
       });
@@ -59,11 +67,11 @@ export function useFacilitiesByOrg(
   }, [fetchFacilities, orgId]);
 
   return {
-    data,            // FacilityKpi[] 데이터
-    totalPages,      // 총 페이지 수
-    totalElements,   // 전체 데이터 개수
-    loading,         // 로딩 상태
-    error,           // 에러 메시지
-    refetch: fetchFacilities, // 수동 재호출
+    data,
+    totalPages,
+    totalElements,
+    loading,
+    error,
+    refetch: fetchFacilities,
   };
 }

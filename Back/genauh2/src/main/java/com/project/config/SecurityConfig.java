@@ -68,6 +68,9 @@ public class SecurityConfig {
                     // [수정] 새로 추가한 수소 탱크 API 경로 허용
                     .requestMatchers("/storage/**").permitAll()
 
+                    .requestMatchers("/real/**").permitAll()
+
+
                     // 새로운 경로를 추가
                     .requestMatchers("/comparison/**").permitAll()
             	    

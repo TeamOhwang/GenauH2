@@ -8,6 +8,13 @@ export default function DateRangeBar({ onChange }: Props) {
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
 
+  const handleSearch = () => {
+    // "YYYY-MM-DD" → LocalDateTime 호환 포맷으로 변환
+    const startDate = start ? `${start}T00:00:00` : "";
+    const endDate = end ? `${end}T23:59:59` : "";
+    onChange(startDate, endDate);
+  };
+
   return (
     <div className="flex gap-2 items-center">
       <input
@@ -23,7 +30,7 @@ export default function DateRangeBar({ onChange }: Props) {
         className="border rounded px-2 text-black"
       />
       <button
-        onClick={() => onChange(start, end)}
+        onClick={handleSearch}
         className="px-3 py-1 bg-blue-600 text-white rounded"
       >
         조회

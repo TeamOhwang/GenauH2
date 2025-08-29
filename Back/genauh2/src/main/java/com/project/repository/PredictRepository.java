@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 import com.project.dto.FacilityKpiDto;
 import com.project.entity.Predict;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -174,67 +175,33 @@ public interface PredictRepository extends JpaRepository<Predict, String> {
     
 
     /// 사업자 id 기준으로 등록된 설비 + 예측/실제 생산량 집계합 (페이지네이션 지원)
-    @Query(
-        value = """
-            SELECT 
-                o.orgId        AS orgId,
-                f.facId        AS facId,
-                f.name         AS facilityName,
-                COALESCE(r.ts, p.ts) AS ts,
-                COALESCE(r.productionKg, 0)   AS productionKg,
-                COALESCE(p.predictedMaxKg, 0) AS predictedMaxKg
-            FROM organizations o
-            JOIN facilities f 
-                ON o.orgId = f.orgId
-            JOIN plant_generation pg 
-                ON f.facId = pg.facId
-            LEFT JOIN (
-                SELECT plant_id, ts, SUM(productionKg) AS productionKg
-                FROM production_real
-                GROUP BY plant_id, ts
-            ) r
-                ON pg.plant_id = r.plant_id
-            LEFT JOIN (
-                SELECT plant_id, ts, SUM(predictedMaxKg) AS predictedMaxKg
-                FROM production_predict
-                GROUP BY plant_id, ts
-            ) p
-                ON pg.plant_id = p.plant_id AND r.ts = p.ts
-            WHERE o.orgId = :orgId
-            ORDER BY ts ASC
-            /*#pageable*/
+    @Query(value = """
+            SELECT a.orgId         AS orgId,
+                   a.facId         AS facId,
+                   f.name          AS facilityName,
+                   a.ts            AS ts,
+                   a.productionKg  AS productionKg,
+                   a.predictedMaxKg AS predictedMaxKg
+            FROM facility_kpi_agg a
+            JOIN facilities f ON a.facId = f.facId
+            WHERE a.orgId = :orgId
+              AND a.ts BETWEEN :start AND :end
+            ORDER BY a.ts ASC
             """,
-        countQuery = """
+            countQuery = """
             SELECT COUNT(*)
-            FROM (
-                SELECT COALESCE(r.ts, p.ts) AS ts, f.facId
-                FROM organizations o
-                JOIN facilities f 
-                    ON o.orgId = f.orgId
-                JOIN plant_generation pg 
-                    ON f.facId = pg.facId
-                LEFT JOIN (
-                    SELECT plant_id, ts
-                    FROM production_real
-                    GROUP BY plant_id, ts
-                ) r
-                    ON pg.plant_id = r.plant_id
-                LEFT JOIN (
-                    SELECT plant_id, ts
-                    FROM production_predict
-                    GROUP BY plant_id, ts
-                ) p
-                    ON pg.plant_id = p.plant_id AND r.ts = p.ts
-                WHERE o.orgId = :orgId
-                GROUP BY f.facId, ts
-            ) sub
+            FROM facility_kpi_agg a
+            WHERE a.orgId = :orgId
+              AND a.ts BETWEEN :start AND :end
             """,
-        nativeQuery = true
-    )
-    Page<FacilityKpiDto> findKpiByOrgId(
+            nativeQuery = true)
+        Page<FacilityKpiDto> findByOrgIdWithName(
             @Param("orgId") Long orgId,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end,
             Pageable pageable
-    );
+        );
+    
 
    /**
          * 특정 날짜의 모든 실제 유휴 전력량 데이터를 타임스탬프와 함께 조회합니다.

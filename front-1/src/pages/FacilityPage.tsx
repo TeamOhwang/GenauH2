@@ -9,10 +9,10 @@ import FacilityLineChart from "@/components/Kpi/FacilityLineChart";
 import FacilityTable from "@/components/Kpi/FacilityTable";
 
 export default function FacilityDashboard() {
-  //  로그인된 사용자 orgId 가져오기
+  // 로그인된 사용자 orgId
   const orgId = useAuthStore((s) => s.orgId);
 
-  // 날짜/기간 필터
+  // 날짜/기간 필터 (LocalDateTime 포맷 문자열)
   const [start, setStart] = useState<string>("");
   const [end, setEnd] = useState<string>("");
 
@@ -23,7 +23,7 @@ export default function FacilityDashboard() {
   // interval (차트 뷰 단위)
   const [interval, setInterval] = useState<"15min" | "1h" | "1d">("1h");
 
-  //  훅은 항상 실행되도록 유지
+  // 데이터 훅 호출 (start/end 기본값은 훅 내부에서 보장됨)
   const { data, totalPages, totalElements, loading, error } = useFacilitiesByOrg(
     orgId ?? 0,
     start || undefined,
@@ -36,7 +36,7 @@ export default function FacilityDashboard() {
   const totalPredicted = data.reduce((a, c) => a + (c.predictedMaxKg || 0), 0);
   const totalProduction = data.reduce((a, c) => a + (c.productionKg || 0), 0);
 
-  // 조건부 렌더링은 JSX 단계에서 처리
+  // 조직 정보 없음 처리
   if (!orgId) {
     return (
       <div className="flex items-center justify-center min-h-screen text-red-400 text-lg">
@@ -47,7 +47,7 @@ export default function FacilityDashboard() {
 
   return (
     <div className="flex bg-slate-900 text-white min-h-screen">
-      {/* 왼쪽 영역: KPI, 차트 */}
+      {/* 왼쪽 영역: KPI + 차트 */}
       <div className="w-2/3 flex flex-col p-6 space-y-6">
         {/* 상단 컨트롤바 */}
         <TopControlBar

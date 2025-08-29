@@ -129,7 +129,7 @@ public interface RealRepository extends JpaRepository<Real, Long> {
                         @Param("endDate") LocalDateTime endDate);
 
         /**
-         * [신규 추가] 특정 조직(orgId)의 지정된 기간 동안의 모든 실제 생산량(Real) 엔티티를 조회합니다.
+         * 특정 조직(orgId)의 지정된 기간 동안의 모든 실제 생산량(Real) 엔티티를 조회합니다.
          * 
          * @param orgId     조직 ID
          * @param startDate 시작 일시
@@ -139,7 +139,7 @@ public interface RealRepository extends JpaRepository<Real, Long> {
         List<Real> findByOrgidAndTsBetween(Long orgId, LocalDateTime startDate, LocalDateTime endDate);
 
         /**
-         * [수정된 부분] 종료 시점을 포함하지 않는 시간 범위로 데이터를 조회하는 메소드 추가
+         *  종료 시점을 포함하지 않는 시간 범위로 데이터를 조회하는 메소드 추가
          */
         List<Real> findByOrgidAndTsGreaterThanEqualAndTsLessThan(Long orgId, LocalDateTime startDate,
                         LocalDateTime endDate);
@@ -152,5 +152,14 @@ public interface RealRepository extends JpaRepository<Real, Long> {
          */
         @Query(value = "SELECT ts, idlepowerkw FROM production_real WHERE DATE(ts) = :date ORDER BY ts ASC", nativeQuery = true)
         List<Object[]> findIdlePowerByDate(@Param("date") String date);
+
+        @Query("SELECT FUNCTION('HOUR', r.ts) as hour, SUM(r.productionKg) as totalProductionKg FROM Real r WHERE r.orgid = :orgId AND r.ts >= :start AND r.ts < :end GROUP BY hour ORDER BY hour ASC")
+        List<Object[]> findHourlyProductionByOrgId(@Param("orgId") Long orgId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+        @Query("SELECT SUM(r.productionKg) FROM Real r WHERE r.orgid = :orgId AND r.ts >= :start AND r.ts < :end")
+        BigDecimal findTotalProductionByOrgIdForLastSixMonths(@Param("orgId") Long orgId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+        @Query("SELECT SUM(r.productionKg) FROM Real r WHERE r.orgid = :orgId")
+        BigDecimal findTotalProductionByOrgId(@Param("orgId") Long orgId);
 
 }

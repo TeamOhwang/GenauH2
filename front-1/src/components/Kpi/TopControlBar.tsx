@@ -10,9 +10,14 @@ export default function TopControlBar({ interval, onIntervalChange, onRangeChang
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
 
+  const handleSearch = () => {
+    const startDate = start ? `${start}T00:00:00` : "";
+    const endDate = end ? `${end}T23:59:59` : "";
+    onRangeChange(startDate, endDate);
+  };
+
   return (
     <div className="flex flex-wrap gap-2 items-center bg-slate-800 p-3 rounded-xl">
-      {/* 기간 단위 버튼 */}
       {["15min", "1h", "1d"].map((v) => (
         <button
           key={v}
@@ -23,7 +28,6 @@ export default function TopControlBar({ interval, onIntervalChange, onRangeChang
         </button>
       ))}
 
-      {/* 날짜 입력 */}
       <input
         type="date"
         value={start}
@@ -38,7 +42,7 @@ export default function TopControlBar({ interval, onIntervalChange, onRangeChang
       />
 
       <button
-        onClick={() => onRangeChange(start, end)}
+        onClick={handleSearch}
         className="px-3 py-1 bg-blue-600 text-white rounded"
       >
         조회
