@@ -1,23 +1,22 @@
+// src/App.tsx
 import { useEffect } from "react";
 import { useAuthStore } from "@/stores/useAuthStore";
 import AppRoutes from "@/routes/AppRoutes";
 
-
 function Splash() {
-return <div>로딩중...</div>;
+  return <div>로딩중...</div>;
 }
 
-
 export default function App() {
-const init = useAuthStore((s) => s.init);
-const isInit = useAuthStore((s) => s.isInit);
+  const init = useAuthStore((s) => s.init);
+  const isInit = useAuthStore((s) => s.isInit);
 
+  useEffect(() => {
+    (async () => {
+      await init();
+    })();
+  }, [init]);
 
-useEffect(() => {
-(async () => { await init(); })();
-}, [init]);
-
-
-if (!isInit) return <Splash />;
-return <AppRoutes />;
+  if (!isInit) return <Splash />; 
+  return <AppRoutes />;
 }

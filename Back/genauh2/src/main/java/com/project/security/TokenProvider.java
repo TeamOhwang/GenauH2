@@ -24,9 +24,9 @@ public class TokenProvider {
         return Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
     }
     
-    public String create(String userId) {
+    public String create(String orgId) {
         try {
-            log.info("🔑 토큰 생성 시작 - userId: {}", userId);
+            log.info("🔑 토큰 생성 시작 - userId: {}", orgId);
             
             // 토큰 만료 시간을 1일로 설정
             Date expiryDate = Date.from(
@@ -35,7 +35,7 @@ public class TokenProvider {
             
             // JWT 토큰 생성 (최신 방식)
             String token = Jwts.builder()
-                    .setSubject(userId)
+            		.setSubject(String.valueOf(orgId))
                     .setIssuer("demo-app")
                     .setIssuedAt(new Date())
                     .setExpiration(expiryDate)
@@ -62,11 +62,11 @@ public class TokenProvider {
                     .parseClaimsJws(token)
                     .getBody();
             
-            String userId = claims.getSubject();
-            log.debug("✅ 토큰 검증 완료 - userId: {}", userId);
+            String orgId = claims.getSubject();
+            log.debug("✅ 토큰 검증 완료 - userId: {}", orgId);
             
             // 토큰의 subject를 반환
-            return userId;
+            return orgId;
             
         } catch (Exception e) {
             log.error("❌ 토큰 검증 오류: {}", e.getMessage());

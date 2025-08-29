@@ -62,7 +62,7 @@ async register(body: RegisterReq): Promise<any> {
     const prof = await this.profile();
     const { setEmail, setOrgId, setRole } = useAuthStore.getState();
     setEmail(prof.email ?? null);
-    setOrgId(prof.userId ?? null);
+    setOrgId(prof.orgId ?? null);
     setRole(prof.role ?? null);
     return prof.role ?? null;
   },
@@ -71,7 +71,7 @@ async register(body: RegisterReq): Promise<any> {
     const prof = await this.profile();
     const { setEmail, setOrgId, setRole } = useAuthStore.getState();
     setEmail(prof.email ?? null);
-    setOrgId(prof.userId ?? null);
+    setOrgId(prof.orgId ?? null);
     setRole(prof.role ?? null);
     return prof.role ?? null;
   },

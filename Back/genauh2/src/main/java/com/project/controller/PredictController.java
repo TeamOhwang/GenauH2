@@ -1,13 +1,17 @@
 package com.project.controller;
 
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
-
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.project.service.PredictService;
+
+import com.project.dto.FacilityKpiDto;
 import com.project.dto.PredictDTO;
 
 @RestController
@@ -111,22 +115,19 @@ public class PredictController {
     
     
     
-    /// 사업자 id 기준으로 등록된 설비id 가져오고, 수소생산량, 최대수소생산량 집계합
-    @GetMapping("/allsumid")
-    public ResponseEntity<List<Map<String, Object>>> getKpis(
-            @RequestParam Long orgId,
-            @RequestParam(required = false) String start,
-            @RequestParam(required = false) String end) {
-
-        return ResponseEntity.ok(predictService.getKpis(orgId, start, end));
+    ////// 사업자 id 기준 KPI 조회 + 페이지네이션
+    @GetMapping("/{orgId}/kpis")
+    public Page<FacilityKpiDto> getFacilityKpis(
+            @PathVariable Long orgId,
+            @PageableDefault(size = 20, sort = "ts") Pageable pageable
+    ) {
+    	System.out.println("컨트롤러에 들어온 orgId = " + orgId);
+        return predictService.getFacilityKpis(orgId, pageable);
     }
-    
-    
-    
+}
     
     
     
     
     
      
-}

@@ -1,133 +1,115 @@
-import { useState, useMemo } from "react";
+// src/pages/FacilityDashboard.tsx
+import { useState } from "react";
 import { useFacilitiesByOrg } from "@/hooks/useFacilitiesByOrg";
-import FacilityFilterBar from "@/components/FacilityFilterBar";
-import FacilityTable from "@/components/FacilityTable";
-import * as XLSX from "xlsx";
+import { useAuthStore } from "@/stores/useAuthStore";
+import TopControlBar from "@/components/Kpi/TopControlBar";
+import KpiCard from "@/components/Kpi/KpiCard";
+import TimeSlider from "@/components/Kpi/TimeSlider";
+import FacilityLineChart from "@/components/Kpi/FacilityLineChart";
+import FacilityTable from "@/components/Kpi/FacilityTable";
 
-export default function FacilityPage() {
-  const orgId = 1; // TODO: 로그인 후 orgId 연동 필요
-  const { data, loading, error } = useFacilitiesByOrg(orgId);
+export default function FacilityDashboard() {
+  //  로그인된 사용자 orgId 가져오기
+  const orgId = useAuthStore((s) => s.orgId);
 
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [selectedFacility, setSelectedFacility] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
+  // 날짜/기간 필터
+  const [start, setStart] = useState<string>("");
+  const [end, setEnd] = useState<string>("");
 
-  const pageSize = 20;
-  const maxPageButtons = 10;
+  // 페이지네이션
+  const [page, setPage] = useState(0);
+  const size = 12;
 
-  // 날짜 + 설비명 필터링
-  const filteredItems = useMemo(() => {
-    let result = data;
+  // interval (차트 뷰 단위)
+  const [interval, setInterval] = useState<"15min" | "1h" | "1d">("1h");
 
-    if (startDate || endDate) {
-      result = result.filter((f) => {
-        const tsDate = new Date(f.ts);
-        const start = startDate ? new Date(startDate) : null;
-        const end = endDate ? new Date(endDate) : null;
-        if (start && tsDate < start) return false;
-        if (end && tsDate > end) return false;
-        return true;
-      });
-    }
+  //  훅은 항상 실행되도록 유지
+  const { data, totalPages, totalElements, loading, error } = useFacilitiesByOrg(
+    orgId ?? 0,
+    start || undefined,
+    end || undefined,
+    page,
+    size
+  );
 
-    if (selectedFacility) {
-      result = result.filter((f) => f.facilityName  === selectedFacility);
-    }
+  // KPI 계산 (NaN 방지)
+  const totalPredicted = data.reduce((a, c) => a + (c.predictedMaxKg || 0), 0);
+  const totalProduction = data.reduce((a, c) => a + (c.productionKg || 0), 0);
 
-    return result;
-  }, [data, startDate, endDate, selectedFacility]);
+  // 조건부 렌더링은 JSX 단계에서 처리
+  if (!orgId) {
+    return (
+      <div className="flex items-center justify-center min-h-screen text-red-400 text-lg">
+        ⚠ 조직 정보 없음 (로그인 다시 확인 필요)
+      </div>
+    );
+  }
 
-  // 전체 페이지 수
-  const totalPages = Math.ceil(filteredItems.length / pageSize);
-
-  // 현재 페이지 데이터
-  const paginatedItems = useMemo(() => {
-    if (totalPages === 0) return []; 
-    const startIdx = (currentPage - 1) * pageSize;
-    return filteredItems.slice(startIdx, startIdx + pageSize);
-  }, [filteredItems, currentPage, totalPages]);
-
-  // 엑셀 다운로드 (현재 필터링된 데이터 전체)
-  const handleExportExcel = () => {
-    if (!filteredItems.length) {
-      alert("엑셀로 내보낼 데이터가 없습니다.");
-      return;
-    }
-    const worksheet = XLSX.utils.json_to_sheet(filteredItems);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Facilities");
-    XLSX.writeFile(workbook, "facilities.xlsx");
-  };
-
-  if (loading) return <p className="p-4">불러오는 중...</p>;
-  if (error) return <p className="p-4 text-red-500">{error}</p>;
-
-  // 드롭다운에 들어갈 설비명 목록
-  const facilityNames = Array.from(new Set(data.map((f) => f.facilityName )));
-
-  // 페이지네이션 버튼 그룹
-  const currentGroup = Math.floor((currentPage - 1) / maxPageButtons);
-  const startPage = currentGroup * maxPageButtons + 1;
-  const endPage = Math.min(startPage + maxPageButtons - 1, totalPages);
   return (
-    <div className="p-4 sm:p-6">
-      <h1 className="text-lg sm:text-xl font-bold mb-4">설비 목록</h1>
+    <div className="flex bg-slate-900 text-white min-h-screen">
+      {/* 왼쪽 영역: KPI, 차트 */}
+      <div className="w-2/3 flex flex-col p-6 space-y-6">
+        {/* 상단 컨트롤바 */}
+        <TopControlBar
+          interval={interval}
+          onIntervalChange={setInterval}
+          onRangeChange={(s, e) => {
+            setStart(s);
+            setEnd(e);
+            setPage(0); // 날짜 바뀌면 페이지 리셋
+          }}
+        />
 
-      {/*필터바 */}
-      <FacilityFilterBar
-        startDate={startDate}
-        endDate={endDate}
-        selectedFacility={selectedFacility}
-        facilityNames={facilityNames}
-        onChangeStartDate={setStartDate}
-        onChangeEndDate={setEndDate}
-        onChangeFacility={setSelectedFacility}
-        onExportExcel={handleExportExcel}
-      />
+        {/* 로딩/에러 처리 */}
+        {loading && (
+          <div className="text-gray-400 text-center mt-10">
+            📡 데이터 불러오는 중...
+          </div>
+        )}
+        {error && (
+          <div className="text-red-500 text-center mt-10">⚠ {error}</div>
+        )}
 
-      {/*테이블 */}
-      <div className="overflow-x-auto">
-      <FacilityTable items={paginatedItems} />
+        {!loading && !error && (
+          <>
+            {/* KPI 카드 */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <KpiCard title="총 최대 예측량" value={totalPredicted} unit="kg" />
+              <KpiCard title="총 실제 생산량" value={totalProduction} unit="kg" />
+              <KpiCard title="데이터 개수" value={totalElements} unit="rows" />
+            </div>
+
+            {/* 기간 슬라이더 */}
+            <div className="bg-slate-800 p-4 rounded-xl">
+              <TimeSlider dataLength={data.length} />
+            </div>
+
+            {/* 라인 차트 */}
+            <div className="bg-slate-800 p-4 rounded-xl flex-1">
+              {data.length > 0 ? (
+                <FacilityLineChart data={data} />
+              ) : (
+                <div className="text-gray-400 text-center py-20">
+                  표시할 데이터가 없습니다.
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
-       {/* 페이지네이션: totalPages > 0 일 때만 */}
-    {totalPages > 0 && (
-      <div className="flex flex-wrap justify-center gap-2 mt-4">
-        <button
-          onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-          disabled={currentPage === 1}
-          className="px-2 sm:px-3 py-1 border rounded disabled:opacity-50 text-sm sm:text-base"
-        >
-          이전
-        </button>
-
-        {Array.from({ length: endPage - startPage + 1 }, (_, i) => {
-          const page = startPage + i;
-          return (
-            <button
-              key={page}
-              onClick={() => setCurrentPage(page)}
-              className={`px-2 sm:px-3 py-1 border rounded text-sm sm:text-base ${
-                currentPage === page
-                  ? "bg-blue-500 text-white"
-                  : "hover:bg-gray-100"
-              }`}
-            >
-              {page}
-            </button>
-          );
-        })}
-
-        <button
-          onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-          disabled={currentPage === totalPages}
-          className="px-2 sm:px-3 py-1 border rounded disabled:opacity-50 text-sm sm:text-base"
-        >
-          다음
-        </button>
+      {/* 오른쪽 영역: 테이블 */}
+      <div className="w-1/3 bg-slate-800 p-4 flex flex-col">
+        <FacilityTable
+          orgId={orgId}
+          data={data}
+          page={page}
+          setPage={setPage}
+          totalPages={totalPages}
+          start={start || undefined}
+          end={end || undefined}
+        />
       </div>
-    )}
-  </div>
-);
+    </div>
+  );
 }
