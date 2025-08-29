@@ -11,16 +11,18 @@ type UpdateFacilityProps = {
 
 const UpdateFaForm = ({ facility, onSuccess, onClose }: UpdateFacilityProps) => {
     const [form, setForm] = useState({
-        facilityId: "",
-        name: "",
-        location: "",
-        modelNo: "",
-        cellCount: "",
-        ratedPowerKw: "",
-        ratedOutputKgH: "",
-        secNominalKwhPerKg: "",
-        catalystInstallDate: "",
-        catalystLifeHours: "",
+        facId: "", // 조직 ID를 문자열로 변환
+        name: "", // 시설 이름
+        location: "", // 시설 위치
+        model: "", 
+        maker: "", 
+        type: "",
+        powerKw: 0,
+        h2Rate: 0, 
+        specKwh: 0, 
+        purity: 0, 
+        pressure: 0, 
+        install: "", 
     });
 
     const { updateFacilityAction, loading, error } = useAdmin();
@@ -29,16 +31,18 @@ const UpdateFaForm = ({ facility, onSuccess, onClose }: UpdateFacilityProps) => 
     useEffect(() => {
         if (facility) {
             setForm({
-                facilityId: facility.facilityId || "",
+                facId: facility.facId || "",
                 name: facility.name || "",
                 location: facility.location || "",
-                modelNo: facility.modelNo || "",
-                cellCount: facility.cellCount || "",
-                ratedPowerKw: facility.ratedPowerKw || "",
-                ratedOutputKgH: facility.ratedOutputKgH || "",
-                secNominalKwhPerKg: facility.secNominalKwhPerKg || "",
-                catalystInstallDate: facility.catalystInstallDate || "",
-                catalystLifeHours: facility.catalystLifeHours || "",
+                model: facility.model || "",
+                maker: facility.maker || "",
+                type: facility.type || "",
+                powerKw: facility.powerKw || 0,
+                h2Rate: facility.h2Rate || 0,
+                specKwh: facility.specKwh || 0,
+                purity: facility.purity || 0,
+                pressure: facility.pressure || 0,
+                install: facility.install || "",
             });
         }
     }, [facility]);
@@ -82,7 +86,7 @@ const UpdateFaForm = ({ facility, onSuccess, onClose }: UpdateFacilityProps) => 
             // 날짜 형식 변환
             const formattedForm = {
                 ...form,
-                catalystInstallDate: formatDateForBackend(form.catalystInstallDate)
+                install: formatDateForBackend(form.install)
             };
             
             console.log('변환된 form 데이터:', formattedForm);

@@ -121,10 +121,17 @@
 
 		<!-- CoolSMS SDK -->
 		<dependency>
-        <groupId>net.nurigo</groupId>
-        <artifactId>sdk</artifactId>
-        <version>4.3.0</version>
-    </dependency>
+        	<groupId>net.nurigo</groupId>
+        	<artifactId>sdk</artifactId>
+        	<version>4.3.0</version>
+    	</dependency>
+    	
+    	<!-- WebSocket -->
+    	<dependency>
+    		<groupId>org.springframework.boot</groupId>
+    		<artifactId>spring-boot-starter-websocket</artifactId>
+    		<version>3.5.4</version>
+    	</dependency>
 
 	</dependencies>
 

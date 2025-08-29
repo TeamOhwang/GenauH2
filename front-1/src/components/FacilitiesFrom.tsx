@@ -13,15 +13,15 @@ const FacilitiesFrom = ({ orgId, onSuccess }: FacilitiesProps) => {
         orgId: orgId, // 조직 ID를 문자열로 변환
         name: "", // 시설 이름
         location: "", // 시설 위치
-        model: "",
-        maker: "",
+        model: "", 
+        maker: "", 
         type: "",
-        powerKw: "",
-        h2Rate: "",
-        specKwh: "",
-        purity: "",
-        pressure: "",
-        install: "",
+        powerKw: 0,
+        h2Rate: 0, 
+        specKwh: 0, 
+        purity: 0, 
+        pressure: 0, 
+        install: "", 
     });
 
     const { createFacility, loading, error } = useAdmin();
@@ -109,49 +109,57 @@ const FacilitiesFrom = ({ orgId, onSuccess }: FacilitiesProps) => {
                 <input
                     type="text"
                     name="modelNo"
-                    placeholder="모델번호"
-                    value={form.modelNo}
+                    placeholder="모델명"
+                    value={form.model}
                     onChange={handleChange}
                     className="w-full border rounded px-3 py-2"
                 />
                 <input
                     type="text"
-                    name="cellCount"
-                    placeholder="셀 개수"
-                    value={form.cellCount}
+                    name="maker"
+                    placeholder="제조사"
+                    value={form.maker}
                     onChange={handleChange}
                     className="w-full border rounded px-3 py-2"
                 />
                 <input
                     type="text"
-                    name="ratedPowerKw"
+                    name="type"
+                    placeholder="생산방식"
+                    value={form.type}
+                    onChange={handleChange}
+                    className="w-full border rounded px-3 py-2"
+                />
+                <input
+                    type="text"
+                    name="powerKw"
                     placeholder="정격 전력(kW)"
-                    value={form.ratedPowerKw}
+                    value={form.powerKw}
                     onChange={handleChange}
                     className="w-full border rounded px-3 py-2"
                 />
                 <input
                     type="text"
-                    name="ratedOutputKgH"
+                    name="h2Rate"
                     placeholder="정격 출력(kg/h)"
-                    value={form.ratedOutputKgH}
+                    value={form.h2Rate}
                     onChange={handleChange}
                     className="w-full border rounded px-3 py-2"
                 />
                 <input
                     type="text"
-                    name="secNominalKwhPerKg"
+                    name="specKwh"
                     placeholder="기준 SEC(kWh/kg)"
-                    value={form.secNominalKwhPerKg}
+                    value={form.specKwh}
                     onChange={handleChange}
                     className="w-full border rounded px-3 py-2"
                 />
                 <div>
                     <input
                         type="text"
-                        name="catalystInstallDate"
+                        name="install"
                         placeholder="촉매 설치일 (예: 20151005 또는 2015-10-05)"
-                        value={form.catalystInstallDate}
+                        value={form.install}
                         onChange={handleChange}
                         className="w-full border rounded px-3 py-2"
                     />
@@ -159,9 +167,17 @@ const FacilitiesFrom = ({ orgId, onSuccess }: FacilitiesProps) => {
                 </div>
                 <input
                     type="text"
-                    name="catalystLifeHours"
-                    placeholder="촉매 수명"
-                    value={form.catalystLifeHours}
+                    name="purity"
+                    placeholder="수소 순도"
+                    value={form.purity}
+                    onChange={handleChange}
+                    className="w-full border rounded px-3 py-2"
+                />
+                <input
+                    type="text"
+                    name="pressure"
+                    placeholder="압력"
+                    value={form.pressure}
                     onChange={handleChange}
                     className="w-full border rounded px-3 py-2"
                 />

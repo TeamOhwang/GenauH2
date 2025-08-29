@@ -10,8 +10,7 @@ type user = {
     password: string;
 }
 
-type facility = {
-    facId: string;
+type createfacility = {
     orgId: string;
     name: string;
     type: string;
@@ -24,7 +23,22 @@ type facility = {
     pressure: number;
     location: string;
     install: string;
-    createdAt: string;
+}
+
+type updateFacility = {
+
+    facId: string;
+    name: string;
+    location: string;
+    model: string;
+    maker: string;
+    type: string;
+    powerKw: number;
+    h2Rate: number;
+    specKwh: number;
+    purity: number;
+    pressure: number;
+    install: string;
 }
 
 export function useAdmin() {
@@ -88,7 +102,7 @@ export function useAdmin() {
         }
     }, [])
 
-    const createFacility = useCallback(async (params: facility) => {
+    const createFacility = useCallback(async (params: createfacility) => {
         setLoading(true);
         setError(null);
         try {
@@ -119,7 +133,7 @@ export function useAdmin() {
         }
     }, [])
 
-    const updateFacilityAction = useCallback(async (params: facility) => {
+    const updateFacilityAction = useCallback(async (params: updateFacility) => {
         setLoading(true);
         setError(null);
         try {

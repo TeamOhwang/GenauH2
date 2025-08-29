@@ -29,7 +29,6 @@ export async function fetchAllFacilities(orgId?: string) {
 }
 
 export async function addFacility(params: {
-    facId: string;
     orgId: string;
     name: string;
     type: string;
@@ -42,7 +41,6 @@ export async function addFacility(params: {
     pressure: number;
     location: string;
     install: string;
-    createdAt: string;
 }) {
     console.log('=== adminService.addFacility 시작 ===');
     // console.log('받은 파라미터:', params);
@@ -73,7 +71,6 @@ export async function addFacility(params: {
 
 export async function updateFacility(params: {
     facId: string;
-    orgId: string;
     name: string;
     type: string;
     maker: string;
@@ -85,7 +82,6 @@ export async function updateFacility(params: {
     pressure: number;
     location: string;
     install: string;
-    createdAt: string;
 }) {
     return await updateFacilityApi(params);
 }

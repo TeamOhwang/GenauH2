@@ -20,6 +20,7 @@ export default function Sidebar() {
     // ADMIN 전용 메뉴 (필요시 추가)
     const adminMenu = [
         { label: "관리자 페이지", to: PATHS.admin, icon: <ShieldUser /> },
+        { label: "가입 요청", to: PATHS.requestJoin, icon: <ShieldUser /> },
     ];
 
     const menu = role === "SUPERVISOR" ? [ ...adminMenu] : [ ...userMenu];

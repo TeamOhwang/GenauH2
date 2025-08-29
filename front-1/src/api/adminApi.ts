@@ -13,17 +13,17 @@ export const ADMIN_ENDPOINTS = {
 }
 
 // 회원 등록
-// export async function registerApi(params:{
-//     orgName: string;
-//     ownerName: string; // ownerName에서 name으로 변경
-//     bizRegNo: string;
-//     email: string;
-//     phoneNum: string;
-//     password: string;
-// }) {
-//     const res = await apiClient.post(ADMIN_ENDPOINTS.register, params);
-//     return (res as any)?.data?.data ?? (res as any)?.data ?? null;
-// }
+export async function registerApi(params:{
+    orgName: string;
+    name: string; // ownerName에서 name으로 변경
+    bizRegNo: string;
+    email: string;
+    phoneNum: string;
+    password: string;
+}) {
+    const res = await apiClient.post(ADMIN_ENDPOINTS.register, params);
+    return (res as any)?.data?.data ?? (res as any)?.data ?? null;
+}
 
 // 모든 회원 조회
 export async function getUserListApi() {

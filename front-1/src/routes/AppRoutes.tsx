@@ -5,6 +5,7 @@ import { PublicOnlyRoute, ProtectedRoute } from "./ProtectedRoute";
 import { PATHS, roleHome, type Role } from "./paths";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { authToken } from "@/stores/authStorage";
+import RequestJoin from "@/pages/RequestJoin";
 
 const Login = lazy(() => import("@/pages/Login"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
@@ -73,6 +74,7 @@ export default function AppRouter() {
 
           <Route element={<ProtectedRoute require="SUPERVISOR"><Outlet /></ProtectedRoute>}>
             <Route path={PATHS.admin} element={<Admin />} />
+            <Route path={PATHS.requestJoin} element={<RequestJoin />} />
           </Route>
 
           <Route path={PATHS.notFound} element={<NotFound />} />
