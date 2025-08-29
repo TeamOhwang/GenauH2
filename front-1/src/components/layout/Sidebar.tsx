@@ -26,7 +26,7 @@ export default function Sidebar() {
     const menu = role === "SUPERVISOR" ? [ ...adminMenu] : [ ...userMenu];
 
     return (
-        <aside className="w-64 bg-white shadow-md p-4 h-full">
+        <aside className="w-64 bg-white dark:bg-gray-800 shadow-md p-4 h-full transition-colors">
             <nav className="space-y-3">
                 {menu.map((item) => (
                     <NavLink
@@ -35,8 +35,8 @@ export default function Sidebar() {
                         className={({ isActive }) =>
                             `flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                                 isActive 
-                                    ? "text-blue-600 bg-blue-50" 
-                                    : "text-gray-700 hover:text-blue-500 hover:bg-gray-50"
+                                    ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20" 
+                                    : "text-gray-700 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700"
                             }`}
                         style={({ isActive }) => ({
                             fontWeight: isActive ? 900 : 500

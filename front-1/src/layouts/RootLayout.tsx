@@ -6,7 +6,7 @@ import Sidebar from "@/components/layout/Sidebar";
 
 export default function RootLayout() {
   return (
-    <div className="bg-gray-100 flex flex-col h-screen overflow-hidden">
+    <div className="bg-gray-100 dark:bg-gray-900 flex flex-col h-screen overflow-hidden transition-colors">
       <Header />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar/>
