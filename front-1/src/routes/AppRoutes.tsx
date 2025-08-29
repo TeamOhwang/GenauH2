@@ -28,7 +28,6 @@ function RoleHomeRedirect() {
   }
   return <Navigate to={roleHome(role)} replace />;
 }
-
 export default function AppRouter() {
   return (
     <Suspense fallback={<div className="p-6">로딩중…</div>}>
@@ -58,7 +57,6 @@ export default function AppRouter() {
 
         <Route element={<RootLayout />}>
           <Route path={PATHS.about} element={<About />} />
-
           <Route element={<ProtectedRoute><Outlet /></ProtectedRoute>}>
             <Route path={PATHS.home} element={<RoleHomeRedirect />} />
           </Route>

@@ -89,7 +89,7 @@ export const useAuthStore = create(
       },
     }),
     {
-      name: "auth-storage", // ✅ localStorage에 저장될 key
+      name: "auth-storage", //  localStorage에 저장될 key
     }
   )
 );

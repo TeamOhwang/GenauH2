@@ -12,7 +12,7 @@ export const PATHS = {
     equipmentList: "/equipmentList",
     price: "/price",
     setting: "/setting",
-    changePassword: "/changePassword", // 비밀번호 변경 (일반 모드 + 리셋 모드 통합)
+    changePassword: "/changePassword", 
     forbidden: "/403",
     notFound: "*",
 } as const;

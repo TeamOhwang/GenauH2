@@ -39,7 +39,6 @@ export async function getDailyGenerationApi(plantId: string, startDate: string, 
 export async function getHourlyHydrogenProductionApi() {
     console.log('🌐 generationApi.getHourlyHydrogenProductionApi 호출');
     console.log('  - URL:', GENERATION_ENDPOINTS.getHourlyHydrogenProduction);
-    console.log('  - plantId:', plantId);
     
     try {
         const res = await apiClient.get(GENERATION_ENDPOINTS.getHourlyHydrogenProduction);
