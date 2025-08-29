@@ -29,9 +29,9 @@ public interface PredictRepository extends JpaRepository<Predict, String> {
             f.orgid,
             pg.plant_id,
             CONCAT(pg.date, ' ', LPAD(pg.hour, 2, '0'), ':00:00') as ts,
-            GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.7), 3)) as idlepowerkw,
-            ROUND((50 + GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.7), 3))), 3) as predictedmaxkg,
-            ROUND((GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.7), 3)) * (0.75 + (RAND() * 0.05)) + 50), 3) as predictedcurrentkg
+            GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.3), 3)) as idlepowerkw,
+            ROUND((50 + GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.3), 3))), 3) as predictedmaxkg,
+            ROUND((GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.3), 3)) * (0.75 + (RAND() * 0.05)) + 50), 3) as predictedcurrentkg
         FROM facilities f
         INNER JOIN plant_generation pg ON f.facid = pg.facid
         WHERE f.spec_kwh > 0 AND f.power_kw > 0 AND pg.capacity_kw > 0
@@ -49,9 +49,9 @@ public interface PredictRepository extends JpaRepository<Predict, String> {
             f.orgid,
             pg.plant_id,
             CONCAT(pg.date, ' ', LPAD(pg.hour, 2, '0'), ':00:00') as ts,
-            GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.7), 3)) as idlepowerkw,
-            ROUND((50 + GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.7), 3))), 3) as predictedmaxkg,
-            ROUND((GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.7), 3)) * (0.75 + (RAND() * 0.05)) + 50), 3) as predictedcurrentkg
+            GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.3), 3)) as idlepowerkw,
+            ROUND((50 + GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.3), 3))), 3) as predictedmaxkg,
+            ROUND((GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.3), 3)) * (0.75 + (RAND() * 0.05)) + 50), 3) as predictedcurrentkg
         FROM facilities f
         INNER JOIN plant_generation pg ON f.facid = pg.facid
         WHERE f.facid = :facId
@@ -70,9 +70,9 @@ public interface PredictRepository extends JpaRepository<Predict, String> {
             f.orgid,
             pg.plant_id,
             CONCAT(pg.date, ' ', LPAD(pg.hour, 2, '0'), ':00:00') as ts,
-            GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.7), 3)) as idlepowerkw,
-            ROUND((50 + GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.7), 3))), 3) as predictedmaxkg,
-            ROUND((GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.7), 3)) * (0.75 + (RAND() * 0.05)) + 50), 3) as predictedcurrentkg
+            GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.3), 3)) as idlepowerkw,
+            ROUND((50 + GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.3), 3))), 3) as predictedmaxkg,
+            ROUND((GREATEST(0, ROUND(pg.forecast_kwh - (pg.capacity_kw * 0.3), 3)) * (0.75 + (RAND() * 0.05)) + 50), 3) as predictedcurrentkg
         FROM facilities f
         INNER JOIN plant_generation pg ON f.facid = pg.facid
         WHERE pg.date = :date
@@ -148,7 +148,7 @@ public interface PredictRepository extends JpaRepository<Predict, String> {
         ORDER BY p.ts ASC, p.predictionid ASC
     """, nativeQuery = true)
     List<Object[]> getAllPredictionsRaw();
-;
+
     // 특정 기간 예측 데이터 조회
     @Query(value = """
         SELECT 

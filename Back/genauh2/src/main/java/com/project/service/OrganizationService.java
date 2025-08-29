@@ -1,8 +1,10 @@
 package com.project.service;
 
 import com.project.dto.OrganizationDTO;
+import com.project.entity.Facility;
 import com.project.entity.Organization;
 import com.project.repository.OrganizationRepository;
+import com.project.dto.FacilityRequestDTO;
 import com.project.dto.NotificationSettingsDTO; // 알림설정 추가
 
 import org.springframework.transaction.annotation.Transactional; // 추가
@@ -10,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +26,9 @@ public class OrganizationService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+    
+    @Autowired
+    private FacilityService facilityService;
 
     // 사용자 로그인 (ACTIVE 상태만 로그인 가능)
     public OrganizationDTO login(String email, String password) {
@@ -107,7 +113,8 @@ public class OrganizationService {
             String bizRegNo,
             String email,
             String rawPassword,
-            String phoneNum) {
+            String phoneNum,
+            List<FacilityRequestDTO> facilities) {
         
         // 이메일 중복 검사
         if (organizationRepository.existsByEmail(email)) {
@@ -135,6 +142,13 @@ public class OrganizationService {
         organization.setBizRegNo(bizRegNo);
 
         Organization saved = organizationRepository.save(organization);
+        
+        if (facilities != null && !facilities.isEmpty()) {
+            for (FacilityRequestDTO facilityDTO : facilities) {
+                Facility facility = convertToFacilityEntity(facilityDTO, saved.getOrgId());
+                facilityService.saveFacility(facility);
+            }
+        }
         return convertToDTO(saved);
     }
 
@@ -463,4 +477,24 @@ public class OrganizationService {
                 organization.getCreatedAt(),
                 organization.getUpdatedAt());
     }
+    
+ // 기존 convertToDTO 메서드 아래에 추가
+    private Facility convertToFacilityEntity(FacilityRequestDTO dto, Long orgId) {
+        return Facility.builder()
+                .orgId(orgId)
+                .name(dto.getName())
+                .type(Facility.ElectrolysisType.valueOf(dto.getType()))
+                .maker(dto.getMaker())
+                .model(dto.getModel())
+                .powerKw(dto.getPowerKw() != null ? BigDecimal.valueOf(dto.getPowerKw()) : null)
+                .h2Rate(dto.getH2Rate() != null ? BigDecimal.valueOf(dto.getH2Rate()) : null)
+                .specKwh(dto.getSpecKwh() != null ? BigDecimal.valueOf(dto.getSpecKwh()) : null)
+                .purity(dto.getPurity() != null ? BigDecimal.valueOf(dto.getPurity()) : null)
+                .pressure(dto.getPressure() != null ? BigDecimal.valueOf(dto.getPressure()) : null)
+                .location(dto.getLocation())
+                .install(dto.getInstall())
+                .build();
+    }
+    
+    
 }

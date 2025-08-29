@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.project.dto.LoginRequestDTO;
 import com.project.dto.NotificationSettingsDTO;
 import com.project.dto.OrganizationDTO;
+import com.project.dto.RegistrationRequestDTO;
 import com.project.entity.Organization;
 import com.project.security.TokenProvider;
 import com.project.service.OrganizationService;
@@ -83,42 +84,46 @@ public class OrganizationController {
 
 	// 일반 회원가입 (관리자 권한 불필요, INVITED 상태로 생성)
 	@PostMapping("/register")
-	public ResponseEntity<Map<String, Object>> register(@RequestBody Map<String, String> request) {
-		Map<String, Object> response = new HashMap<>();
+	public ResponseEntity<Map<String, Object>> register(@RequestBody RegistrationRequestDTO request) {
+	    Map<String, Object> response = new HashMap<>();
 
-		try {
-			String orgName = request.get("orgName");
-			String name = request.get("name");
-			String bizRegNo = request.get("bizRegNo");
-			String email = request.get("email");
-			String password = request.get("password");
-			String phoneNum = request.get("phoneNum");
+	    try {
+	        // 필수 필드 검증
+	        if (request.getOrgName() == null || request.getOwnerName() == null || 
+	            request.getEmail() == null || request.getRawPassword() == null) {
+	            response.put("success", false);
+	            response.put("message", "필수 입력값이 누락되었습니다.");
+	            return ResponseEntity.badRequest().body(response);
+	        }
 
-			// 필수 필드 검증
-			if (orgName == null || name == null || email == null || password == null) {
-				response.put("success", false);
-				response.put("message", "필수 입력값이 누락되었습니다.");
-				return ResponseEntity.badRequest().body(response);
-			}
+	        // facilities 정보 로깅 (디버깅용)
+	        System.out.println("받은 facilities 정보: " + request.getFacilities());
 
-			// INVITED 상태로 회원 생성
-			OrganizationDTO created = organizationService.createPendingUser(orgName, name, bizRegNo, email, password,
-					phoneNum);
+	        // INVITED 상태로 회원 생성 (facilities 정보도 함께 전달)
+	        OrganizationDTO created = organizationService.createPendingUser(
+	            request.getOrgName(), 
+	            request.getOwnerName(), 
+	            request.getBizRegNo(), 
+	            request.getEmail(), 
+	            request.getRawPassword(),
+	            request.getPhoneNum(),
+	            request.getFacilities()  // facilities 정보 추가
+	        );
 
-			response.put("success", true);
-			response.put("data", created);
-			response.put("message", "회원가입이 완료되었습니다. 관리자 승인을 기다려주세요.");
-			return ResponseEntity.ok(response);
+	        response.put("success", true);
+	        response.put("data", created);
+	        response.put("message", "회원가입이 완료되었습니다. 관리자 승인을 기다려주세요.");
+	        return ResponseEntity.ok(response);
 
-		} catch (RuntimeException e) {
-			response.put("success", false);
-			response.put("message", e.getMessage());
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-		} catch (Exception e) {
-			response.put("success", false);
-			response.put("message", "회원가입 처리 중 오류가 발생했습니다.");
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-		}
+	    } catch (RuntimeException e) {
+	        response.put("success", false);
+	        response.put("message", e.getMessage());
+	        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+	    } catch (Exception e) {
+	        response.put("success", false);
+	        response.put("message", "회원가입 처리 중 오류가 발생했습니다.");
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+	    }
 	}
 
 	// 관리자용 회원가입 승인 요청 목록 조회

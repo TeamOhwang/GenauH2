@@ -23,7 +23,7 @@ public interface RealRepository extends JpaRepository<Real, Long> {
                         +
                         "SELECT f.facid, f.orgid, pg.plant_id, " +
                         "CONCAT(pg.date, ' ', LPAD(pg.hour, 2, '0'), ':00:00') as ts, " +
-                        "GREATEST(0, ROUND(pg.generation_kw - (pg.capacity_kw * 0.7), 3)) as idlepowerkw, " +
+                        "GREATEST(0, ROUND(pg.generation_kw - (pg.capacity_kw * 0.3), 3)) as idlepowerkw, " +
                         "ROUND(((f.power_kw * (CASE WHEN GREATEST(0, ROUND(pg.generation_kw - (pg.capacity_kw * 0.7), 3)) = 0 THEN (((49 + (RAND() * 2)) / f.power_kw) * 100) ELSE (((50 + GREATEST(0, ROUND(pg.generation_kw - (pg.capacity_kw * 0.7), 3))) / f.power_kw) * 100) END / 100)) / f.spec_kwh), 3) as productionkg, "
                         +
                         "ROUND((f.power_kw * (CASE WHEN GREATEST(0, ROUND(pg.generation_kw - (pg.capacity_kw * 0.7), 3)) = 0 THEN (((49 + (RAND() * 2)) / f.power_kw) * 100) ELSE (((50 + GREATEST(0, ROUND(pg.generation_kw - (pg.capacity_kw * 0.7), 3))) / f.power_kw) * 100) END / 100)), 2) as powerconsumedkwh, "
