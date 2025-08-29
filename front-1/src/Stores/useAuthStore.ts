@@ -1,6 +1,5 @@
-// src/stores/useAuthStore.ts
 import { create } from "zustand";
-import { persist } from "zustand/middleware";   // ✅ 추가
+import { persist } from "zustand/middleware";
 import { jwtDecode } from "jwt-decode";
 import { authToken } from "@/stores/authStorage";
 import { AuthApi } from "@/api/authApi";
@@ -12,10 +11,11 @@ type JWTPayload = {
   role?: "USER" | "SUPERVISOR";
   roles?: string[];
   exp?: number;
-  orgId?: number;           
-  org_id?: number;          
-  organizationId?: number;  
+  orgId?: number;
+  org_id?: number;
+  organizationId?: number;
   email?: string;
+  orgName?: string;         
 };
 
 // JWT에서 role 파싱
@@ -37,10 +37,12 @@ export const useAuthStore = create(
     role: Role;
     orgId: number | null;
     email: string | null;
+    orgName: string | null;                  
     isInit: boolean;
     setRole: (r: Role) => void;
     setOrgId: (id: number | null) => void;
     setEmail: (e: string | null) => void;
+    setOrgName: (n: string | null) => void;   
     init: () => Promise<void>;
     logout: () => void;
   }>(
@@ -48,13 +50,15 @@ export const useAuthStore = create(
       role: decodeRole(authToken.get()),
       orgId: null,
       email: null,
+      orgName: null,                       
       isInit: false,
 
       setRole: (r) => set({ role: r }),
       setOrgId: (id) => set({ orgId: id }),
       setEmail: (e) => set({ email: e }),
+      setOrgName: (n) => set({ orgName: n }), 
 
-      // JWT payload에서 orgId, email 세팅
+      // JWT payload에서 orgId, email, orgName 세팅
       init: async () => {
         const t = authToken.get();
         console.log("🔥 init 실행됨, 토큰:", t);
@@ -79,17 +83,18 @@ export const useAuthStore = create(
                 (payload as any)?.organizationId ??
                 null,
           email: payload?.email ?? null,
+          orgName: payload?.orgName ?? null, 
           isInit: true,
         });
       },
 
       logout: () => {
         AuthApi.logoutAll();
-        set({ role: null, orgId: null, email: null, isInit: true });
+        set({ role: null, orgId: null, email: null, orgName: null, isInit: true }); 
       },
     }),
     {
-      name: "auth-storage", //  localStorage에 저장될 key
+      name: "auth-storage", // localStorage key
     }
   )
 );

@@ -9,7 +9,6 @@ export default function DateRangeBar({ onChange }: Props) {
   const [end, setEnd] = useState("");
 
   const handleSearch = () => {
-    // "YYYY-MM-DD" → LocalDateTime 호환 포맷으로 변환
     const startDate = start ? `${start}T00:00:00` : "";
     const endDate = end ? `${end}T23:59:59` : "";
     onChange(startDate, endDate);

@@ -60,18 +60,19 @@ async register(body: RegisterReq): Promise<any> {
     const token = await this.login(payload);
     authToken.set(token);
     const prof = await this.profile();
-    const { setEmail, setOrgId, setRole } = useAuthStore.getState();
-    setEmail(prof.email ?? null);
+    const { setEmail, setOrgId, setRole, setOrgName } = useAuthStore.getState(); 
     setOrgId(prof.orgId ?? null);
+    setOrgName(prof.orgName ?? null);
     setRole(prof.role ?? null);
     return prof.role ?? null;
   },
 
   async syncRole(): Promise<Role | null> {
     const prof = await this.profile();
-    const { setEmail, setOrgId, setRole } = useAuthStore.getState();
+    const { setEmail, setOrgId, setRole, setOrgName } = useAuthStore.getState(); 
     setEmail(prof.email ?? null);
     setOrgId(prof.orgId ?? null);
+    setOrgName(prof.orgName ?? null); 
     setRole(prof.role ?? null);
     return prof.role ?? null;
   },
