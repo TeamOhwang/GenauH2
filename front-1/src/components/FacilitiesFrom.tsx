@@ -3,9 +3,9 @@
 import { useAdmin } from '@/hooks/useAdmin';
 import { useState, useEffect } from 'react'
 
-type FacilitiesProps = { 
+type FacilitiesProps = {
     orgId: string;
-    onSuccess?: () => void 
+    onSuccess?: () => void
 };
 
 const FacilitiesFrom = ({ orgId, onSuccess }: FacilitiesProps) => {
@@ -13,15 +13,15 @@ const FacilitiesFrom = ({ orgId, onSuccess }: FacilitiesProps) => {
         orgId: orgId, // 조직 ID를 문자열로 변환
         name: "", // 시설 이름
         location: "", // 시설 위치
-        model: "", 
-        maker: "", 
+        model: "",
+        maker: "",
         type: "",
-        powerKw: 0,
-        h2Rate: 0, 
-        specKwh: 0, 
-        purity: 0, 
-        pressure: 0, 
-        install: "", 
+        powerKw: null,
+        h2Rate: null,
+        specKwh: null,
+        purity: null,
+        pressure: null,
+        install: "",
     });
 
     const { createFacility, loading, error } = useAdmin();
@@ -29,7 +29,7 @@ const FacilitiesFrom = ({ orgId, onSuccess }: FacilitiesProps) => {
     // 날짜 형식을 백엔드가 기대하는 형식으로 변환
     const formatDateForBackend = (dateString: string): string => {
         if (!dateString) return '';
-        
+
         // 'YYYYMMDD' 형식을 'YYYY-MM-DD' 형식으로 변환
         if (/^\d{8}$/.test(dateString)) {
             const year = dateString.substring(0, 4);
@@ -37,7 +37,7 @@ const FacilitiesFrom = ({ orgId, onSuccess }: FacilitiesProps) => {
             const day = dateString.substring(6, 8);
             return `${year}-${month}-${day}`;
         }
-        
+
         return dateString;
     };
 
@@ -48,30 +48,30 @@ const FacilitiesFrom = ({ orgId, onSuccess }: FacilitiesProps) => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         console.log('=== 시설 등록 시작 ===');
         console.log('전송할 데이터:', form);
-        
+
         // 필수 필드 검증
         const requiredFields = ['name', 'location', 'type', 'powerKw', 'h2Rate', 'specKwh'];
         const missingFields = requiredFields.filter(field => !form[field as keyof typeof form]);
-        
+
         if (missingFields.length > 0) {
             alert(`필수 필드가 누락되었습니다: ${missingFields.join(', ')}`);
             return;
         }
-        
+
         try {
             // 날짜 형식 변환
             const formattedForm = {
                 ...form,
                 install: formatDateForBackend(form.install)
             };
-            
+
             console.log('변환된 form 데이터:', formattedForm);
-            
+
             const facility = await createFacility(formattedForm);
-            
+
             if (facility) {
                 console.log('시설 등록 성공!');
                 alert("시설 등록 성공");
@@ -89,72 +89,100 @@ const FacilitiesFrom = ({ orgId, onSuccess }: FacilitiesProps) => {
     return (
         <div className="p-6">
             <h3 className="text-lg font-semibold mb-4">새 시설 등록</h3>
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <input
-                    type="text"
-                    name="name"
-                    placeholder="시설명"
-                    value={form.name}
-                    onChange={handleChange}
-                    className="w-full border rounded px-3 py-2"
-                />
-                <input
-                    type="text"
-                    name="location"
-                    placeholder="시설 위치"
-                    value={form.location}
-                    onChange={handleChange}
-                    className="w-full border rounded px-3 py-2"
-                />
-                <input
-                    type="text"
-                    name="modelNo"
-                    placeholder="모델명"
-                    value={form.model}
-                    onChange={handleChange}
-                    className="w-full border rounded px-3 py-2"
-                />
-                <input
-                    type="text"
-                    name="maker"
-                    placeholder="제조사"
-                    value={form.maker}
-                    onChange={handleChange}
-                    className="w-full border rounded px-3 py-2"
-                />
-                <input
-                    type="text"
-                    name="type"
-                    placeholder="생산방식"
-                    value={form.type}
-                    onChange={handleChange}
-                    className="w-full border rounded px-3 py-2"
-                />
-                <input
-                    type="text"
-                    name="powerKw"
-                    placeholder="정격 전력(kW)"
-                    value={form.powerKw}
-                    onChange={handleChange}
-                    className="w-full border rounded px-3 py-2"
-                />
-                <input
-                    type="text"
-                    name="h2Rate"
-                    placeholder="정격 출력(kg/h)"
-                    value={form.h2Rate}
-                    onChange={handleChange}
-                    className="w-full border rounded px-3 py-2"
-                />
-                <input
-                    type="text"
-                    name="specKwh"
-                    placeholder="기준 SEC(kWh/kg)"
-                    value={form.specKwh}
-                    onChange={handleChange}
-                    className="w-full border rounded px-3 py-2"
-                />
-                <div>
+            <form onSubmit={handleSubmit}>
+                <div className="space-y-4 flex flex-col mb-4 text-gray-800 dark:text-gray-800">
+                    <input
+                        type="text"
+                        name="name"
+                        placeholder="시설명"
+                        value={form.name}
+                        onChange={handleChange}
+                        className="w-full border rounded px-3 py-2"
+                    />
+                    <input
+                        type="text"
+                        name="location"
+                        placeholder="시설 위치"
+                        value={form.location}
+                        onChange={handleChange}
+                        className="w-full border rounded px-3 py-2"
+                    />
+                    <input
+                        type="text"
+                        name="model"
+                        placeholder="모델명"
+                        value={form.model}
+                        onChange={handleChange}
+                        className="w-full border rounded px-3 py-2"
+                    />
+
+                    <input
+                        type="text"
+                        name="maker"
+                        placeholder="제조사"
+                        value={form.maker}
+                        onChange={handleChange}
+                        className="w-full border rounded px-3 py-2"
+                    />
+
+                    <div className="flex flex-row gap-2">
+                        <select
+                            name="type"
+                            value={form.type}
+                            onChange={handleChange}
+                            className="w-full border rounded px-3 py-2 text-gray-800"
+                        >
+                            <option value="" selected hidden>생산방식 선택</option>
+                            <option value="PEM">PEM</option>
+                            <option value="ALK">ALK</option>
+                            <option value="SOEC">SOEC</option>
+                        </select>
+                        <input
+                            type="text"
+                            name="purity"
+                            placeholder="수소 순도"
+                            value={form.purity || ''}
+                            onChange={handleChange}
+                            className="w-full border rounded px-3 py-2"
+                        />
+                    </div>
+
+                    <div className="flex flex-row gap-2">
+                        <input
+                            type="text"
+                            name="powerKw"
+                            placeholder="정격 전력(kW)"
+                            value={form.powerKw || ''}
+                            onChange={handleChange}
+                            className="w-full border rounded px-3 py-2"
+                        />
+                        <input
+                            type="text"
+                            name="h2Rate"
+                            placeholder="정격 출력(kg/h)"
+                            value={form.h2Rate || ''}
+                            onChange={handleChange}
+                            className="w-full border rounded px-3 py-2"
+                        />
+                    </div>
+                    <div className="flex flex-row gap-2">
+                        <input
+                            type="text"
+                            name="specKwh"
+                            placeholder="기준 SEC(kWh/kg)"
+                            value={form.specKwh || ''}
+                            onChange={handleChange}
+                            className="w-full border rounded px-3 py-2"
+                        />
+                        <input
+                            type="text"
+                            name="pressure"
+                            placeholder="압력"
+                            value={form.pressure || ''}
+                            onChange={handleChange}
+                            className="w-full border rounded px-3 py-2"
+                        />
+                    </div>
                     <input
                         type="text"
                         name="install"
@@ -163,27 +191,10 @@ const FacilitiesFrom = ({ orgId, onSuccess }: FacilitiesProps) => {
                         onChange={handleChange}
                         className="w-full border rounded px-3 py-2"
                     />
-                    <p className="text-xs text-gray-500 mt-1">YYYYMMDD 또는 YYYY-MM-DD 형식으로 입력하세요</p>
                 </div>
-                <input
-                    type="text"
-                    name="purity"
-                    placeholder="수소 순도"
-                    value={form.purity}
-                    onChange={handleChange}
-                    className="w-full border rounded px-3 py-2"
-                />
-                <input
-                    type="text"
-                    name="pressure"
-                    placeholder="압력"
-                    value={form.pressure}
-                    onChange={handleChange}
-                    className="w-full border rounded px-3 py-2"
-                />
-                <button 
-                    type="submit" 
-                    disabled={loading} 
+                <button
+                    type="submit"
+                    disabled={loading}
                     className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 disabled:bg-gray-400"
                 >
                     {loading ? "등록중..." : "등록"}
