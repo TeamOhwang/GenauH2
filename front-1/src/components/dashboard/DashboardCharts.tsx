@@ -58,13 +58,13 @@ export default function DashboardCharts({
     return (
         <div className="grid grid-cols-2 gap-4">
             {/* 태양광 발전량 차트 */}
-            <div className="m-0 bg-white rounded-2xl shadow p-4 mb-6">
+            <div className="m-0 bg-white dark:bg-gray-800 rounded-2xl shadow p-4 mb-6">
                 <div className="flex items-center justify-between mb-3">
-                    <p className="text-xl font-bold">{chart1Title}</p>
+                    <p className="text-xl font-bold text-gray-800 dark:text-white">{chart1Title}</p>
                     <select
                         value={selectedPlant}
                         onChange={(e) => onPlantChange(e.target.value as Plant)}
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                         <option value="plant1">발전소 1 (1.2MW)</option>
                         <option value="plant2">발전소 2 (800kW)</option>
@@ -79,8 +79,8 @@ export default function DashboardCharts({
             </div>
 
             {/* 수소 생산량 차트 */}
-            <div className="m-0 bg-white rounded-2xl shadow p-4 mb-6">
-                <p className="text-xl font-bold mb-3">{chart2Title}</p>
+                <div className="m-0 bg-white dark:bg-gray-800 rounded-2xl shadow p-4 mb-6">
+                <p className="text-xl font-bold text-gray-800 dark:text-white mb-3">{chart2Title}</p>
                 <ChartComponent 
                     data={h2Data} 
                     options={currentChartOptions.plant1} 

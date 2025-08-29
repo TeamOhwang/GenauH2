@@ -113,11 +113,11 @@ export default function Setting() {
     if (isLoading) {
         return (
             <div className="flex flex-col gap-4">
-                <div className="bg-white p-6 rounded-lg shadow-md">
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
                     <div className="animate-pulse">
-                        <div className="h-6 bg-gray-200 rounded w-1/4 mb-4"></div>
-                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                        <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-4"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
                     </div>
                 </div>
             </div>
@@ -126,22 +126,22 @@ export default function Setting() {
 
     return (
         <div className="flex flex-col gap-4">
-            <div className="bg-white p-4 rounded-lg shadow-md">
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
                 <p className="text-xl font-bold">비밀번호 변경</p>
                 <button onClick={handleChangePassword}>비밀번호 변경</button>
-                {isPasswordReset && <p className="text-red-500 text-xs font-light mb-3">비밀번호 변경 메일이 발송되었습니다.</p>}
+                {isPasswordReset && <p className="text-red-500 dark:text-red-400 text-xs font-light mb-3">비밀번호 변경 메일이 발송되었습니다.</p>}
             </div>
 
             {/* 알림 설정 섹션 */}
-            <div className="bg-white p-6 rounded-lg shadow-md">
-                <h2 className="text-xl font-bold text-black mb-6">알림 설정</h2>
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+                <h2 className="text-xl font-bold text-black dark:text-white mb-6">알림 설정</h2>
 
                 {/* 이메일 알림 */}
                 <div className="mb-8">
                     <div className="flex items-start justify-between">
                         <div className="flex-1">
-                            <h3 className="text-lg font-bold text-black mb-2">이메일</h3>
-                            <p className="text-black mb-3">이메일 계정으로 알림을 발송합니다.</p>
+                            <h3 className="text-lg font-bold text-black dark:text-white mb-2">이메일</h3>
+                            <p className="text-black dark:text-white mb-3">이메일 계정으로 알림을 발송합니다.</p>
                         </div>
                         <label className="inline-flex items-center cursor-pointer ml-4">
                             <input
@@ -152,7 +152,7 @@ export default function Setting() {
                             />
                             <div className={`
                                 relative w-11 h-6 rounded-full transition-colors duration-200 ease-in-out
-                                ${emailNotification ? 'bg-blue-600' : 'bg-gray-300'}
+                                ${emailNotification ? 'bg-blue-600 dark:bg-blue-700' : 'bg-gray-300 dark:bg-gray-700'}
                             `}>
                                 <div className={`
                                     absolute top-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 ease-in-out
@@ -167,11 +167,11 @@ export default function Setting() {
                 <div>
                     <div className="flex items-start justify-between">
                         <div className="flex-1">
-                            <h3 className="text-lg font-bold text-black mb-2">SMS</h3>
-                            <p className="text-black mb-3">SMS로 알림을 발송합니다.</p>
-                            <p className="text-black mb-3">등록된 번호 : {notificationSms}</p>
+                            <h3 className="text-lg font-bold text-black dark:text-white mb-2">SMS</h3>
+                            <p className="text-black dark:text-white mb-3">SMS로 알림을 발송합니다.</p>
+                            <p className="text-black dark:text-white mb-3">등록된 번호 : {notificationSms}</p>
                             {!isSmsOpen && <button
-                                className="text-sm text-gray-500 hover:text-gray-700"
+                                className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                                 onClick={handleSmsButtonClick}
                             >
                                 번호 변경
@@ -199,7 +199,7 @@ export default function Setting() {
                             />
                             <div className={`
                                 relative w-11 h-6 rounded-full transition-colors duration-200 ease-in-out
-                                ${smsNotification ? 'bg-blue-600' : 'bg-gray-300'}
+                                ${smsNotification ? 'bg-blue-600 dark:bg-blue-700' : 'bg-gray-300 dark:bg-gray-700'}
                             `}>
                                 <div className={`
                                     absolute top-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 ease-in-out
@@ -211,10 +211,10 @@ export default function Setting() {
                 </div>
             </div>
 
-            <div className="bg-white p-4 rounded-lg shadow-md">
-                <p className="text-xl font-bold">시설 추가 / 수정 요청</p>
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+                <p className="text-xl font-bold text-black dark:text-white">시설 추가 / 수정 요청</p>
             </div>
-            <h1>회원 탈퇴</h1>
+            <h1 className="text-black dark:text-white">회원 탈퇴</h1>
         </div>
     )
 }

@@ -11,7 +11,7 @@ import DarkModeToggle from "@/components/ui/DarkModeToggle";
 export default function Header() {
   const role = useAuthStore((s) => s.role) as Role | null;
   const logout = useAuthStore((s) => s.logout);
-  const email = useAuthStore((s) => s.email); 
+  const email = useAuthStore((s) => s.email);
   const { isDarkMode } = useDarkModeStore();
 
   // 토큰과 역할로 로고 목적지 계산
@@ -36,7 +36,7 @@ export default function Header() {
 
     setPending(true);
     try {
-      await Promise.resolve(logout()); 
+      await Promise.resolve(logout());
     } finally {
       setPending(false);
     }

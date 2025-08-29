@@ -68,7 +68,7 @@ export default function Dashboard() {
                 <div className="flex items-center justify-between mb-6">
                     {/* 왼쪽: 제목과 타임프레임 탭 */}
                     <div className="flex items-center space-x-6">
-                        <h1 className="text-2xl font-bold text-gray-800">대시보드</h1>
+                        <h1 className="text-2xl font-bold text-gray-800 dark:text-white">대시보드</h1>
                         <TimeFrameTabs
                             activeTimeFrame={activeTimeFrame}
                             onTimeFrameChange={setActiveTimeFrame}
