@@ -43,13 +43,14 @@ const defaultStart = () =>
 const defaultEnd = () => new Date(); // 현재
 
 export const FacilityApi = {
-  /** ✅ org 단위 전체 조회 */
+  /**  org 단위 전체 조회 */
   async listByOrg(params: {
     orgId: number | null;
     start?: string;
     end?: string;
     page?: number;
     size?: number;
+    facIds?: number[]; // facIds 필터링 추가
   }): Promise<PageResponse<FacilityKpi>> {
     if (!params.orgId) {
       return {
@@ -69,6 +70,7 @@ export const FacilityApi = {
       size: params.size ?? 12,
       start: toDateTime(startDate),
       end: toDateTime(endDate),
+      facIds: params.facIds, // 추가된 facIds 파라미터
     };
 
     console.log(
@@ -110,7 +112,7 @@ export const FacilityApi = {
     };
   },
 
-  /** ✅ 특정 설비 단위 조회 (orgId + facId) */
+  /**  특정 설비 단위 조회 (orgId + facId) */
   async listByFacility(params: {
     orgId: number;
     facId: number;
@@ -127,7 +129,7 @@ export const FacilityApi = {
       size: params.size ?? 12,
       start: toDateTime(startDate),
       end: toDateTime(endDate),
-      facId: params.facId, // ✅ facId 파라미터 추가
+      facId: params.facId, // facId 파라미터 추가
     };
 
     console.log(

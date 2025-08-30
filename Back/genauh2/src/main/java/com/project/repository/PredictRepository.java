@@ -170,38 +170,34 @@ public interface PredictRepository extends JpaRepository<Predict, String> {
     List<Object[]> getPredictionsByDateRange(@Param("startDate") String startDate, @Param("endDate") String endDate);
     
     
-    
-    
-    
 
     /// 사업자 id 기준으로 등록된 설비 + 예측/실제 생산량 집계합 (페이지네이션 지원)
-    @Query(value = """
-            SELECT a.orgId         AS orgId,
-                   a.facId         AS facId,
-                   f.name          AS facilityName,
-                   a.ts            AS ts,
-                   a.productionKg  AS productionKg,
-                   a.predictedMaxKg AS predictedMaxKg
-            FROM facility_kpi_agg a
-            JOIN facilities f ON a.facId = f.facId
-            WHERE a.orgId = :orgId
-              AND a.ts BETWEEN :start AND :end
-            ORDER BY a.ts ASC
-            """,
-            countQuery = """
-            SELECT COUNT(*)
-            FROM facility_kpi_agg a
-            WHERE a.orgId = :orgId
-              AND a.ts BETWEEN :start AND :end
-            """,
-            nativeQuery = true)
-        Page<FacilityKpiDto> findByOrgIdWithName(
-            @Param("orgId") Long orgId,
-            @Param("start") LocalDateTime start,
-            @Param("end") LocalDateTime end,
-            Pageable pageable
-        );
-    
+		    @Query(value = """
+		            SELECT a.orgId         AS orgId,
+		                   a.facId         AS facId,
+		                   f.name          AS facilityName,
+		                   a.ts            AS ts,
+		                   a.productionKg  AS productionKg,
+		                   a.predictedMaxKg AS predictedMaxKg
+		            FROM facility_kpi_agg a
+		            JOIN facilities f ON a.facId = f.facId
+		            WHERE a.orgId = :orgId
+		              AND a.ts BETWEEN :start AND :end
+		            ORDER BY a.ts ASC
+		            """,
+		            countQuery = """
+		            SELECT COUNT(*)
+		            FROM facility_kpi_agg a
+		            WHERE a.orgId = :orgId
+		              AND a.ts BETWEEN :start AND :end
+		            """,
+		            nativeQuery = true)
+		Page<FacilityKpiDto> findByOrgIdWithName(
+		    @Param("orgId") Long orgId,
+		    @Param("start") LocalDateTime start,
+		    @Param("end") LocalDateTime end,
+		    Pageable pageable
+		);
 
    /**
          * 특정 날짜의 모든 실제 유휴 전력량 데이터를 타임스탬프와 함께 조회합니다.

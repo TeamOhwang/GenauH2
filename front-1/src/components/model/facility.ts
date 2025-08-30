@@ -5,5 +5,5 @@ export type DailyData = {
 
 export type HourlyData = {
   time: string;
-  amount: number;
+  amount: number;  
 };
