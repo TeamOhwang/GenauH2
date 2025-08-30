@@ -121,7 +121,6 @@ return (
 
     {/* 오른쪽: 테이블 */}
     <div className="w-1/3 bg-slate-800 p-4 flex flex-col">
-      {/* flex-1 주면 차트랑 자동으로 같은 높이 */}
       <div className="flex-1">
         <FacilityTable data={mappedData} start={start} end={end} />
       </div>

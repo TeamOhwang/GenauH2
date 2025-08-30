@@ -119,6 +119,11 @@ public class OrganizationService {
             String phoneNum,
             List<FacilityRequestDTO> facilities) {
         
+        // 전화번호 null 및 공백 검증 추가
+        if (phoneNum == null || phoneNum.trim().isEmpty()) {
+            throw new RuntimeException("전화번호는 필수 입력값입니다.");
+        }
+        
         // 이메일 중복 검사
         if (organizationRepository.existsByEmail(email)) {
             throw new RuntimeException("이미 등록된 이메일입니다.");

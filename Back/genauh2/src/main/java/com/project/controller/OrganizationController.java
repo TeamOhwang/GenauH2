@@ -88,11 +88,19 @@ public class OrganizationController {
 	    Map<String, Object> response = new HashMap<>();
 
 	    try {
-	        // 필수 필드 검증
+	        // 필수 필드 검증 (phoneNum 추가)
 	        if (request.getOrgName() == null || request.getOwnerName() == null || 
-	            request.getEmail() == null || request.getRawPassword() == null) {
+	            request.getEmail() == null || request.getRawPassword() == null ||
+	            request.getPhoneNum() == null) {
 	            response.put("success", false);
-	            response.put("message", "필수 입력값이 누락되었습니다.");
+	            response.put("message", "필수 입력값이 누락되었습니다. (조직명, 소유자명, 이메일, 비밀번호, 전화번호)");
+	            return ResponseEntity.badRequest().body(response);
+	        }
+
+	        // 전화번호 공백 검증
+	        if (request.getPhoneNum().trim().isEmpty()) {
+	            response.put("success", false);
+	            response.put("message", "전화번호를 입력해주세요.");
 	            return ResponseEntity.badRequest().body(response);
 	        }
 
