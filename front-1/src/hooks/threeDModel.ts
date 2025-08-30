@@ -1,94 +1,80 @@
-import { useEffect, useState } from "react";
-import { FacilityApi, FacilityKpi } from "@/api/facilityApi";
+import { useEffect, useState, useCallback } from "react";
+import { oneFacilityApi, FacilityKpi, PageResponse } from "@/api/OnefacilityApi";
 
-export type DailyData = { date: string; production: number };
+export type DailyData = { date: string; production: number; predicted: number };
 export type HourlyData = { time: string; amount: number };
 
-export const useFacilityDashboard = (
+export function useFacilityDashboard(
   orgId: number | null,
   facId: number | null,
   start?: string,
   end?: string,
-  page: number = 0 // 하루 단위 페이지네이션
-) => {
-  const [data, setData] = useState<FacilityKpi[]>([]);
-  const [loading, setLoading] = useState(false);
+  page: number = 0
+) {
+  const [daily, setDaily] = useState<DailyData[]>([]);
+  const [hourly, setHourly] = useState<HourlyData[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchData = useCallback(async () => {
     if (!orgId || !facId || !start || !end) return;
     setLoading(true);
 
-    FacilityApi.listByFacility({
-      orgId,
-      facId,
-      start: `${start}T00:00:00`,
-      end: `${end}T23:59:59`,
-      size: 1000, // 전체 기간 데이터 충분히 받기
-    })
-      .then((res) => setData(res.content ?? []))
-      .finally(() => setLoading(false));
-  }, [orgId, facId, start, end]);
-
-  // 일별 합계 (기간 내 모든 일자 채움, 로컬 기준)
-  const daily: DailyData[] = (() => {
-    if (!start || !end) return [];
-
-    const startDate = new Date(start);
-    const endDate = new Date(end);
-    const map: Record<string, number> = {};
-
-    data.forEach((cur) => {
-      const local = new Date(cur.ts);
-      const date = new Date(local.getTime() - local.getTimezoneOffset() * 60000)
-        .toISOString()
-        .slice(0, 10);
-
-      map[date] = (map[date] ?? 0) + cur.productionKg * 10.1;
-    });
-
-    const result: DailyData[] = [];
-    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-      const iso = d.toISOString().slice(0, 10);
-      result.push({
-        date: iso,
-        production: map[iso] ?? 0,
+    try {
+      const res: PageResponse<FacilityKpi> = await oneFacilityApi.listByFacility({
+        orgId,
+        facId: [facId],
+        start: `${start}T00:00:00`,
+        end: `${end}T23:59:59`,
+        size: 1000,
       });
-    }
-    return result;
-  })();
 
-  const allDates = daily.map((d) => d.date);
-  const selectedDate = allDates[page] ?? null;
+      const list = res.content ?? [];
 
-  const hourly: HourlyData[] = (() => {
-    if (!selectedDate) return [];
+      // ✅ 일별 합계 (UTC → KST 변환 후 일자별 그룹핑)
+      const dailyMap: Record<string, { production: number; predicted: number }> = {};
+      list.forEach((cur) => {
+        const local = new Date(cur.ts);
+        const kst = new Date(local.getTime() + 9 * 60 * 60 * 1000); // UTC+9
+        const date = kst.toISOString().slice(0, 10);
 
-    const map: Record<string, number> = {};
-    for (let h = 0; h < 24; h++) {
-      const hour = String(h).padStart(2, "0") + ":00";
-      map[hour] = 0;
-    }
+        if (!dailyMap[date]) dailyMap[date] = { production: 0, predicted: 0 };
+        dailyMap[date].production += cur.productionKg;
+        dailyMap[date].predicted += cur.predictedMaxKg;
+      });
 
-    data.forEach((cur) => {
-      const local = new Date(cur.ts);
-      const date = new Date(local.getTime() - local.getTimezoneOffset() * 60000)
-        .toISOString()
-        .slice(0, 10);
+      const sortedDates = Object.keys(dailyMap).sort();
+      const dailyData = sortedDates.map((d) => ({
+        date: d,
+        production: dailyMap[d].production,
+        predicted: dailyMap[d].predicted,
+      }));
+      setDaily(dailyData);
 
-      if (date === selectedDate) {
-        const time = new Date(local.getTime() - local.getTimezoneOffset() * 60000)
-          .toISOString()
-          .slice(11, 16); // HH:mm
-        if (map[time] !== undefined) {
-          map[time] = Number((map[time] + cur.productionKg * 10.1).toFixed(3));
+      // ✅ 선택된 날짜의 시간별 합계 (UTC → KST 변환 후 시간별 그룹핑)
+      const selectedDate = dailyData[page]?.date;
+      const hourlyMap: Record<string, number> = {};
+      for (let h = 0; h < 24; h++) hourlyMap[`${String(h).padStart(2, "0")}:00`] = 0;
+
+      list.forEach((cur) => {
+        const local = new Date(cur.ts);
+        const kst = new Date(local.getTime() + 9 * 60 * 60 * 1000);
+        const date = kst.toISOString().slice(0, 10);
+
+        if (date === selectedDate) {
+          const hour = kst.getHours();
+          hourlyMap[`${String(hour).padStart(2, "0")}:00`] += cur.productionKg;
         }
-      }
-    });
+      });
 
-    return Object.entries(map).map(([time, amount]) => ({ time, amount }));
-  })();
+      setHourly(Object.entries(hourlyMap).map(([time, amount]) => ({ time, amount })));
+    } finally {
+      setLoading(false);
+    }
+  }, [orgId, facId, start, end, page]);
 
-  const totalPages = allDates.length;
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
-  return { daily, hourly, loading, totalPages, page, selectedDate };
-};
+  return { daily, hourly, loading, totalPages: daily.length };
+}

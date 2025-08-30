@@ -1,0 +1,102 @@
+import apiClient, { AUTH_ENDPOINTS } from "@/api/apiClient";
+
+// FacilityKpi 타입 정의
+export type FacilityKpi = {
+  orgId: number;
+  facId: number;
+  facilityName: string;
+  ts: string;
+  predictedMaxKg: number;
+  productionKg: number;
+};
+
+// PageResponse 타입 정의
+export type PageResponse<T> = {
+  content: T[];
+  totalPages: number;
+  totalElements: number;
+  size: number;
+  number: number; // 현재 페이지 번호
+};
+
+// 기본 날짜 설정 함수
+const defaultStart = () => new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // 7일 전
+const defaultEnd = () => new Date(); // 현재
+
+// 날짜를 ISO 형식으로 변환하는 함수
+const toDateTime = (date: Date) => {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return (
+    date.getFullYear() +
+    "-" +
+    pad(date.getMonth() + 1) +
+    "-" +
+    pad(date.getDate()) +
+    "T" +
+    pad(date.getHours()) +
+    ":" +
+    pad(date.getMinutes()) +
+    ":" +
+    pad(date.getSeconds())
+  );
+};
+
+// API 호출 함수
+export const oneFacilityApi = {
+  async listByFacility(params: {
+    orgId: number;
+    facId: number[]; // facIds 배열로 받음
+    start?: string;
+    end?: string;
+    page?: number;
+    size?: number;
+  }): Promise<PageResponse<FacilityKpi>> {
+    if (!params.facId || params.facId.length === 0) {
+      throw new Error("Invalid facId: facId must be a non-empty array");
+    }
+
+    const startDate = params.start ? new Date(params.start) : defaultStart();
+    const endDate = params.end ? new Date(params.end) : defaultEnd();
+
+    const cleanParams: Record<string, any> = {
+      page: params.page ?? 0,
+      size: params.size ?? 12,
+      start: toDateTime(startDate),
+      end: toDateTime(endDate),
+      facId: params.facId.join(','), // 배열을 쿼리 파라미터로 전달
+    };
+
+    try {
+      const res = await apiClient.get<PageResponse<FacilityKpi>>(
+        AUTH_ENDPOINTS.oneFacilityKpis(params.orgId),
+        { params: cleanParams }
+      );
+
+      const raw = res.data ?? {
+        content: [],
+        totalPages: 0,
+        totalElements: 0,
+        size: cleanParams.size,
+        number: cleanParams.page,
+      };
+
+      return {
+        content: (raw.content ?? []).map((item: any) => ({
+          orgId: Number(item.orgId ?? 0),
+          facId: Number(item.facId ?? 0),
+          facilityName: String(item.facilityName ?? ""),
+          ts: item.ts ? new Date(String(item.ts)).toISOString() : "",
+          predictedMaxKg: isNaN(Number(item.predictedMaxKg)) ? 0 : Number(item.predictedMaxKg),
+          productionKg: isNaN(Number(item.productionKg)) ? 0 : Number(item.productionKg),
+        })),
+        totalPages: raw.totalPages ?? 0,
+        totalElements: raw.totalElements ?? 0,
+        size: raw.size ?? cleanParams.size,
+        number: raw.number ?? cleanParams.page,
+      };
+    } catch (error) {
+      console.error("설비 데이터 조회 실패:", error);
+      throw error;
+    }
+  },
+};

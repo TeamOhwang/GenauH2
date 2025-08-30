@@ -25,11 +25,11 @@ export default function TopControlBar({ orgId, onDateSelect, onFacilitySelect }:
       setFacilities(uniqueFacilities); // 설비 목록 업데이트
       console.log("설비 목록 업데이트:", uniqueFacilities);
 
-      // 설비 목록이 업데이트되면 첫 번째 항목을 자동으로 선택
+      
       if (uniqueFacilities.length > 0 && selected === null) {
         const firstFacility = uniqueFacilities[0].facId;
-        setSelected(firstFacility); // 첫 번째 설비 선택
-        onFacilitySelect(firstFacility); // 부모 컴포넌트로 전달
+        setSelected(firstFacility); 
+        onFacilitySelect(firstFacility); 
       }
     }).catch((error) => {
       console.error("설비 목록 불러오기 실패:", error);
@@ -53,7 +53,7 @@ export default function TopControlBar({ orgId, onDateSelect, onFacilitySelect }:
           <option value="">-- 선택 --</option>
           {facilities.map((f) => (
             <option key={f.facId} value={f.facId}>
-              {f.facilityName}
+              {f.facilityName }
             </option>
           ))}
         </select>

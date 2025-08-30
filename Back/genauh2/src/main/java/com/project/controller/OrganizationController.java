@@ -58,7 +58,9 @@ public class OrganizationController {
 			if (user != null) {
 				// JWT 토큰 생성 (orgId 사용)
 				String token = tokenProvider.create(user.getOrgId().toString());
-
+				 System.out.println("✅ ✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅v생성된 토큰: " + token); // 토큰 생성 확인
+				 
+				 
 				response.put("success", true);
 				response.put("token", token);
 				response.put("user", user);
