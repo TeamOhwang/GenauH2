@@ -7,15 +7,15 @@ import java.util.Map;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Controller
+@RestController
 @RequiredArgsConstructor
 public class WebSocketController {
 
@@ -67,18 +67,49 @@ public class WebSocketController {
     @GetMapping("/api/websocket/test")
     @ResponseBody
     public Map<String, Object> testWebSocket() {
+        log.info("WebSocket 테스트 API 호출됨");
+        
         Map<String, Object> response = new HashMap<>();
         response.put("status", "success");
         response.put("message", "WebSocket 서버가 정상적으로 작동 중입니다.");
         response.put("timestamp", LocalDateTime.now().toString());
+        response.put("endpoints", new String[]{"/ws", "/topic/admin/notifications", "/topic/admin/stats"});
         
-        // 테스트 알림 전송
-        Map<String, Object> testNotification = new HashMap<>();
-        testNotification.put("type", "TEST");
-        testNotification.put("message", "테스트 알림입니다.");
-        testNotification.put("timestamp", System.currentTimeMillis());
+        try {
+            // 테스트 알림 전송
+            Map<String, Object> testNotification = new HashMap<>();
+            testNotification.put("type", "TEST");
+            testNotification.put("message", "테스트 알림입니다.");
+            testNotification.put("timestamp", System.currentTimeMillis());
+            testNotification.put("source", "WebSocket 테스트 API");
+            
+            messagingTemplate.convertAndSend("/topic/admin/notifications", testNotification);
+            log.info("테스트 알림 전송 완료");
+            
+            response.put("notification_sent", true);
+        } catch (Exception e) {
+            log.error("테스트 알림 전송 실패", e);
+            response.put("notification_sent", false);
+            response.put("error", e.getMessage());
+        }
         
-        messagingTemplate.convertAndSend("/topic/admin/notifications", testNotification);
+        return response;
+    }
+
+    // WebSocket 상태 확인 엔드포인트
+    @GetMapping("/api/websocket/status")
+    @ResponseBody
+    public Map<String, Object> getWebSocketStatus() {
+        log.info("WebSocket 상태 확인 API 호출됨");
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "success");
+        response.put("websocket_enabled", true);
+        response.put("stomp_enabled", true);
+        response.put("endpoint", "/ws");
+        response.put("message_broker", "/topic");
+        response.put("application_prefix", "/app");
+        response.put("timestamp", LocalDateTime.now().toString());
         
         return response;
     }

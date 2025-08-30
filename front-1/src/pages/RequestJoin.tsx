@@ -1,7 +1,8 @@
 import { getPendingsApi } from '@/api/adminApi';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { updateUserStatus } from '@/api/adminService';
+import { useWebSocket } from '@/hooks/useWebSocket';
 
 interface PendingUser {
     orgId: string;
@@ -18,48 +19,68 @@ const RequestJoin = () => {
     const [pendings, setPendings] = useState<PendingUser[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    
+    // WebSocket 연결을 통한 실시간 업데이트
+    const { isConnected, notifications } = useWebSocket();
+
+    const fetchPendings = useCallback(async () => {
+        try {
+            setLoading(true);
+            const response = await getPendingsApi();
+            console.log('API 응답:', response);
+
+            // 응답 데이터 구조 확인 및 안전한 처리
+            let pendingUsers: PendingUser[] = [];
+
+            if (Array.isArray(response)) {
+                pendingUsers = response;
+            } else if (response && typeof response === 'object' && 'data' in response && Array.isArray(response.data)) {
+                pendingUsers = response.data;
+            } else if (response && typeof response === 'object' && 'content' in response && Array.isArray(response.content)) {
+                pendingUsers = response.content;
+            } else {
+                console.warn('예상하지 못한 API 응답 구조:', response);
+                pendingUsers = [];
+            }
+
+            setPendings(pendingUsers);
+        } catch (err) {
+            setError('가입 요청 목록을 불러오는데 실패했습니다.');
+            console.error('Error fetching pendings:', err);
+            setPendings([]);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
-        const fetchPendings = async () => {
-            try {
-                setLoading(true);
-                const response = await getPendingsApi();
-                console.log('API 응답:', response);
-
-                // 응답 데이터 구조 확인 및 안전한 처리
-                let pendingUsers: PendingUser[] = [];
-
-                if (Array.isArray(response)) {
-                    pendingUsers = response;
-                } else if (response && typeof response === 'object' && 'data' in response && Array.isArray(response.data)) {
-                    pendingUsers = response.data;
-                } else if (response && typeof response === 'object' && 'content' in response && Array.isArray(response.content)) {
-                    pendingUsers = response.content;
-                } else {
-                    console.warn('예상하지 못한 API 응답 구조:', response);
-                    pendingUsers = [];
-                }
-
-                setPendings(pendingUsers);
-            } catch (err) {
-                setError('가입 요청 목록을 불러오는데 실패했습니다.');
-                console.error('Error fetching pendings:', err);
-                setPendings([]);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchPendings();
-    }, []);
+    }, [fetchPendings]);
+
+    // WebSocket 알림을 통해 실시간 업데이트
+    useEffect(() => {
+        if (notifications.length > 0) {
+            const latestNotification = notifications[0];
+            
+            // 새로운 가입 요청이나 상태 변경 알림이 오면 목록 새로고침
+            if (latestNotification.type === 'NEW_REGISTRATION_REQUEST' || 
+                latestNotification.type === 'REGISTRATION_APPROVED' ||
+                latestNotification.type === 'REGISTRATION_REJECTED') {
+                console.log('WebSocket 알림으로 인한 목록 새로고침:', latestNotification);
+                fetchPendings();
+            }
+        }
+    }, [notifications, fetchPendings]);
 
     const handleApprove = async (orgId: string) => {
         try {
             const result = await updateUserStatus(orgId, "ACTIVE")
             if (result) {
                 alert("승인 처리가 완료되었습니다. ordId : " + orgId);
+                // 승인 처리 후 목록 새로고침
+                await fetchPendings();
             } else {
-                alert("승인 처리 중 오류가 발생했습니다." + error);
+                alert("승인 처리 중 오류가 발생했습니다. " + error);
             }
         } catch (err) {
             alert('승인 처리 중 오류가 발생했습니다.');
@@ -118,7 +139,36 @@ const RequestJoin = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors p-6">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">가입 요청 관리</h1>
+            <div className="flex items-center justify-between mb-6">
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">가입 요청 관리</h1>
+                
+                {/* WebSocket 연결 상태 및 새로고침 버튼 */}
+                <div className="flex items-center gap-4">
+                    <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${
+                        isConnected 
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                            : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                    }`}>
+                        <div className={`w-2 h-2 rounded-full ${
+                            isConnected ? 'bg-green-500' : 'bg-red-500'
+                        }`}></div>
+                        {isConnected ? '실시간 연결됨' : '연결 해제됨'}
+                    </div>
+                    
+                    {!isConnected && (
+                        <div className="text-xs text-red-600 dark:text-red-400 max-w-xs">
+                            WebSocket 연결 실패. 실시간 업데이트가 작동하지 않습니다.
+                        </div>
+                    )}
+                    
+                    <button
+                        onClick={fetchPendings}
+                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                    >
+                        새로고침
+                    </button>
+                </div>
+            </div>
 
             {/* 요약 통계 */}
             {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">

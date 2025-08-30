@@ -1,4 +1,3 @@
-import React from 'react';
 import { useWebSocket } from '@/hooks/useWebSocket';
 
 export default function SimpleNotification() {
@@ -9,9 +8,6 @@ export default function SimpleNotification() {
 
   return (
     <div className="relative">
-      {/* 연결 상태 표시 */}
-      <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-gray-400'}`} 
-           title={isConnected ? '웹소켓 연결됨' : '웹소켓 연결 안됨'} />
       
       {/* 새로운 알림이 있을 때 빨간 점 표시 */}
       {hasNewNotifications && (
