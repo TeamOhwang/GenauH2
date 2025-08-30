@@ -70,6 +70,7 @@ export default function AppRouter() {
             <Route path={PATHS.facilityPage} element={<FacilityPage />} /> 
             <Route path={PATHS.equipmentList} element={<EquipmentList />} /> 
             <Route path={PATHS.setting} element={<Setting />} />
+            <Route path={PATHS.test} element={<About />} />
           </Route>
 
           <Route element={<ProtectedRoute require="SUPERVISOR"><Outlet /></ProtectedRoute>}>
