@@ -12,10 +12,24 @@ export default defineConfig({
   resolve: {
     alias: { "@": path.resolve(__dirname, "./src") },
   },
+  define: {
+    global: 'globalThis',
+  },
+  optimizeDeps: {
+    include: ['@stomp/stompjs'],
+  },
   server: {
     port: 5174,
     strictPort: true,
     proxy: {
+      // WebSocket 연결을 위한 유일한 프록시 규칙입니다.
+      // SockJS의 초기 요청(/ws/info 등)과 실제 WebSocket 핸드셰이크를 모두 처리합니다.
+      "/ws": {
+        target: "http://localhost:8088",
+        changeOrigin: true,
+        secure: false,
+        ws: true, // WebSocket 프록시 활성화
+      },
       "/gh": {
         target: "http://localhost:8088",
         changeOrigin: true,
@@ -23,10 +37,10 @@ export default defineConfig({
       },
       // 공공데이터포털 API 프록시
       "/cloud": {
-        target: "https://api.odcloud.kr", 
+        target: "https://api.odcloud.kr",
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path.replace(/^\/cloud/, "/api"), 
+        rewrite: (path) => path.replace(/^\/cloud/, "/api"),
       },
     },
   },

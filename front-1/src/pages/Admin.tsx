@@ -10,14 +10,17 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { Select } from "@radix-ui/react-select";
 import { useEffect, useState } from "react";
 import * as React from "react";
+import { Link } from "react-router-dom";
+import { PATHS } from "@/routes/paths";
+import { Bell } from "lucide-react";
 
-// 사용자 타입 정의
+// 사용자 타입 정의 - INVITED 상태 제거
 interface User {
   email: string;
   name: string;
   orgName: string;
   bizRegNo: string;
-  status: "ACTIVE" | "SUSPENDED";
+  status: "ACTIVE" | "SUSPENDED"; // INVITED 상태 제거
   orgId: string;
   updatedAt: string;
 }
@@ -42,7 +45,6 @@ interface Facility {
 
 export default function Admin() {
 
-  const [isOpen, setIsOpen] = useState(false);
   const [statusChangeModal, setStatusChangeModal] = useState<{
     isOpen: boolean;
     orgId: string;
@@ -85,7 +87,7 @@ export default function Admin() {
   if (error) return <div className="h-full p-6"><p className="text-center text-lg text-red-600">오류: {error}</p></div>;
 
   const filteredUsers = users.filter(u => {
-    // 상태 필터링
+    // 상태 필터링 - INVITED 상태는 이미 백엔드에서 제외됨
     const statusMatch = statusFilter === "ALL" || u.status === statusFilter;
 
     // 검색어가 없으면 상태만 확인
@@ -198,77 +200,97 @@ export default function Admin() {
 
   return (
     <div className="h-full p-6">
-      <div className="flex ">
-        <p className="text-2xl font-bold mb-6">관리자 페이지</p>
-        <button onClick={() => setIsOpen(true)} className="bg-blue-500 dark:bg-blue-700 text-white px-3 py-2 rounded-md w-24 h-10 mx-3">회원 추가</button>
-        <Modal isOpen={isOpen} onClose={() => setIsOpen(false)}>
-          회원 등록
-          <RegiFrom />
-        </Modal>
-
-        {/* 상태 변경 확인 모달 */}
-        <Modal isOpen={statusChangeModal.isOpen} onClose={() => setStatusChangeModal({ ...statusChangeModal, isOpen: false })}>
-          <div className="p-6">
-            <h3 className="text-lg font-semibold mb-4">사용자 상태 변경 확인</h3>
-            <p className="mb-4">
-              <strong>{statusChangeModal.userName}</strong> 사용자의 상태를<br />
-              <span className="font-semibold"
-                style={{
-                  color: statusChangeModal.currentStatus === "ACTIVE" ? "rgb(16, 185, 53)" : "rgb(236, 45, 45)",
-                }}>
-                {statusChangeModal.currentStatus === "ACTIVE" ? "활성화" : "비활성화"}
-              </span>에서
-              <span className="font-semibold"
-                style={{
-                  color: statusChangeModal.newStatus === "ACTIVE" ? "rgb(16, 185, 53)" : "rgb(236, 45, 45)",
-                }}>
-                {statusChangeModal.newStatus === "ACTIVE" ? "활성화" : "비활성화"}
-              </span>로 변경하시겠습니까?
-            </p>
-            <div className="flex gap-3 justify-end">
-              <button
-                onClick={() => setStatusChangeModal({ ...statusChangeModal, isOpen: false })}
-                className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
-              >
-                취소
-              </button>
-              <button
-                onClick={confirmStatusChange}
-                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-              >
-                확인
-              </button>
-            </div>
-          </div>
-        </Modal>
-
-        {/* 시설 삭제 확인 모달 */}
-        <Modal isOpen={deleteFacilityModal.isOpen} onClose={() => setDeleteFacilityModal({ ...deleteFacilityModal, isOpen: false })}>
-          <div className="p-6">
-            <h3 className="text-lg font-semibold mb-4">시설 삭제 확인</h3>
-            <p className="mb-4">
-              <strong>{deleteFacilityModal.facility?.name || 'N/A'}</strong> 시설을 삭제하시겠습니까?<br />
-              <span className="text-red-600 font-semibold">이 작업은 되돌릴 수 없습니다.</span>
-            </p>
-            <div className="flex gap-3 justify-end">
-              <button
-                onClick={() => setDeleteFacilityModal({ ...deleteFacilityModal, isOpen: false })}
-                className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
-              >
-                취소
-              </button>
-              <button
-                onClick={confirmDeleteFacility}
-                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
-              >
-                삭제
-              </button>
-            </div>
-          </div>
-        </Modal>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <p className="text-2xl font-bold">관리자 페이지</p>
+          
+          {/* WebSocket 테스트 링크 */}
+          <Link 
+            to={PATHS.websocketTest}
+            className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-md transition-colors"
+          >
+            WebSocket 테스트
+          </Link>
+        </div>
+        
+        {/* 알림 로그 링크 추가 */}
+        <Link 
+          to={PATHS.notificationLog}
+          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-colors flex items-center gap-2"
+        >
+          <Bell className="w-4 h-4" />
+          알림 로그
+        </Link>
       </div>
 
-      {/* 요약 통계 */}
+      {/* <button onClick={() => setIsOpen(true)} className="bg-blue-500 dark:bg-blue-700 text-white px-3 py-2 rounded-md w-24 h-10 mx-3">회원 추가</button>
+      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)}>
+        회원 등록
+        <RegiFrom />
+      </Modal> */}
+
+      {/* 상태 변경 확인 모달 */}
+      <Modal isOpen={statusChangeModal.isOpen} onClose={() => setStatusChangeModal({ ...statusChangeModal, isOpen: false })}>
+        <div className="p-6">
+          <h3 className="text-lg font-semibold mb-4">사용자 상태 변경 확인</h3>
+          <p className="mb-4">
+            <strong>{statusChangeModal.userName}</strong> 사용자의 상태를<br />
+            <span className="font-semibold"
+              style={{
+                color: statusChangeModal.currentStatus === "ACTIVE" ? "rgb(16, 185, 53)" : "rgb(236, 45, 45)",
+              }}>
+              {statusChangeModal.currentStatus === "ACTIVE" ? "활성화" : "비활성화"}
+            </span>에서
+            <span className="font-semibold"
+              style={{
+                color: statusChangeModal.newStatus === "ACTIVE" ? "rgb(16, 185, 53)" : "rgb(236, 45, 45)",
+              }}>
+              {statusChangeModal.newStatus === "ACTIVE" ? "활성화" : "비활성화"}
+            </span>로 변경하시겠습니까?
+          </p>
+          <div className="flex gap-3 justify-end">
+            <button
+              onClick={() => setStatusChangeModal({ ...statusChangeModal, isOpen: false })}
+              className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              취소
+            </button>
+            <button
+              onClick={confirmStatusChange}
+              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+            >
+              확인
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* 시설 삭제 확인 모달 */}
+      <Modal isOpen={deleteFacilityModal.isOpen} onClose={() => setDeleteFacilityModal({ ...deleteFacilityModal, isOpen: false })}>
+        <div className="p-6">
+          <h3 className="text-lg font-semibold mb-4">시설 삭제 확인</h3>
+          <p className="mb-4">
+            <strong>{deleteFacilityModal.facility?.name || 'N/A'}</strong> 시설을 삭제하시겠습니까?<br />
+            <span className="text-red-600 font-semibold">이 작업은 되돌릴 수 없습니다.</span>
+          </p>
+          <div className="flex gap-3 justify-end">
+            <button
+              onClick={() => setDeleteFacilityModal({ ...deleteFacilityModal, isOpen: false })}
+              className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              취소
+            </button>
+            <button
+              onClick={confirmDeleteFacility}
+              className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+            >
+              삭제
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* 요약 통계 - INVITED 상태의 회원들은 제외됨 */}
       <div className="flex gap-6 mb-6">
         <Card className="flex-1 text-center dark:bg-gray-800">
           <CardContent>
@@ -291,7 +313,7 @@ export default function Admin() {
       </div>
 
       <div className="flex flex-col h-2/3 w-full bg-white dark:bg-gray-800 rounded-2xl shadow overflow-y-scroll scrollbar-hide">
-        {/* 검색  + 필터 */}
+        {/* 검색  + 필터 - INVITED 상태의 회원들은 제외됨 */}
         <div className="flex mb-4 sticky top-0 bg-white dark:bg-gray-800 z-10 pb-4 mb-4 border-b dark:border-gray-700 pt-3 px-3">
           <Input
             placeholder="소속, 이메일, 이름, 사업자번호로 검색..."
@@ -311,7 +333,7 @@ export default function Admin() {
           </Select>
         </div>
 
-        {/* 테이블 */}
+        {/* 테이블 - INVITED 상태의 회원들은 제외됨 */}
         {filteredUsers.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             {search.trim() ? `"${search}"에 대한 검색 결과가 없습니다.` : "사용자가 없습니다."}
@@ -337,7 +359,7 @@ export default function Admin() {
                     <td className="text-center">{u.email}</td>
                     <td className="text-center">{u.name}</td>
                     <td className="text-center">{u.bizRegNo}</td>
-                    <td className="text-center">{u.updatedAt.split("T")[0]}</td>
+                    <td className="text-center">{u.updatedAt ? u.updatedAt.split("T")[0] : 'N/A'}</td>
                     <td className="text-center">
                         <button
                           onClick={() => handleStatusChange(u.orgId, u.status, u.orgName || u.email)}

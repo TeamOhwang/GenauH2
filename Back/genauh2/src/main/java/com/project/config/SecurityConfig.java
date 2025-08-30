@@ -1,10 +1,12 @@
 package com.project.config;
 
 import java.util.Arrays;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -13,7 +15,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+
 import com.project.filter.JwtAuthenticationFilter;
 
 @Configuration
@@ -58,7 +60,13 @@ public class SecurityConfig {
             	    .requestMatchers("/user/password-reset-page").permitAll()  // 비밀번호 리셋 페이지 추가
             	    
             	    .requestMatchers("/api/public/**").permitAll()
+            	    
+            	    // WebSocket 관련 경로들 허용
             	    .requestMatchers("/ws/**").permitAll()
+            	    .requestMatchers("/api/websocket/**").permitAll()  // WebSocket 테스트 API 허용
+            	    .requestMatchers("/topic/**").permitAll()  // STOMP 토픽 허용
+            	    .requestMatchers("/app/**").permitAll()   // STOMP 앱 접두사 허용
+            	    
             	    .requestMatchers("/error").permitAll()
             	    .requestMatchers("/alert/**").permitAll()
 

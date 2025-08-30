@@ -1,14 +1,5 @@
-import { createUser, fetchAllFacilities, fetchAllUsers, updateUserStatus, addFacility, updateFacility, deleteFacility } from "@/api/adminService";
+import { fetchPendings, fetchAllFacilities, fetchAllUsers, updateUserStatus, addFacility, updateFacility, deleteFacility } from "@/api/adminService";
 import { useCallback, useState } from "react";
-
-type user = {
-    orgName: string;
-    name: string; // ownerName에서 name으로 변경
-    bizRegNo: string;
-    email: string;
-    phoneNum: string;
-    password: string;
-}
 
 type createfacility = {
     orgId: string;
@@ -25,19 +16,19 @@ type createfacility = {
     install: string;
 }
 
-type updateFacility = {
-
+type updatefacility = {
     facId: string;
+    orgId: string;
     name: string;
-    location: string;
-    model: string;
-    maker: string;
     type: string;
+    maker: string;
+    model: string;
     powerKw: number;
     h2Rate: number;
     specKwh: number;
     purity: number;
     pressure: number;
+    location: string;
     install: string;
 }
 
@@ -46,17 +37,17 @@ export function useAdmin() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const addUser = useCallback(async (params: user) => {
+    const getPendings = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
-            const user = await createUser(params)
-            return user
+            const pendings = await fetchPendings();
+            return pendings;
         } catch (e: any) {
-            setError(e?.message ?? "회원 등록 실패");
-            return null;
+            setError(e?.message ?? "승인 대기 목록 조회 실패");
+            return [];
         } finally {
-            setLoading(false)
+            setLoading(false);
         }
     }, [])
 
@@ -133,7 +124,7 @@ export function useAdmin() {
         }
     }, [])
 
-    const updateFacilityAction = useCallback(async (params: updateFacility) => {
+    const updateFacilityAction = useCallback(async (params: updatefacility) => {
         setLoading(true);
         setError(null);
         try {
@@ -161,5 +152,5 @@ export function useAdmin() {
         }
     }, [])
 
-    return { loading, error, addUser, getUsers, updateUserStatusAction, getFacilities, createFacility, updateFacilityAction, deleteFacilityAction }
+    return { loading, error, getPendings, getUsers, updateUserStatusAction, getFacilities, createFacility, updateFacilityAction, deleteFacilityAction }
 }
