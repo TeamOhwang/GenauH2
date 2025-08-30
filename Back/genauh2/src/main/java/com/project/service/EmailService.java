@@ -163,7 +163,7 @@ public class EmailService {
     }
 
     /**
-     * 수소 생산량 0 감지 시 알림 이메일을 발송합니다. (새로 추가된 메서드)
+     * 수소 생산량 0 감지 시 알림 이메일을 발송합니다.
      * @param toEmail 수신자 이메일
      * @param userName 수신자 이름
      * @param production 문제가 발생한 생산 데이터
@@ -181,15 +181,41 @@ public class EmailService {
             helper.setText(htmlContent, true);
 
             mailSender.send(message);
-            log.info("✅ 생산량 0 감지 알림 이메일 전송 성공: {}", toEmail);
+            log.info("생산량 0 감지 알림 이메일 전송 성공: {}", toEmail);
 
         } catch (MessagingException e) {
-            log.error("❌ 생산량 0 감지 알림 이메일 전송 실패: {}", e.getMessage());
+            log.error("생산량 0 감지 알림 이메일 전송 실패: {}", e.getMessage());
+            throw new RuntimeException("이메일 발송 실패: " + e.getMessage(), e);
         }
     }
 
-     /**
-     * 생산량 0 감지 알림을 위한 HTML 이메일 템플릿을 생성합니다. (새로 추가된 메서드)
+    /**
+     * 일반적인 알림 이메일 발송 메서드 (ProductionAlarmService에서 사용)
+     * @param toEmail 수신자 이메일 주소
+     * @param subject 이메일 제목
+     * @param body 이메일 본문 내용
+     */
+    public void sendAlertEmail(String toEmail, String subject, String body) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
+            
+            helper.setFrom(fromEmail);
+            helper.setTo(toEmail);
+            helper.setSubject(subject);
+            helper.setText(body, false); // 단순 텍스트 이메일
+            
+            mailSender.send(message);
+            log.info("알림 이메일 발송 완료: {}", toEmail);
+            
+        } catch (MessagingException e) {
+            log.error("알림 이메일 발송 실패: {}", toEmail, e);
+            throw new RuntimeException("이메일 발송 실패: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 생산량 0 감지 알림을 위한 HTML 이메일 템플릿을 생성합니다.
      */
     private String createProductionAlertEmailTemplate(String userName, Real production) {
         String occurredAt = production.getTs().format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 HH시 mm분"));
@@ -215,7 +241,7 @@ public class EmailService {
             <body>
                 <div class="container">
                     <div class="header">
-                        <h1>🚨 긴급 알림</h1>
+                        <h1>긴급 알림</h1>
                         <h2>수소 생산 시스템 모니터링</h2>
                     </div>
                     <div class="content">
@@ -250,5 +276,4 @@ public class EmailService {
             </html>
             """.formatted(userName, occurredAt, production.getFacid(), production.getPlantId());
     }
-
 }
