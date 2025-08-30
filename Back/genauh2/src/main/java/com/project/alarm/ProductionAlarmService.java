@@ -60,7 +60,7 @@ public class ProductionAlarmService {
                 String dedupKey = String.format("alarm:prod-zero:%d:%s", production.getFacid(), production.getTs().toString());
 
                 // 동일한 타임스탬프의 이벤트에 대해 5분 내 중복 알림 방지
-                if (dedupGuard.tryOnce(dedupKey, java.time.Duration.ofMinutes(5))) {
+                if (dedupGuard.tryOnce(dedupKey, java.time.Duration.ofMinutes(15))) {
                     log.warn("[생산량 오류 감지! 점검이 필요합니다.] 설비 ID: {}, 시간: {}", production.getFacid(), production.getTs());
                     
                     // 4. SMS + 이메일 알림을 발송합니다.
@@ -119,16 +119,21 @@ public class ProductionAlarmService {
      * @param message SMS 메시지 내용
      */
     private void sendSmsToUser(Organization user, String message) {
+        log.info("SMS 발송 체크 - 사용자: {}, SMS설정: {}, 전화번호: {}", 
+                 user.getName(), user.isSmsNotification(), user.getPhoneNum());
+        
         // SMS 수신 설정이 켜져 있고, 전화번호가 등록되어 있는지 확인
         if (user.isSmsNotification() && user.getPhoneNum() != null && !user.getPhoneNum().isEmpty()) {
+            log.info("SMS 발송 조건 충족 - 발송 시도");
             try {
                 smsService.sendSms(user.getPhoneNum(), message);
-                log.info("📱 SMS 발송 성공: {} ({})", user.getName(), user.getPhoneNum());
+                log.info("SMS 발송 성공: {} ({})", user.getName(), user.getPhoneNum());
             } catch (Exception e) {
-                log.error("📱 SMS 발송 실패: {} ({})", user.getName(), user.getPhoneNum(), e);
+                log.error("SMS 발송 실패: {} ({})", user.getName(), user.getPhoneNum(), e);
             }
         } else {
-            log.debug("사용자 {}(orgId={})가 SMS 수신을 동의하지 않았거나 전화번호가 없습니다.", user.getName(), user.getOrgId());
+            log.warn("SMS 발송 조건 미충족 - notification: {}, phoneNum: '{}'", 
+                     user.isSmsNotification(), user.getPhoneNum());
         }
     }
 
@@ -139,8 +144,12 @@ public class ProductionAlarmService {
      * @param occurredAt 발생 시간 (포맷된 문자열)
      */
     private void sendEmailToUser(Organization user, Real production, String occurredAt) {
+        log.info("이메일 발송 체크 - 사용자: {}, 이메일설정: {}, 이메일주소: {}", 
+                 user.getName(), user.isEmailNotification(), user.getEmail());
+        
         // 이메일 수신 설정이 켜져 있고, 이메일 주소가 등록되어 있는지 확인
         if (user.isEmailNotification() && user.getEmail() != null && !user.getEmail().isEmpty()) {
+            log.info("이메일 발송 조건 충족 - 발송 시도");
             try {
                 // 이메일 제목
                 String subject = String.format("[GENAUH2 긴급] 수소 생산량 0 감지 알림 - %s", occurredAt);
@@ -149,9 +158,9 @@ public class ProductionAlarmService {
                 String emailBody = String.format(
                     "안녕하세요, %s님.\n\n" +
                     "수소 생산량 0이 감지되어 긴급 알림을 보내드립니다.\n\n" +
-                    "📍 발생 시간: %s\n" +
-                    "📍 설비 ID: %d\n" +
-                    "📍 생산량: 0 kg\n\n" +
+                    "발생 시간: %s\n" +
+                    "설비 ID: %d\n" +
+                    "생산량: 0 kg\n\n" +
                     "즉시 설비 점검이 필요합니다.\n" +
                     "빠른 시일 내에 확인해 주시기 바랍니다.\n\n" +
                     "감사합니다.\n" +
@@ -161,13 +170,14 @@ public class ProductionAlarmService {
                 
                 // EmailService를 사용한 이메일 발송
                 emailService.sendAlertEmail(user.getEmail(), subject, emailBody);
-                log.info("📧 이메일 발송 성공: {} ({})", user.getName(), user.getEmail());
+                log.info("이메일 발송 성공: {} ({})", user.getName(), user.getEmail());
                 
             } catch (Exception e) {
-                log.error("📧 이메일 발송 실패: {} ({})", user.getName(), user.getEmail(), e);
+                log.error("이메일 발송 실패: {} ({})", user.getName(), user.getEmail(), e);
             }
         } else {
-            log.debug("사용자 {}(orgId={})가 이메일 수신을 동의하지 않았거나 이메일 주소가 없습니다.", user.getName(), user.getOrgId());
+            log.warn("이메일 발송 조건 미충족 - notification: {}, email: '{}'", 
+                     user.isEmailNotification(), user.getEmail());
         }
     }
 }
