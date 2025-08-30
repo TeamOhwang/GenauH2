@@ -1,28 +1,33 @@
 import apiClient from "./apiClient";
 
 export const ADMIN_ENDPOINTS = {
-    // register: "/organization/register", // /user/register에서 /organization/register로 변경
+    register: "/user/register",
     getUserList: "/user/list",
     updateUserStatus: (userId: string) => `/user/${userId}/status`,
     getFacilityList: "/plant/list",
     addFacility: "/plant/insert",
     updateFacility: "/plant/update",
     deleteFacility: "/plant/delete",
-    getPendings: "/user/pending",
-    approveUser: (orgId: string) => `/user/${orgId}/approve`,
+    pending: "/user/pending",
 }
 
-// 회원 등록
-export async function registerApi(params:{
-    orgName: string;
-    name: string; // ownerName에서 name으로 변경
-    bizRegNo: string;
-    email: string;
-    phoneNum: string;
-    password: string;
-}) {
-    const res = await apiClient.post(ADMIN_ENDPOINTS.register, params);
-    return (res as any)?.data?.data ?? (res as any)?.data ?? null;
+// // 회원 등록
+// export async function registerApi(params:{
+//     orgName: string;
+//     ownerName: string;
+//     bizRegNo: string;
+//     email: string;
+//     phoneNum: string;
+//     password: string;
+// }) {
+//     const res = await apiClient.post(ADMIN_ENDPOINTS.register, params);
+//     return (res as any)?.data?.data ?? (res as any)?.data ?? null;
+// }
+
+// 승인 대기 중인 회원 목록 조회
+export async function getPendingsApi() {
+    const res = await apiClient.get(ADMIN_ENDPOINTS.pending);
+    return (res as any)?.data?.data ?? (res as any)?.data ?? [];
 }
 
 // 모든 회원 조회
@@ -176,14 +181,4 @@ export async function deleteFacilityApi(facilityId: string) {
         console.log('=== adminApi.deleteFacilityApi 종료 (에러) ===');
         throw error;
     }
-}
-
-export async function getPendingsApi() {
-    const res = await apiClient.get(ADMIN_ENDPOINTS.getPendings);
-    return res.data ?? [];
-}
-
-export async function approveUserApi(orgId: string, action: "approve" | "reject") {
-    const res = await apiClient.post(ADMIN_ENDPOINTS.approveUser(orgId), { action });
-    return res.data ?? [];
 }

@@ -1,34 +1,40 @@
 package com.project.service;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.project.dto.FacilityRequestDTO;
+import com.project.dto.NotificationSettingsDTO;
 import com.project.dto.OrganizationDTO;
 import com.project.entity.Facility;
 import com.project.entity.Organization;
 import com.project.repository.OrganizationRepository;
-import com.project.dto.FacilityRequestDTO;
-import com.project.dto.NotificationSettingsDTO; // 알림설정 추가
 
-import org.springframework.transaction.annotation.Transactional; // 추가
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class OrganizationService {
 
-    @Autowired
-    private OrganizationRepository organizationRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final OrganizationRepository organizationRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final SimpMessagingTemplate messagingTemplate;
     
-    @Autowired
-    private FacilityService facilityService;
+    private final FacilityService facilityService;
+    
+    private final WebSocketNotificationService webSocketNotificationService;
 
     // 사용자 로그인 (ACTIVE 상태만 로그인 가능)
     public OrganizationDTO login(String email, String password) {
@@ -116,6 +122,11 @@ public class OrganizationService {
             String phoneNum,
             List<FacilityRequestDTO> facilities) {
         
+        // 전화번호 null 및 공백 검증 추가
+        if (phoneNum == null || phoneNum.trim().isEmpty()) {
+            throw new RuntimeException("전화번호는 필수 입력값입니다.");
+        }
+        
         // 이메일 중복 검사
         if (organizationRepository.existsByEmail(email)) {
             throw new RuntimeException("이미 등록된 이메일입니다.");
@@ -149,7 +160,37 @@ public class OrganizationService {
                 facilityService.saveFacility(facility);
             }
         }
+        
+        // WebSocket으로 관리자에게 새로운 회원가입 알림 전송
+        sendNewRegistrationNotification(saved);
+        
+        // 관리자 통계 업데이트
+        updateAdminStats();
+        
         return convertToDTO(saved);
+    }
+
+    // 새로운 회원가입 알림 전송
+    private void sendNewRegistrationNotification(Organization organization) {
+        try {
+            Map<String, Object> notification = new HashMap<>();
+            notification.put("type", "NEW_REGISTRATION_REQUEST");
+            notification.put("orgId", organization.getOrgId());
+            notification.put("orgName", organization.getOrgName());
+            notification.put("email", organization.getEmail());
+            notification.put("name", organization.getName());
+            notification.put("bizRegNo", organization.getBizRegNo());
+            notification.put("phoneNum", organization.getPhoneNum());
+            notification.put("message", "새로운 가입 요청이 들어왔습니다: " + organization.getOrgName());
+            notification.put("timestamp", System.currentTimeMillis());
+            
+            // 관리자에게 알림 전송
+            messagingTemplate.convertAndSend("/topic/admin/notifications", notification);
+            
+            log.info("새로운 회원가입 알림 전송 완료: {}", organization.getOrgName());
+        } catch (Exception e) {
+            log.error("새로운 회원가입 알림 전송 실패", e);
+        }
     }
 
     // 관리자용 조직 및 사용자 생성 (ACTIVE 상태로 즉시 생성)
@@ -202,9 +243,72 @@ public class OrganizationService {
     // 사용자 상태 변경
     public OrganizationDTO updateUserStatus(Long orgId, Organization.Status status) {
         return organizationRepository.findById(orgId).map(organization -> {
+            Organization.Status oldStatus = organization.getStatus();
             organization.setStatus(status);
-            return convertToDTO(organizationRepository.save(organization));
+            OrganizationDTO updatedOrg = convertToDTO(organizationRepository.save(organization));
+            
+            // WebSocket을 통해 상태 변경 알림 전송
+            sendStatusChangeNotification(organization, oldStatus, status);
+            
+            return updatedOrg;
         }).orElse(null);
+    }
+
+    // WebSocket을 통한 상태 변경 알림 전송
+    private void sendStatusChangeNotification(Organization organization, Organization.Status oldStatus, Organization.Status newStatus) {
+        try {
+            Map<String, Object> notification = new HashMap<>();
+            notification.put("type", "STATUS_CHANGED");
+            notification.put("orgId", organization.getOrgId());
+            notification.put("orgName", organization.getOrgName());
+            notification.put("email", organization.getEmail());
+            notification.put("oldStatus", oldStatus.name());
+            notification.put("newStatus", newStatus.name());
+            notification.put("timestamp", System.currentTimeMillis());
+            
+            if (newStatus == Organization.Status.ACTIVE) {
+                notification.put("type", "REGISTRATION_APPROVED");
+                notification.put("message", "가입 요청이 승인되었습니다: " + organization.getOrgName());
+            } else if (newStatus == Organization.Status.SUSPENDED) {
+                notification.put("type", "USER_SUSPENDED");
+                notification.put("message", "사용자가 정지되었습니다: " + organization.getOrgName());
+            }
+            
+            // 관리자에게 알림 전송
+            messagingTemplate.convertAndSend("/topic/admin/notifications", notification);
+            
+            // 관리자 통계 업데이트
+            updateAdminStats();
+            
+            log.info("상태 변경 알림 전송 완료: {} -> {}", oldStatus, newStatus);
+        } catch (Exception e) {
+            log.error("상태 변경 알림 전송 실패", e);
+        }
+    }
+
+    // 관리자 통계 업데이트 및 전송
+    private void updateAdminStats() {
+        try {
+            long totalUsers = organizationRepository.count();
+            long activeUsers = organizationRepository.countByStatus(Organization.Status.ACTIVE);
+            long suspendedUsers = organizationRepository.countByStatus(Organization.Status.SUSPENDED);
+            long invitedUsers = organizationRepository.countByStatus(Organization.Status.INVITED);
+            
+            Map<String, Object> stats = new HashMap<>();
+            stats.put("type", "ADMIN_STATS");
+            stats.put("totalUsers", totalUsers);
+            stats.put("activeUsers", activeUsers);
+            stats.put("suspendedUsers", suspendedUsers);
+            stats.put("pendingCount", invitedUsers);
+            stats.put("timestamp", System.currentTimeMillis());
+            
+            // 관리자에게 통계 전송
+            messagingTemplate.convertAndSend("/topic/admin/stats", stats);
+            
+            log.info("관리자 통계 업데이트 완료");
+        } catch (Exception e) {
+            log.error("관리자 통계 업데이트 실패", e);
+        }
     }
 
     // 사용자 비밀번호 변경 (관리자용)

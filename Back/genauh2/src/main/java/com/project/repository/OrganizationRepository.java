@@ -1,11 +1,12 @@
 package com.project.repository;
 
-import com.project.entity.Organization;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.Optional;
+import com.project.entity.Organization;
 
 @Repository
 public interface OrganizationRepository extends JpaRepository<Organization, Long> {
@@ -42,4 +43,7 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
     
     // 조직명과 상태로 조회
     List<Organization> findByOrgNameAndStatus(String orgName, Organization.Status status);
+    
+    // 상태별 사용자 수 카운트
+    long countByStatus(Organization.Status status);
 }

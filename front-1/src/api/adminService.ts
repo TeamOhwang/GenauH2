@@ -1,20 +1,17 @@
-import { addFacilityApi, deleteFacilityApi, getFacilityListApi, getUserListApi, registerApi, updateFacilityApi, updateUserStatusApi } from "@/api/adminApi";
+import { getPendingsApi, addFacilityApi, deleteFacilityApi, getFacilityListApi, getUserListApi, updateFacilityApi, updateUserStatusApi } from "@/api/adminApi";
 
-export async function createUser(params:{
-    orgName: string;
-    name: string; // ownerName에서 name으로 변경
-    bizRegNo: string;
-    email: string;
-    phoneNum: string;
-    password: string;
-}) {
-    return await registerApi(params);
+export async function fetchPendings() {
+    const pendings = await getPendingsApi();
+    return pendings;
 }
 
 export async function fetchAllUsers() {
     const users = await getUserListApi();
 
-    return users.map((u: any) => ({
+    // INVITED 상태의 회원들을 제외하고 ACTIVE, SUSPENDED 상태의 회원만 반환
+    const filteredUsers = users.filter((u: any) => u.status !== "INVITED");
+
+    return filteredUsers.map((u: any) => ({
         ...u,
         role: u.role === "SUPERVISOR" ? "ADMIN" : "USER",
     }))
@@ -71,6 +68,7 @@ export async function addFacility(params: {
 
 export async function updateFacility(params: {
     facId: string;
+    orgId: string;
     name: string;
     type: string;
     maker: string;
