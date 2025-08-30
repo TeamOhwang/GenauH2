@@ -34,7 +34,7 @@ public class ProductionAlarmService {
      * cron = "0 * * * * *" (매분 0초)
      */
     @Scheduled(cron = "0 * * * * *", zone = "Asia/Seoul")
-    @Transactional(readOnly = true)
+    @Transactional
     public void checkProductionAndNotify() {
         log.info("수소 생산량 0 감지 스케줄러를 시작합니다.");
 
