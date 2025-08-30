@@ -12,6 +12,12 @@ export default defineConfig({
   resolve: {
     alias: { "@": path.resolve(__dirname, "./src") },
   },
+  define: {
+    global: 'globalThis',
+  },
+  optimizeDeps: {
+    include: ['@stomp/stompjs'],
+  },
   server: {
     port: 5174,
     strictPort: true,

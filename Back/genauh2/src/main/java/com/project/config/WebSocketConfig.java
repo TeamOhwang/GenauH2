@@ -2,22 +2,13 @@ package com.project.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
-import org.springframework.web.socket.config.annotation.EnableWebSocket;
+import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
-import lombok.RequiredArgsConstructor;
-
-
 @Configuration
-@EnableWebSocket
-@RequiredArgsConstructor
-public class WebSocketConfig implements WebSocketMessageBrokerConfigurer{
-
-    @Override
-    public void registerStompEndpoints(StompEndpointRegistry registry){
-        registry.addEndpoint("/ws").setAllowedOriginPatterns("*").withSockJS();
-    }
+@EnableWebSocketMessageBroker
+public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
@@ -25,4 +16,11 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer{
         registry.setApplicationDestinationPrefixes("/app");
     }
     
+    @Override
+    public void registerStompEndpoints(StompEndpointRegistry registry) {
+        // SockJS와 네이티브 WebSocket 모두 지원
+        registry.addEndpoint("/ws")
+            .setAllowedOriginPatterns("*") // 개발 중에는 모든 origin 허용
+            .withSockJS(); // SockJS fallback 지원
+    }
 }

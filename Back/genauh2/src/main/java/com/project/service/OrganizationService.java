@@ -1,22 +1,22 @@
 package com.project.service;
 
-import com.project.dto.OrganizationDTO;
-import com.project.entity.Facility;
-import com.project.entity.Organization;
-import com.project.repository.OrganizationRepository;
-import com.project.dto.FacilityRequestDTO;
-import com.project.dto.NotificationSettingsDTO; // 알림설정 추가
-
-import org.springframework.transaction.annotation.Transactional; // 추가
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired; // 알림설정 추가
+import org.springframework.security.crypto.password.PasswordEncoder; // 추가
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.project.dto.FacilityRequestDTO;
+import com.project.dto.NotificationSettingsDTO;
+import com.project.dto.OrganizationDTO;
+import com.project.entity.Facility;
+import com.project.entity.Organization;
+import com.project.repository.OrganizationRepository;
 
 @Service
 public class OrganizationService {
@@ -29,6 +29,9 @@ public class OrganizationService {
     
     @Autowired
     private FacilityService facilityService;
+    
+    @Autowired
+    private WebSocketNotificationService webSocketNotificationService;
 
     // 사용자 로그인 (ACTIVE 상태만 로그인 가능)
     public OrganizationDTO login(String email, String password) {
@@ -149,7 +152,17 @@ public class OrganizationService {
                 facilityService.saveFacility(facility);
             }
         }
-        return convertToDTO(saved);
+        
+        // 웹소켓으로 관리자에게 새로운 회원가입 알림 전송
+        OrganizationDTO savedDTO = convertToDTO(saved);
+        webSocketNotificationService.notifyNewRegistration(savedDTO);
+        
+        // 관리자에게 통계 업데이트 전송
+        int pendingCount = getInvitedUsers().size();
+        int totalUsers = getAllUsers().size();
+        webSocketNotificationService.notifyAdminStats(pendingCount, totalUsers);
+        
+        return savedDTO;
     }
 
     // 관리자용 조직 및 사용자 생성 (ACTIVE 상태로 즉시 생성)
