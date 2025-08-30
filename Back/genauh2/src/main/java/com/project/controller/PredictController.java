@@ -123,8 +123,12 @@ public class PredictController {
     @GetMapping("/{orgId}/kpis")
     public Page<FacilityKpiDto> getFacilityKpis(
             @PathVariable Long orgId,
-            @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
-            @RequestParam("end") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
+            @RequestParam("start") 
+            @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss") LocalDateTime start,
+
+            @RequestParam("end") 
+            @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss") LocalDateTime end,
+
             @PageableDefault(size = 20, sort = "ts", direction = Sort.Direction.ASC) Pageable pageable
     ) {
         System.out.println("컨트롤러에 들어온 orgId = " + orgId);

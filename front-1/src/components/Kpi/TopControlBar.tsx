@@ -7,7 +7,7 @@ type Props = {
 export default function TopControlBar({ onDateSelect }: Props) {
   const [selected, setSelected] = useState<number | null>(null);
   const [customDate, setCustomDate] = useState("");
-  const [currentMonth, setCurrentMonth] = useState(new Date()); // ✅ 현재 월 상태 관리
+  const [currentMonth, setCurrentMonth] = useState(new Date()); //  현재 월 상태 관리
 
   // 이번 달의 실제 일 수 계산
   const daysInMonth = new Date(

@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useFacilitiesByOrg } from "@/hooks/useFacilitiesByOrg";
 import { useAuthStore } from "@/stores/useAuthStore";
+
 import TopControlBar from "@/components/Kpi/TopControlBar";
 import KpiCard from "@/components/Kpi/KpiCard";
 import FacilityLineChart from "@/components/Kpi/FacilityLineChart";
@@ -9,23 +10,47 @@ import FacilityTable from "@/components/Kpi/FacilityTable";
 export default function FacilityDashboard() {
   const orgId = useAuthStore((s) => s.orgId);
 
-  const [start, setStart] = useState<string>("");
-  const [end, setEnd] = useState<string>("");
-  const [selectedDay, setSelectedDay] = useState<string>("");
+  const [start, setStart] = useState("");
+  const [end, setEnd] = useState("");
+  const [selectedDay, setSelectedDay] = useState("");
 
-  const [page, setPage] = useState(0);
-  const size = 500; // 하루 데이터 충분히 커버 가능
-
-  const { data, totalPages, loading, error } = useFacilitiesByOrg(
+  const { data, loading, error } = useFacilitiesByOrg(
     orgId ?? 0,
     start || undefined,
     end || undefined,
-    page,
-    size
+    0,
+    500
   );
 
-  const totalProduction = data.reduce((sum, d) => sum + (d.productionKg || 0), 0);
-  const totalPredicted = data.reduce((sum, d) => sum + (d.predictedMaxKg ?? 50), 0);
+  // hover 상태
+  const [hoverProd, setHoverProd] = useState<number | null>(null);
+  const [hoverPred, setHoverPred] = useState<number | null>(null);
+
+
+  
+
+  //  테이블용 skeleton 데이터
+  const mappedData = useMemo(() => {
+    if (!selectedDay) return [];
+    const hours = Array.from({ length: 24 }, (_, i) => i);
+
+    return hours.map((h) => {
+      const point = data.find((d) => new Date(d.ts).getHours() === h);
+      return {
+        ts: `${selectedDay}T${String(h).padStart(2, "0")}:00:00`,
+        facilityName: point?.facilityName ?? "-",
+        productionKg: (point?.productionKg ?? 0) * 10.1,
+        predictedMaxKg: point?.predictedMaxKg ?? 0,
+        orgId: point?.orgId ?? 0,   
+        facId: point?.facId ?? 0,   
+      };
+    });
+  }, [data, selectedDay]);
+
+  // 합계 (테이블 기준으로 계산)
+  const totalProduction = mappedData.reduce((sum, d) => sum + d.productionKg, 0);
+  const totalPredicted = mappedData.reduce((sum, d) => sum + d.predictedMaxKg, 0);
+
   if (!orgId) {
     return (
       <div className="flex items-center justify-center min-h-screen text-red-400 text-lg">
@@ -34,61 +59,72 @@ export default function FacilityDashboard() {
     );
   }
 
-  return (
-    <div className="flex bg-slate-900 text-white min-h-screen">
-      {/* 왼쪽: KPI + 차트 */}
-      <div className="w-2/3 flex flex-col p-6 space-y-6">
-        {/* 날짜 버튼 */}
-        <TopControlBar
-          onDateSelect={(s, e, day) => {
-            setStart(s);
-            setEnd(e);
-            setSelectedDay(day);
-            setPage(0);
-          }}
-        />
+return (
+  <div className="flex bg-slate-900 text-white min-h-screen">
+    {/* 왼쪽: KPI + 차트 */}
+    <div className="flex flex-col w-2/3 p-6 space-y-6">
+      <TopControlBar
+        onDateSelect={(s, e, day) => {
+          setStart(s);
+          setEnd(e);
+          setSelectedDay(day);
+        }}
+      />
 
-        {loading && <div className="text-gray-400 text-center mt-10">📡 데이터 불러오는 중...</div>}
-        {error && <div className="text-red-500 text-center mt-10">⚠ {error}</div>}
+      {loading && (
+        <div className="text-gray-400 text-center mt-10">
+          📡 데이터 불러오는 중...
+        </div>
+      )}
+      {error && (
+        <div className="text-red-500 text-center mt-10">⚠ {error}</div>
+      )}
 
-        {!loading && !error && (
-          <>
-            {/* KPI 카드 */}
-            <div className="grid grid-cols-2 gap-4">
-              <KpiCard title={`${selectedDay} 총 최대 예측량`} value={totalPredicted} unit="kg" />
-              <KpiCard title={`${selectedDay} 총 실제 생산량`} value={totalProduction} unit="kg" />
-            </div>
+      {/* 날짜 선택 전 안내 문구 */}
+      {!loading && !error && !selectedDay && (
+        <div className="flex-1 flex items-center justify-center text-gray-400 text-lg">
+          📅 날짜를 클릭해주세요.
+        </div>
+      )}
 
-            {/* 차트 */}
-            <div className="bg-slate-800 p-4 rounded-xl flex-1">
-              {data.length > 0 ? (
-                <FacilityLineChart data={data} />
-              ) : (
-                <div className="text-gray-400 text-center py-20">
-                  표시할 데이터가 없습니다.
-                </div>
-              )}
-            </div>
-          </>
-        )}
-      </div>
+      {/* 날짜 선택 후 데이터 렌더링 */}
+      {!loading && !error && selectedDay && (
+        <>
+          {/* KPI 카드 */}
+          <div className="grid grid-cols-2 gap-4">
+            <KpiCard
+              title={`${selectedDay} 최대 예측량`}
+              value={hoverPred !== null ? hoverPred : totalPredicted}
+              unit="kg"
+            />
+            <KpiCard
+              title={`${selectedDay} 실제 생산량`}
+              value={hoverProd !== null ? hoverProd : totalProduction}
+              unit="kg"
+            />
+          </div>
 
-      {/* 오른쪽: 테이블 */}
-      <div className="w-1/3 bg-slate-800 p-4 flex flex-col">
-        <FacilityTable
-          orgId={orgId}
-          data={data}
-          page={page}
-          setPage={setPage}
-          totalPages={totalPages}
-          start={start}
-          end={end}
-        />
-      </div>
+          {/*  차트 높이 = 테이블 높이와 자동 맞춤 */}
+         <div className="bg-slate-800 p-4 rounded-xl flex-1">
+            <FacilityLineChart 
+              data={data}
+              selectedDay={selectedDay}
+              onHover={(prod, pred) => {
+                setHoverProd(prod);
+                setHoverPred(pred);
+              }}
+            />
+          </div>
+        </>
+      )}
     </div>
 
-    
-  );
-
-  
+    {/* 오른쪽: 테이블 */}
+    <div className="w-1/3 bg-slate-800 p-4 flex flex-col">
+      <div className="flex-1">
+        <FacilityTable data={mappedData} start={start} end={end} />
+      </div>
+    </div>
+  </div>
+);
 }

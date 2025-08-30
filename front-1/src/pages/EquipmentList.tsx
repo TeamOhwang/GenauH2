@@ -1,24 +1,44 @@
-// src/pages/FacilityDashboard.tsx
-import { useFacilitiesByOrg } from "@/hooks/useFacilitiesByOrg";
-import FacilityCard from "@/components/FacilityCard";
+import { useState } from "react";
+import Sidebar from "@/components/model/ThreeDBar";
+import Facility3D from "@/components/model/ThreeDFacility";
+import DailyChart from "@/components/model/DailyChart";
+import HourlyTable from "@/components/model/ThreeDTable";
+import { useFacilityDashboard } from "@/hooks/threeDModel";
+import { useAuthStore } from "@/stores/useAuthStore"; // ✅ orgId 가져오기
 
-export default function EquipmentList() {
-  const orgId = 1; // TODO: 로그인 후 orgId 연동
-  const { data, loading, error } = useFacilitiesByOrg(orgId);
+export default function Dashboard() {
+  const orgId = useAuthStore((s) => s.orgId);          // ✅ 로그인된 사용자 orgId
+  const [selected, setSelected] = useState<number | null>(null); // facId
 
-  if (loading) return <p className="p-4">불러오는 중...</p>;
-  if (error) return <p className="p-4 text-red-500">{error}</p>;
+  const facilities = [
+    { id: 1, name: "광명 설비" },
+    { id: 2, name: "벽석 설비" },
+    { id: 3, name: "화성 설비" },
+  ];
+
+  // ✅ orgId + facId 넘겨줌
+  const { daily, hourly, loading } = useFacilityDashboard(orgId, selected);
 
   return (
-    <div className="p-6 bg-gray-900 min-h-screen text-white">
-      <h1 className="text-2xl font-bold mb-6">설비 대시보드</h1>
+    <div className="flex h-screen">
+      <Sidebar facilities={facilities} onSelect={setSelected} />
 
-      {/* 카드 그리드 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-        {data.map((f, idx) => (
-          <FacilityCard key={`${f.facId}-${idx}`} facility={f} index={idx + 1} />
-        ))}
-      </div>
+      <main className="flex-1 bg-slate-100 p-6 grid grid-cols-3 gap-6">
+        <section className="col-span-2 space-y-4">
+          {selected ? (
+            <>
+              <Facility3D modelUrl="/models/facility.glb" />
+              <DailyChart data={daily} />
+            </>
+          ) : (
+            <p className="text-gray-500">설비를 선택해주세요</p>
+          )}
+        </section>
+
+        <section className="col-span-1">
+          {loading ? <p>로딩 중...</p> : <HourlyTable data={hourly} />}
+        </section>
+      </main>
     </div>
   );
 }

@@ -2,10 +2,22 @@ import { saveAs } from "file-saver";
 import type { FacilityKpi } from "@/api/facilityApi";
 import { exportFacilitiesToExcel } from "@/components/Kpi/exportUtils";
 
-export default function ExportExcelButton({ data }: { data: FacilityKpi[] }) {
+export default function ExportExcelButton({
+  data,
+  start,
+  end,
+}: {
+  data: FacilityKpi[];
+  start?: string;
+  end?: string;
+}) {
   const handleExport = () => {
     const buf = exportFacilitiesToExcel(data);
-    saveAs(new Blob([buf]), "facilities.xlsx");
+    const fileName =
+      start && end
+        ? `facilities_${start.slice(0, 10)}_${end.slice(0, 10)}.xlsx`
+        : "facilities.xlsx";
+    saveAs(new Blob([buf]), fileName);
   };
 
   return (
