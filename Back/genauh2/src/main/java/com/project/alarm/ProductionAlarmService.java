@@ -28,7 +28,7 @@ public class ProductionAlarmService {
     private final SmsService smsService;
     private final EmailService emailService;
     private final DedupGuard dedupGuard; // 중복 발송 방지를 위해 추가
-
+    private final AlarmsRepository alarmsRepository;
     /**
      * 매 분마다 실행하여 수소 생산량이 0인지 확인하고 SMS + 이메일 알림을 보냅니다.
      * cron = "0 * * * * *" (매분 0초)
@@ -110,6 +110,19 @@ public class ProductionAlarmService {
             
             // 이메일 발송
             sendEmailToUser(user, production, occurredAt);
+        }
+        try {
+            Alarms alarm = new Alarms();
+            alarm.setFacilityId(production.getFacid()); 
+            alarm.setAlarmType(Alarms.AlarmType.LOW_PRODUCTION);
+            alarm.setSeverity(Alarms.Severity.CRITICAL);
+            alarm.setReason(String.format("[%s] 설비 ID %d의 수소 생산량 0 감지 - %s", 
+                                        occurredAt, production.getFacid(), occurredAt));
+            
+            alarmsRepository.save(alarm);
+            log.info("알람 DB 저장 완료 - 설비 ID: {}", production.getFacid());
+        } catch (Exception e) {
+            log.error("알람 DB 저장 실패", e);
         }
     }
 
