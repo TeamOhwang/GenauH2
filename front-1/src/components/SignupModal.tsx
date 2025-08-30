@@ -104,6 +104,12 @@ export default function SignupModal({ onClose }: Props) {
       return;
     }
 
+    // 전화번호 필수 체크
+    if (!userInfo.phoneNum || userInfo.phoneNum.trim() === "") {
+      alert("전화번호를 입력해주세요.");
+      return;
+    }
+
     // 사업자 인증 체크
     if (!bizVerified) {
       alert("사업자등록번호 확인 후 진행해주세요.");
@@ -166,6 +172,16 @@ export default function SignupModal({ onClose }: Props) {
                   setUserInfo({ ...userInfo, ownerName: e.target.value })
                 }
                 className="border rounded px-3 py-2"
+              />
+              <input
+                type="tel"
+                placeholder="전화번호 (예: 01012345678)"
+                value={userInfo.phoneNum}
+                onChange={(e) =>
+                  setUserInfo({ ...userInfo, phoneNum: e.target.value })
+                }
+                className="border rounded px-3 py-2"
+                required
               />
               <div className="flex gap-2">
                 <input
