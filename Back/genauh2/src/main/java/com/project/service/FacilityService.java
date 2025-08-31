@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.project.entity.ActivityLog;
 import com.project.entity.Facility;
 import com.project.repository.FacilityRepository;
 
@@ -14,8 +15,27 @@ public class FacilityService {
     @Autowired
     private FacilityRepository facilityRepository;
     
-    public Facility saveFacility(Facility facility) {
-        return facilityRepository.save(facility);
+    @Autowired
+    private ActivityLogService activityLogService;
+    
+    public Facility saveFacility(Facility facility, jakarta.servlet.http.HttpServletRequest request) {
+        Facility savedFacility = facilityRepository.save(facility);
+        
+        // 설비 추가 활동 로그 생성
+        try {
+            activityLogService.createUserActivityLog(
+                ActivityLog.ActivityType.FACILITY_ADD,
+                facility.getOrgId(),
+                "USER", // 사용자 이름은 별도로 전달받아야 함
+                "USER", // 사용자 역할은 별도로 전달받아야 함
+                "새로운 설비 추가: " + facility.getName(),
+                request
+            );
+        } catch (Exception e) {
+            // 로그 생성 실패는 설비 저장에 영향을 주지 않도록 함
+        }
+        
+        return savedFacility;
     }
     
     public List<Facility> getAllFacilities() {
@@ -31,7 +51,7 @@ public class FacilityService {
                 .orElseThrow(() -> new RuntimeException("ID " + facilityId + "에 해당하는 설비를 찾을 수 없습니다."));
     }
     
-    public Facility updateFacility(Long facilityId, Facility facilityDetails) {
+    public Facility updateFacility(Long facilityId, Facility facilityDetails, jakarta.servlet.http.HttpServletRequest request) {
         Facility existingFacility = facilityRepository.findById(facilityId)
                 .orElseThrow(() -> new RuntimeException("ID " + facilityId + "에 해당하는 설비를 찾을 수 없습니다."));
         
@@ -72,13 +92,43 @@ public class FacilityService {
             existingFacility.setInstall(facilityDetails.getInstall());
         }
         
-        return facilityRepository.save(existingFacility);
+        Facility updatedFacility = facilityRepository.save(existingFacility);
+        
+        // 설비 수정 활동 로그 생성
+        try {
+            activityLogService.createUserActivityLog(
+                ActivityLog.ActivityType.FACILITY_UPDATE,
+                existingFacility.getOrgId(),
+                "USER", // 사용자 이름은 별도로 전달받아야 함
+                "USER", // 사용자 역할은 별도로 전달받아야 함
+                "설비 수정: " + existingFacility.getName(),
+                request
+            );
+        } catch (Exception e) {
+            // 로그 생성 실패는 설비 수정에 영향을 주지 않도록 함
+        }
+        
+        return updatedFacility;
     }
     
-    public void deleteFacility(Long facilityId) {
-        if (!facilityRepository.existsById(facilityId)) {
-            throw new RuntimeException("ID " + facilityId + "에 해당하는 설비를 찾을 수 없습니다.");
+    public void deleteFacility(Long facilityId, jakarta.servlet.http.HttpServletRequest request) {
+        Facility facility = facilityRepository.findById(facilityId)
+                .orElseThrow(() -> new RuntimeException("ID " + facilityId + "에 해당하는 설비를 찾을 수 없습니다."));
+        
+        // 설비 삭제 활동 로그 생성
+        try {
+            activityLogService.createUserActivityLog(
+                ActivityLog.ActivityType.FACILITY_DELETE,
+                facility.getOrgId(),
+                "USER", // 사용자 이름은 별도로 전달받아야 함
+                "USER", // 사용자 역할은 별도로 전달받아야 함
+                "설비 삭제: " + facility.getName(),
+                request
+            );
+        } catch (Exception e) {
+            // 로그 생성 실패는 설비 삭제에 영향을 주지 않도록 함
         }
+        
         facilityRepository.deleteById(facilityId);
     }
 }

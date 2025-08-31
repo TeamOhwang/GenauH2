@@ -45,16 +45,214 @@ let globalStats: StatsPayload | null = null;
 let globalIsConnected = false;
 const listeners: Set<() => void> = new Set();
 
+// 전역 WebSocket 클라이언트 관리
+let globalClient: Client | null = null;
+let isConnecting = false;
+
 // 전역 상태 업데이트 함수
 const updateGlobalState = () => {
     listeners.forEach(listener => listener());
 };
 
+// 전역 WebSocket 연결 관리
+class WebSocketManager {
+    private static instance: WebSocketManager;
+    private reconnectAttempts = 0;
+    private maxReconnectAttempts = 5;
+    private reconnectDelay = 5000;
+
+    static getInstance(): WebSocketManager {
+        if (!WebSocketManager.instance) {
+            WebSocketManager.instance = new WebSocketManager();
+        }
+        return WebSocketManager.instance;
+    }
+
+    async connect(): Promise<void> {
+        if (globalClient?.connected || isConnecting) {
+            console.log('WebSocket 이미 연결됨 또는 연결 중');
+            return;
+        }
+
+        isConnecting = true;
+        try {
+            await loadSockJS();
+            
+            const sockUrl = `/gh/ws`;
+            console.log('전역 WebSocket 연결 시도:', sockUrl);
+
+            const client = new Client({
+                webSocketFactory: () => {
+                    const sock = new SockJS(sockUrl);
+                    
+                    sock.onopen = () => {
+                        console.log('SockJS 연결 성공');
+                    };
+                    
+                    sock.onerror = (error: Event) => {
+                        console.error('SockJS 연결 오류:', error);
+                    };
+                    
+                    sock.onclose = (event: CloseEvent) => {
+                        console.log('SockJS 연결 종료:', event.code, event.reason);
+                        this.handleDisconnect();
+                    };
+                    
+                    return sock;
+                },
+                debug: (str) => {
+                    console.log('STOMP Debug:', str);
+                },
+                reconnectDelay: 0, // 자동 재연결 비활성화 (수동으로 관리)
+                heartbeatIncoming: 4000,
+                heartbeatOutgoing: 4000,
+                connectionTimeout: 10000,
+            });
+
+            client.onConnect = () => {
+                console.log('전역 STOMP 연결 성공');
+                globalIsConnected = true;
+                globalClient = client;
+                this.reconnectAttempts = 0;
+                isConnecting = false;
+                updateGlobalState();
+
+                // 관리자 알림 구독
+                client.subscribe('/topic/admin/notifications', (message) => {
+                    try {
+                        const notification: NotificationPayload = JSON.parse(message.body);
+                        globalNotifications = [notification, ...globalNotifications].slice(0, 50);
+                        console.log('새로운 알림 수신:', notification);
+                        updateGlobalState();
+                    } catch (error) {
+                        console.error('알림 파싱 오류:', error);
+                    }
+                });
+
+                // 관리자 통계 구독
+                client.subscribe('/topic/admin/stats', (message) => {
+                    try {
+                        const statsData: StatsPayload = JSON.parse(message.body);
+                        globalStats = statsData;
+                        console.log('통계 업데이트 수신:', statsData);
+                        updateGlobalState();
+                    } catch (error) {
+                        console.error('통계 파싱 오류:', error);
+                    }
+                });
+
+                // 연결 성공 후 테스트 메시지 전송
+                setTimeout(() => {
+                    try {
+                        client.publish({
+                            destination: '/app/test',
+                            body: JSON.stringify({ message: '전역 클라이언트 연결 테스트' })
+                        });
+                        console.log('테스트 메시지 전송 완료');
+                    } catch (error) {
+                        console.error('테스트 메시지 전송 실패:', error);
+                    }
+                }, 1000);
+            };
+
+            client.onDisconnect = () => {
+                console.log('전역 STOMP 연결 해제');
+                globalIsConnected = false;
+                globalClient = null;
+                updateGlobalState();
+            };
+
+            client.onStompError = (frame) => {
+                console.error('전역 STOMP 오류:', frame);
+                globalIsConnected = false;
+                globalClient = null;
+                isConnecting = false;
+                updateGlobalState();
+                this.scheduleReconnect();
+            };
+
+            client.onWebSocketError = (error) => {
+                console.error('전역 WebSocket 연결 오류:', error);
+                globalIsConnected = false;
+                globalClient = null;
+                isConnecting = false;
+                updateGlobalState();
+                this.scheduleReconnect();
+            };
+
+            try {
+                client.activate();
+            } catch (error) {
+                console.error('전역 WebSocket 클라이언트 활성화 실패:', error);
+                isConnecting = false;
+                this.scheduleReconnect();
+            }
+        } catch (error) {
+            console.error('전역 SockJS 모듈 로드 실패:', error);
+            isConnecting = false;
+            this.scheduleReconnect();
+        }
+    }
+
+    private handleDisconnect() {
+        globalIsConnected = false;
+        globalClient = null;
+        updateGlobalState();
+        
+        // 자동 재연결 시도
+        if (this.reconnectAttempts < this.maxReconnectAttempts) {
+            this.scheduleReconnect();
+        } else {
+            console.log('최대 재연결 시도 횟수 초과');
+        }
+    }
+
+    private scheduleReconnect() {
+        if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+            console.log('재연결 시도 중단');
+            return;
+        }
+
+        this.reconnectAttempts++;
+        const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1); // 지수 백오프
+        
+        console.log(`${delay}ms 후 재연결 시도 (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+        
+        setTimeout(() => {
+            if (!globalIsConnected && !isConnecting) {
+                this.connect();
+            }
+        }, delay);
+    }
+
+    disconnect() {
+        if (globalClient) {
+            globalClient.deactivate();
+            globalClient = null;
+        }
+        globalIsConnected = false;
+        isConnecting = false;
+        this.reconnectAttempts = 0;
+        updateGlobalState();
+    }
+
+    getClient(): Client | null {
+        return globalClient;
+    }
+
+    isConnected(): boolean {
+        return globalIsConnected;
+    }
+}
+
+// 전역 WebSocket 매니저 인스턴스
+const wsManager = WebSocketManager.getInstance();
+
 export function useWebSocket() {
     const [isConnected, setIsConnected] = useState(globalIsConnected);
     const [notifications, setNotifications] = useState<NotificationPayload[]>(globalNotifications);
     const [stats, setStats] = useState<StatsPayload | null>(globalStats);
-    const clientRef = useRef<Client | null>(null);
+    const isInitialized = useRef(false);
 
     // 전역 상태 동기화
     useEffect(() => {
@@ -72,148 +270,24 @@ export function useWebSocket() {
         };
     }, []);
 
-    const connect = useCallback(async () => {
-        if (clientRef.current?.connected) return;
-
-        try {
-            // SockJS 모듈 로드
-            await loadSockJS();
-            
-            // SockJS를 사용한 WebSocket 연결 - /gh 컨텍스트 경로 포함
-            const sockUrl = `/gh/ws`; // /gh 경로 포함
-            console.log('SockJS WebSocket 연결 시도 (/gh 포함):', sockUrl);
-
-            const client = new Client({
-                webSocketFactory: () => {
-                    const sock = new SockJS(sockUrl);
-                    
-                    sock.onopen = () => {
-                        console.log('SockJS 연결 성공 (/gh 포함)');
-                    };
-                    
-                    sock.onerror = (error: Event) => {
-                        console.error('SockJS 연결 오류 (/gh 포함):', error);
-                    };
-                    
-                    sock.onclose = (event: CloseEvent) => {
-                        console.log('SockJS 연결 종료 (/gh 포함):', event.code, event.reason);
-                    };
-                    
-                    return sock;
-                },
-                debug: (str) => {
-                    console.log('STOMP Debug:', str);
-                },
-                reconnectDelay: 5000,
-                heartbeatIncoming: 4000,
-                heartbeatOutgoing: 4000,
-                connectionTimeout: 10000, // 연결 타임아웃 10초
-            });
-
-            client.onConnect = () => {
-                console.log('STOMP 연결 성공');
-                globalIsConnected = true;
-                setIsConnected(true);
-
-                // 관리자 알림 구독
-                client.subscribe('/topic/admin/notifications', (message) => {
-                    try {
-                        const notification: NotificationPayload = JSON.parse(message.body);
-                        globalNotifications = [notification, ...globalNotifications].slice(0, 50); // 최근 50개만 유지
-                        setNotifications(globalNotifications);
-                        console.log('새로운 알림 수신:', notification);
-                        
-                        // 전역 상태 업데이트 알림
-                        updateGlobalState();
-                    } catch (error) {
-                        console.error('알림 파싱 오류:', error);
-                    }
-                });
-
-                // 관리자 통계 구독
-                client.subscribe('/topic/admin/stats', (message) => {
-                    try {
-                        const statsData: StatsPayload = JSON.parse(message.body);
-                        globalStats = statsData;
-                        setStats(statsData);
-                        console.log('통계 업데이트 수신:', statsData);
-                        
-                        // 전역 상태 업데이트 알림
-                        updateGlobalState();
-                    } catch (error) {
-                        console.error('통계 파싱 오류:', error);
-                    }
-                });
-
-                // 연결 성공 후 테스트 메시지 전송
-                setTimeout(() => {
-                    try {
-                        client.publish({
-                            destination: '/app/test',
-                            body: JSON.stringify({ message: '클라이언트 연결 테스트' })
-                        });
-                        console.log('테스트 메시지 전송 완료');
-                    } catch (error) {
-                        console.error('테스트 메시지 전송 실패:', error);
-                    }
-                }, 1000);
-            };
-
-            client.onDisconnect = () => {
-                console.log('STOMP 연결 해제');
-                globalIsConnected = false;
-                setIsConnected(false);
-                updateGlobalState();
-            };
-
-            client.onStompError = (frame) => {
-                console.error('STOMP 오류:', frame);
-                globalIsConnected = false;
-                setIsConnected(false);
-                updateGlobalState();
-            };
-
-            client.onWebSocketError = (error) => {
-                console.error('WebSocket 연결 오류:', error);
-                globalIsConnected = false;
-                setIsConnected(false);
-                updateGlobalState();
-                
-                // 연결 실패 시 10초 후 재시도
-                setTimeout(() => {
-                    if (!clientRef.current?.connected) {
-                        console.log('WebSocket 재연결 시도...');
-                        connect();
-                    }
-                }, 10000);
-            };
-
-            try {
-                client.activate();
-                clientRef.current = client;
-            } catch (error) {
-                console.error('WebSocket 클라이언트 활성화 실패:', error);
+    // 컴포넌트 마운트 시 한 번만 연결 시도
+    useEffect(() => {
+        if (!isInitialized.current) {
+            isInitialized.current = true;
+            if (!globalIsConnected && !isConnecting) {
+                wsManager.connect();
             }
-        } catch (error) {
-            console.error('SockJS 모듈 로드 실패:', error);
-            // 연결 실패 시 10초 후 재시도
-            setTimeout(() => {
-                if (!clientRef.current?.connected) {
-                    console.log('SockJS 로드 실패 후 재시도...');
-                    connect();
-                }
-            }, 10000);
+        }
+    }, []);
+
+    const connect = useCallback(async () => {
+        if (!globalIsConnected && !isConnecting) {
+            await wsManager.connect();
         }
     }, []);
 
     const disconnect = useCallback(() => {
-        if (clientRef.current) {
-            clientRef.current.deactivate();
-            clientRef.current = null;
-            globalIsConnected = false;
-            setIsConnected(false);
-            updateGlobalState();
-        }
+        wsManager.disconnect();
     }, []);
 
     const clearNotifications = useCallback(() => {
@@ -228,14 +302,6 @@ export function useWebSocket() {
         updateGlobalState();
     }, []);
 
-    useEffect(() => {
-        connect();
-
-        return () => {
-            disconnect();
-        };
-    }, [connect, disconnect]);
-
     return {
         isConnected,
         notifications,
@@ -245,4 +311,11 @@ export function useWebSocket() {
         connect,
         disconnect,
     };
+}
+
+// 앱 종료 시 정리
+if (typeof window !== 'undefined') {
+    window.addEventListener('beforeunload', () => {
+        wsManager.disconnect();
+    });
 }

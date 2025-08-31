@@ -22,20 +22,35 @@ export default defineConfig({
     port: 5174,
     strictPort: true,
     proxy: {
-      // WebSocket 연결을 위한 유일한 프록시 규칙입니다.
-      // SockJS의 초기 요청(/ws/info 등)과 실제 WebSocket 핸드셰이크를 모두 처리합니다.
-      "/ws": {
+      // 1. SockJS 관련 모든 경로를 먼저 처리 (WebSocket + JSONP + 폴백)
+      // 프론트엔드에서 /gh/ws 로 시작하는 모든 요청을 -> 백엔드의 http://localhost:8088/gh/ws 로 프록시
+      "/gh/ws": {
         target: "http://localhost:8088",
         changeOrigin: true,
         secure: false,
         ws: true, // WebSocket 프록시 활성화
+        configure: (proxy, options) => {
+          // SockJS의 JSONP 폴백 요청도 처리
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            console.log('SockJS 프록시 요청:', req.method, req.url);
+          });
+        },
       },
+      // 2. WebSocket 관련 REST API 경로 처리 (컨텍스트 경로 /gh 포함)
+      // 프론트엔드에서 /gh/api/websocket 로 요청하면 -> 백엔드의 http://localhost:8088/gh/api/websocket 로 프록시
+      "/gh/api/websocket": {
+        target: "http://localhost:8088",
+        changeOrigin: true,
+        secure: false,
+      },
+      // 3. 일반 API 요청 (컨텍스트 경로 /gh 포함)
+      // 프론트엔드에서 /gh 로 시작하는 다른 요청들을 -> 백엔드의 http://localhost:8088/gh 로 프록시
       "/gh": {
         target: "http://localhost:8088",
         changeOrigin: true,
         secure: false,
       },
-      // 공공데이터포털 API 프록시
+      // 4. 공공데이터포털 API 프록시
       "/cloud": {
         target: "https://api.odcloud.kr",
         changeOrigin: true,

@@ -205,12 +205,12 @@ export default function Admin() {
           <p className="text-2xl font-bold">관리자 페이지</p>
           
           {/* WebSocket 테스트 링크 */}
-          <Link 
+          {/* <Link 
             to={PATHS.websocketTest}
             className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-md transition-colors"
           >
             WebSocket 테스트
-          </Link>
+          </Link> */}
         </div>
         
         {/* 알림 로그 링크 추가 */}
