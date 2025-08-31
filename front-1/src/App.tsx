@@ -1,22 +1,27 @@
-// src/App.tsx
+
+// App.tsx (앱에서 인증 상태 확인)
 import { useEffect } from "react";
 import { useAuthStore } from "@/stores/useAuthStore";
 import AppRoutes from "@/routes/AppRoutes";
 
-function Splash() {
-  return <div>로딩중...</div>;
-}
+const Splash = () => <div>로딩중...</div>;
 
 export default function App() {
   const init = useAuthStore((s) => s.init);
   const isInit = useAuthStore((s) => s.isInit);
 
   useEffect(() => {
-    (async () => {
+    const initializeAuth = async () => {
+      console.log("초기화 시작");
       await init();
-    })();
-  }, [init]);
+      console.log("초기화 완료");
+    };
 
-  if (!isInit) return <Splash />; 
-  return <AppRoutes />;
+    if (!isInit) {
+      initializeAuth();
+    }
+  }, [isInit, init]);
+
+  if (!isInit) return <Splash />;
+  return <AppRoutes />; // 초기화 완료 후 라우팅
 }

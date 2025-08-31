@@ -125,7 +125,19 @@ public class PredictService {
 
         return predictRepository.findByOrgIdWithName(orgId, start, end, pageable);
     }
+    
+    
+    /// 사업자 id 기준으로 등록된 단일설비 필터링, 수소생산량, 최대수소생산량 집계합
+    @Transactional(readOnly = true)
+    public List<FacilityKpiDto> getOneFacilityKpis(Long orgId, LocalDateTime start, LocalDateTime end, List<Long> facId) {
+        return predictRepository.findByOrgIdWithNameAndFacIds(orgId, start, end, facId);
+    }
 }
+    
+    
+
+
+
 
     
     

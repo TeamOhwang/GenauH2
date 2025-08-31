@@ -29,7 +29,8 @@ export const AUTH_ENDPOINTS = {
   allStations: "/api/region-price",
   stationsByRegion: "/api/region-price/by-region",
   predictAll: "/predict/allsumid",
-  facilityKpis: (orgId: number) => `/predict/${orgId}/kpis`, 
+  facilityKpis: (orgId: number) => `/predict/${orgId}/kpis`,
+  oneFacilityKpis: (orgId: number) => `/predict/${orgId}/one`,
 } as const;
 
 /* ======================== 헤더 유틸 함수 ======================== */

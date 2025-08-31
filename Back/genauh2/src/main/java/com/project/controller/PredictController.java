@@ -1,7 +1,10 @@
 package com.project.controller;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -17,6 +20,7 @@ import com.project.service.PredictService;
 import org.springframework.data.domain.Sort;
 import com.project.dto.FacilityKpiDto;
 import com.project.dto.PredictDTO;
+
 
 @RestController
 @RequestMapping("/predict")
@@ -118,8 +122,8 @@ public class PredictController {
     }
     
     
-    
-    ////// 사업자 id 기준 KPI 조회 + 페이지네이션
+
+    /// 사업자 id 기준으로 등록된 설비id 가져오고, 수소생산량, 최대수소생산량 집계합
     @GetMapping("/{orgId}/kpis")
     public Page<FacilityKpiDto> getFacilityKpis(
             @PathVariable Long orgId,
@@ -136,9 +140,20 @@ public class PredictController {
 
         return predictService.getFacilityKpis(orgId, start, end, pageable);
     }
-}
-    
-    
-    
+
+
+
+    /// 사업자 id 기준으로 등록된 단일설비 필터링, 수소생산량, 최대수소생산량 집계합
+    @GetMapping("/{orgId}/one")
+    public List<FacilityKpiDto> getOneFacilityKpis(
+            @PathVariable Long orgId,
+            @RequestParam("start") @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss") LocalDateTime start,
+            @RequestParam("end") @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss") LocalDateTime end,
+            @RequestParam("facId") List<Long> facId) {
+
+        // 서비스 호출해서 데이터 조회
+        return predictService.getOneFacilityKpis(orgId, start, end, facId);
+    }
+ }
     
      

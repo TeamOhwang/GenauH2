@@ -195,14 +195,52 @@ public interface PredictRepository extends JpaRepository<Predict, String> {
               AND a.ts BETWEEN :start AND :end
             """,
             nativeQuery = true)
-        Page<FacilityKpiDto> findByOrgIdWithName(
+Page<FacilityKpiDto> findByOrgIdWithName(
+    @Param("orgId") Long orgId,
+    @Param("start") LocalDateTime start,
+    @Param("end") LocalDateTime end,
+    Pageable pageable
+);
+    
+    
+    
+    
+    
+  
+  /// 사업자 id 기준으로 등록된  단일 설비 + 예측/실제 생산량 집계합
+    @Query(value = """
+            SELECT a.orgId         AS orgId,
+                   a.facId         AS facId,
+                   f.name          AS facilityName,
+                   a.ts            AS ts,
+                   a.productionKg  AS productionKg,
+                   a.predictedMaxKg AS predictedMaxKg
+            FROM facility_kpi_agg a
+            JOIN facilities f ON a.facId = f.facId
+            WHERE a.orgId = :orgId
+              AND a.ts BETWEEN :start AND :end
+              AND a.facId IN :facId
+            ORDER BY a.ts ASC
+            """,
+            countQuery = """
+            SELECT COUNT(*)
+            FROM facility_kpi_agg a
+            WHERE a.orgId = :orgId
+              AND a.ts BETWEEN :start AND :end
+              AND a.facId IN :facId
+            """,
+            nativeQuery = true)
+    List<FacilityKpiDto> findByOrgIdWithNameAndFacIds(
             @Param("orgId") Long orgId,
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end,
-            Pageable pageable
-        );
-    
+            @Param("facId") List<Long> facId
+    );
 
+    
+    
+    
+    
    /**
          * 특정 날짜의 모든 실제 유휴 전력량 데이터를 타임스탬프와 함께 조회합니다.
          * * @param date 조회할 날짜 (YYYY-MM-DD 형식)
@@ -210,5 +248,7 @@ public interface PredictRepository extends JpaRepository<Predict, String> {
          */
         @Query(value = "SELECT ts, idlepowerkw FROM production_real WHERE DATE(ts) = :date ORDER BY ts ASC", nativeQuery = true)
         List<Object[]> findIdlePowerByDate(@Param("date") String date);
+
+
 
 }
