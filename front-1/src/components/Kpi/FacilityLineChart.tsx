@@ -16,31 +16,41 @@ export default function FacilityLineChart({
   onHover?: (prod: number | null, pred: number | null, ts?: string) => void;
   selectedDay?: string; // YYYY-MM-DD
 }) {
-  //  0~23시 skeleton
+  // 0~23시 skeleton
   const hours = Array.from({ length: 24 }, (_, i) => i);
 
-  //  skeleton 데이터 (해당 시각에 매칭되는 값 있으면 채움)
+  //  모든 설비의 시간별 합산 데이터 생성
   const mappedData = hours.map((h) => {
-    const point = data.find((d) => new Date(d.ts).getHours() === h);
+    const hourData = data.filter((d) => new Date(d.ts).getHours() === h);
+
+    const productionSum = hourData.reduce(
+      (sum, d) => sum + (d.productionKg ?? 0),
+      0
+    );
+    const predictedSum = hourData.reduce(
+      (sum, d) => sum + (d.predictedMaxKg ?? 0),
+      0
+    );
+
     return {
       ts: `${selectedDay}T${String(h).padStart(2, "0")}:00:00`,
-      productionKg: point?.productionKg ?? 0,
-      predictedMaxKg: point?.predictedMaxKg ?? 0,
+      productionKg: productionSum,
+      predictedMaxKg: predictedSum,
     };
   });
 
   const chartRef = useRef<any>(null);
 
   return (
-     <div className="flex-1 flex flex-col">
+    <div className="flex-1 flex flex-col">
       <Line
         ref={chartRef}
         data={{
-          labels: hours.map((h) => `${h}시`), 
+          labels: hours.map((h) => `${h}시`),
           datasets: [
             {
               label: "실제 생산량 (kg)",
-              data: mappedData.map((d) => d.productionKg *10.1),
+              data: mappedData.map((d) => d.productionKg),
               borderColor: "#36A2EB",
               borderWidth: 2,
               pointRadius: 2,
@@ -50,7 +60,7 @@ export default function FacilityLineChart({
             },
             {
               label: "최대 예측량 (kg)",
-              data: mappedData.map((d) => d.predictedMaxKg ),
+              data: mappedData.map((d) => d.predictedMaxKg),
               borderColor: "#FF6384",
               borderWidth: 2,
               pointRadius: 2,
@@ -63,9 +73,7 @@ export default function FacilityLineChart({
         options={{
           responsive: true,
           maintainAspectRatio: false,
-          layout: {
-            padding: { top: 10, bottom: 0 }, 
-          },
+          layout: { padding: { top: 10, bottom: 0 } },
           interaction: { mode: "nearest", intersect: false },
           plugins: {
             legend: { position: "top" },
@@ -82,11 +90,11 @@ export default function FacilityLineChart({
                   if (onHover && items.length > 0) {
                     const idx = items[0].dataIndex;
                     const point = mappedData[idx];
-
-                    const prod = point.productionKg * 10.1;
-                    const pred = point.predictedMaxKg ;
-
-                    onHover(prod, pred, point.ts);
+                    onHover(
+                      point.productionKg,
+                      point.predictedMaxKg,
+                      point.ts
+                    );
                   }
                   return "";
                 },
@@ -100,7 +108,7 @@ export default function FacilityLineChart({
           },
           scales: {
             x: {
-              title: { display: false, text: " ", color: "#ccc" },
+              title: { display: false },
               grid: { color: "rgba(255,255,255,0.05)" },
               ticks: { color: "#ccc", padding: 0 },
             },
@@ -108,17 +116,14 @@ export default function FacilityLineChart({
               title: { display: true, text: " ", color: "#36A2EB" },
               type: "linear",
               position: "left",
-              ticks: { color: "#36A2EB" ,},
-              
-              
-              
+              ticks: { color: "#36A2EB" },
             },
             y2: {
               title: { display: true, text: " ", color: "#FF6384" },
               type: "linear",
               position: "right",
               grid: { drawOnChartArea: false },
-              ticks: { color: "#FF6384" ,stepSize: 50,},
+              ticks: { color: "#FF6384", stepSize: 50 },
             },
           },
         }}

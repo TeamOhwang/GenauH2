@@ -1,5 +1,4 @@
 import { useState } from "react";
-
 import FacilityImage from "@/components/model/FacilityImage";
 import DailyChart from "@/components/model/DailyChart";
 import HourlyTable from "@/components/model/ThreeDTable";
@@ -15,9 +14,7 @@ export default function Dashboard() {
   const [end, setEnd] = useState<string>();
   const [page, setPage] = useState(0);
 
-  
-  //  훅에서 orgId, 선택 설비, 날짜 범위, 페이지를 기반으로 데이터 가져오기
-  const { daily, hourly, loading, totalPages } = useFacilityDashboard(
+  const { daily, hourly, loading, totalPages, total } = useFacilityDashboard(
     orgId,
     selected,
     start,
@@ -30,8 +27,6 @@ export default function Dashboard() {
     1: "/images/ffimg.jpg",
     // 필요 시 2,3,... 추가 가능
   };
-
-
 
   return (
     <div className="flex h-screen">
@@ -57,7 +52,7 @@ export default function Dashboard() {
                 imageUrl={facilityImages[selected] ?? "/images/ffimg.jpg"}
                 alt={`설비 ${selected}`}
               />
-              <DailyChart data={daily} start={start} end={end} />
+              <DailyChart total={total} />
             </>
           ) : (
             <p className="text-gray-500">설비를 선택해주세요</p>
@@ -66,19 +61,15 @@ export default function Dashboard() {
 
         {/* 사이드 영역 (오른쪽: 시간별 테이블) */}
         <section className="col-span-1 h-full">
-          {loading ? (
-            <p>로딩 중...</p>
-          ) : (
-            <HourlyTable
-              data={hourly}
-              page={page}
-              totalPages={totalPages}
-              onPageChange={setPage}
-              start={start}
-              end={end}
-              selectedDate={daily[page]?.date}
-            />
-          )}
+          <HourlyTable
+            data={hourly}
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            start={start}
+            end={end}
+            selectedDate={daily[page]?.date}
+          />
         </section>
       </main>
     </div>

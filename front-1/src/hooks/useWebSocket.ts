@@ -228,13 +228,13 @@ export function useWebSocket() {
         updateGlobalState();
     }, []);
 
-    useEffect(() => {
-        connect();
+    // useEffect(() => {
+    //     connect();
 
-        return () => {
-            disconnect();
-        };
-    }, [connect, disconnect]);
+    //     return () => {
+    //         disconnect();
+    //     };
+    // }, [connect, disconnect]);
 
     return {
         isConnected,
