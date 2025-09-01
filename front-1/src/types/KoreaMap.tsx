@@ -174,12 +174,14 @@ export const KoreaMap = memo(function KoreaMap({
           <div
             ref={refs.setFloating}
             style={{ position: strategy, left: x ?? 0, top: y ?? 0 }}
-            className="z-50 pointer-events-none bg-white/95 backdrop-blur text-xs shadow-md border rounded px-2 py-1 text-black"
+            className="z-50 pointer-events-none bg-white dark:bg-slate-800 
+                      backdrop-blur text-sm shadow-lg border rounded-lg 
+                      px-4 py-2 text-black dark:text-white"
             role="tooltip"
             aria-live="polite"
           >
-            <div className="font-semibold text-black">{hover.label}</div>
-            <div className="text-gray-600">
+            <div className="font-bold text-base">{hover.label}</div>
+            <div className="text-gray-700 dark:text-gray-300">
               {typeof hover.avg === "number"
                 ? `${hover.avg.toLocaleString()} 원`
                 : "데이터 없음"}

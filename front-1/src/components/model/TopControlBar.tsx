@@ -14,57 +14,56 @@ export default function TopControlBar({ orgId, onDateSelect, onFacilitySelect }:
   // 설비 목록 불러오기
   useEffect(() => {
     if (!orgId) return;
-    FacilityApi.listByOrg({ orgId }).then((res) => {
-      console.log("API 응답:", res.content); // 응답 확인
+    FacilityApi.listByOrg({ orgId })
+      .then((res) => {
+        console.log("API 응답:", res.content);
 
-      // 중복 설비 처리 방식 변경
-      const uniqueFacilities = Array.from(
-        new Map(res.content.map((item) => [item.facId, item])).values()
-      ); // facId 기준으로 중복 제거
+        const uniqueFacilities = Array.from(
+          new Map(res.content.map((item) => [item.facId, item])).values()
+        );
 
-      setFacilities(uniqueFacilities); // 설비 목록 업데이트
-      console.log("설비 목록 업데이트:", uniqueFacilities);
+        setFacilities(uniqueFacilities);
 
-      
-      if (uniqueFacilities.length > 0 && selected === null) {
-        const firstFacility = uniqueFacilities[0].facId;
-        setSelected(firstFacility); 
-        onFacilitySelect(firstFacility); 
-      }
-    }).catch((error) => {
-      console.error("설비 목록 불러오기 실패:", error);
-    });
-  }, [orgId, selected]); // orgId가 바뀔 때마다 설비 목록을 불러옵니다
+        if (uniqueFacilities.length > 0 && selected === null) {
+          const firstFacility = uniqueFacilities[0].facId;
+          setSelected(firstFacility);
+          onFacilitySelect(firstFacility);
+        }
+      })
+      .catch((error) => {
+        console.error("설비 목록 불러오기 실패:", error);
+      });
+  }, [orgId, selected]);
 
   return (
-    <div className="flex gap-4 bg-slate-800 p-3 rounded-lg items-center">
+    <div className="flex gap-4 bg-gray-100 dark:bg-slate-800 p-3 rounded-lg items-center">
       {/* 설비 선택 드롭다운 */}
-      <div className="flex flex-col text-white">
-        <label>설비 선택</label>
+      <div className="flex flex-col">
+        <label className="text-gray-900 dark:text-white">설비 선택</label>
         <select
           value={selected ?? ""}
           onChange={(e) => {
             const facId = e.target.value ? Number(e.target.value) : null;
             setSelected(facId);
-            if (facId) onFacilitySelect(facId);  // 선택된 설비 ID 전파
+            if (facId) onFacilitySelect(facId);
           }}
-          className="text-black px-2 py-1 rounded"
+          className="text-gray-900 dark:text-white dark:bg-slate-700 border border-gray-300 dark:border-gray-600 px-2 py-1 rounded"
         >
           <option value="">-- 선택 --</option>
           {facilities.map((f) => (
             <option key={f.facId} value={f.facId}>
-              {f.facilityName }
+              {f.facilityName}
             </option>
           ))}
         </select>
       </div>
 
       {/* 시작일 */}
-      <div className="flex flex-col text-white">
-        <label>시작일</label>
+      <div className="flex flex-col">
+        <label className="text-gray-900 dark:text-white">시작일</label>
         <input
           type="date"
-          className="text-black px-2 py-1 rounded"
+          className="text-gray-900 dark:text-white dark:bg-slate-700 border border-gray-300 dark:border-gray-600 px-2 py-1 rounded"
           onChange={(e) => {
             const start = e.target.value;
             const endInput = document.getElementById("endDate") as HTMLInputElement;
@@ -74,12 +73,12 @@ export default function TopControlBar({ orgId, onDateSelect, onFacilitySelect }:
       </div>
 
       {/* 종료일 */}
-      <div className="flex flex-col text-white">
-        <label>종료일</label>
+      <div className="flex flex-col">
+        <label className="text-gray-900 dark:text-white">종료일</label>
         <input
           id="endDate"
           type="date"
-          className="text-black px-2 py-1 rounded"
+          className="text-gray-900 dark:text-white dark:bg-slate-700 border border-gray-300 dark:border-gray-600 px-2 py-1 rounded"
           onChange={(e) => {
             const end = e.target.value;
             const startInput = document.querySelector<HTMLInputElement>("input[type=date]");

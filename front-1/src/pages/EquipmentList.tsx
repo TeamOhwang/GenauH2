@@ -30,7 +30,7 @@ export default function Dashboard() {
 
   return (
     <div className="flex h-screen">
-      <main className="flex-1 bg-slate-100 dark:bg-gray-900 p-6 grid grid-cols-3 gap-6 h-full">
+      <main className="flex-1 bg-slate-100 dark:bg-gray-900 text-gray-900 dark:text-white p-6 grid grid-cols-3 gap-6 h-full">
         {/* 메인 영역 (왼쪽: 이미지 + 차트) */}
         <section className="col-span-2 flex flex-col h-full gap-4">
           <TopControlBar
@@ -55,7 +55,7 @@ export default function Dashboard() {
               <DailyChart total={total} />
             </>
           ) : (
-            <p className="text-gray-500">설비를 선택해주세요</p>
+            <p className="text-gray-600 dark:text-gray-400">설비를 선택해주세요</p>
           )}
         </section>
 
