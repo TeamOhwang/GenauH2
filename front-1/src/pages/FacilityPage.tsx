@@ -99,7 +99,7 @@ const mappedData = useMemo(() => {
         {/* 날짜 선택 전 안내 문구 */}
         {!loading && !error && !selectedDay && (
           <div className="flex-1 flex items-center justify-center text-gray-400 text-lg">
-            📅 날짜를 클릭해주세요.
+            📅 날짜를 선택해주세요.
           </div>
         )}
 

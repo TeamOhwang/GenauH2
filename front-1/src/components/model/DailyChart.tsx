@@ -33,7 +33,7 @@ export default function DailyChart({ total }: Props) {
   };
 
   return (
-    <div className="bg-white rounded-xl p-4 shadow flex flex-col items-center">
+    <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow flex flex-col items-center">
       <h3 className="font-semibold mb-4">총 생산량 & 예측량</h3>
       <div className="flex items-center gap-8">
         {/* 도넛 차트 */}

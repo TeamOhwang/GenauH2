@@ -5,7 +5,7 @@ type Props = {
 
 export default function FacilityImage({ imageUrl, alt }: Props) {
   return (
-    <div className="h-80 w-full bg-gray-100 rounded-xl shadow flex items-center justify-center">
+    <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-xl shadow flex items-center justify-center">
       <img
         src={imageUrl}   
         alt={alt || "설비 이미지"}
