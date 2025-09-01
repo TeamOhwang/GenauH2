@@ -30,7 +30,7 @@ export default function Dashboard() {
 
   return (
     <div className="flex h-screen">
-      <main className="flex-1 bg-slate-100 dark:bg-gray-900 p-6 grid grid-cols-3 gap-6 h-full">
+      <main className="flex-1 bg-slate-50 dark:bg-gray-900 p-6 grid grid-cols-3 gap-6 h-full">
         {/* 메인 영역 (왼쪽: 이미지 + 차트) */}
         <section className="col-span-2 flex flex-col h-full gap-4">
           <TopControlBar

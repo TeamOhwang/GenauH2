@@ -112,6 +112,13 @@ public class OrganizationService {
                 .orElse(null);
     }
 
+    // 상태와 무관하게 이메일로 사용자 조회 (상태 확인용)
+    public OrganizationDTO getAnyUserByEmail(String email) {
+        return organizationRepository.findByEmail(email)
+                .map(this::convertToDTO)
+                .orElse(null);
+    }
+
     // 일반 회원가입 - INVITED 상태로 생성
     @Transactional
     public OrganizationDTO createPendingUser(

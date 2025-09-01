@@ -128,7 +128,7 @@ export default function Setting() {
         <div className="flex flex-col gap-4">
             <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
                 <p className="text-xl font-bold">비밀번호 변경</p>
-                <button onClick={handleChangePassword} className="text-blue-500 dark:text-blue-400 text-sm font-medium border border-blue-500 dark:border-blue-400 rounded-md px-2 py-1 mt-3">비밀번호 변경</button>
+                <button onClick={handleChangePassword} className="text-blue-500 dark:bg-blue-500 dark:text-white text-sm font-medium border border-blue-500 dark:border-blue-500 rounded-md px-2 py-1 mt-3">비밀번호 변경</button>
                 {isPasswordReset && <p className="text-red-500 dark:text-red-400 text-xs font-light mt-3">비밀번호 변경 메일이 발송되었습니다.</p>}
             </div>
 
@@ -218,7 +218,9 @@ export default function Setting() {
             <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
                 <p className="text-xl font-bold text-black dark:text-white">시설 추가 / 수정 요청</p>
             </div>
-            <h1 className="text-black dark:text-white">회원 탈퇴</h1>
+            <div>
+                <button className="text-red-500 text-md dark:bg-red-500 dark:text-white font-medium border border-red-500 dark:border-red-500 rounded-md px-2 py-1 mt-3">회원 탈퇴</button>
+            </div>
         </div>
     )
 }
