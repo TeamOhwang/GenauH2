@@ -1,7 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { PATHS } from "@/routes/paths";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { ChartLine, DollarSign, LayoutDashboard, Lock, Settings, ShieldUser, TestTube } from "lucide-react"
+import { Bell, ChartLine, DollarSign, LayoutDashboard, Lock, Settings, ShieldUser, TestTube } from "lucide-react"
 import TankDashboard from "@/pages/TankDashboard";
 
 
