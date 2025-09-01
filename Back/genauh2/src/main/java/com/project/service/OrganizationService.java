@@ -16,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.project.dto.FacilityRequestDTO;
 import com.project.dto.NotificationSettingsDTO;
 import com.project.dto.OrganizationDTO;
-import com.project.entity.ActivityLog;
 import com.project.entity.Facility;
 import com.project.entity.Organization;
 import com.project.repository.OrganizationRepository;
@@ -39,7 +38,7 @@ public class OrganizationService {
     private final ActivityLogService activityLogService;
 
     // 사용자 로그인 (ACTIVE 상태만 로그인 가능)
-    public OrganizationDTO login(String email, String password, jakarta.servlet.http.HttpServletRequest request) {
+    public OrganizationDTO login(String email, String password) {
         System.out.println("=== 로그인 시도 ===");
         System.out.println("입력된 이메일: " + email);
         System.out.println("입력된 비밀번호: " + password);
@@ -59,21 +58,6 @@ public class OrganizationService {
             if (passwordMatch) {
                 organization.setUpdatedAt(LocalDateTime.now());
                 organizationRepository.save(organization);
-                
-                // 로그인 성공 활동 로그 생성
-                try {
-                    activityLogService.createUserActivityLog(
-                        ActivityLog.ActivityType.USER_LOGIN,
-                        organization.getOrgId(),
-                        organization.getOrgName(),
-                        organization.getRole().name(),
-                        "사용자 로그인 성공",
-                        request
-                    );
-                } catch (Exception e) {
-                    log.warn("활동 로그 생성 실패: {}", e.getMessage());
-                }
-                
                 return convertToDTO(organization);
             }
         }
@@ -137,8 +121,7 @@ public class OrganizationService {
             String email,
             String rawPassword,
             String phoneNum,
-            List<FacilityRequestDTO> facilities,
-            jakarta.servlet.http.HttpServletRequest request) {
+            List<FacilityRequestDTO> facilities) {
         
         // 전화번호 null 및 공백 검증 추가
         if (phoneNum == null || phoneNum.trim().isEmpty()) {
@@ -185,20 +168,6 @@ public class OrganizationService {
         // 관리자 통계 업데이트
         updateAdminStats();
         
-        // 회원가입 활동 로그 생성
-        try {
-            activityLogService.createUserActivityLog(
-                ActivityLog.ActivityType.USER_SIGNUP,
-                saved.getOrgId(),
-                saved.getOrgName(),
-                saved.getRole().name(),
-                "사용자 회원가입 요청",
-                request
-            );
-        } catch (Exception e) {
-            log.warn("활동 로그 생성 실패: {}", e.getMessage());
-        }
-        
         return convertToDTO(saved);
     }
 
@@ -233,8 +202,7 @@ public class OrganizationService {
             String bizRegNo,
             String email,
             String rawPassword,
-            String phoneNum,
-            jakarta.servlet.http.HttpServletRequest request) {
+            String phoneNum) {
         
         // 이메일 중복 검사
         if (organizationRepository.existsByEmail(email)) {
@@ -262,23 +230,6 @@ public class OrganizationService {
         organization.setBizRegNo(bizRegNo);
 
         Organization saved = organizationRepository.save(organization);
-        
-        // 관리자 활동 로그 생성
-        try {
-            activityLogService.createAdminActivityLog(
-                ActivityLog.ActivityType.ADMIN_USER_ADD,
-                null, // 관리자 ID는 별도로 전달받아야 함
-                "ADMIN",
-                "ADMIN",
-                saved.getOrgId(),
-                "ORGANIZATION",
-                "새로운 사용자 생성: " + saved.getOrgName(),
-                request
-            );
-        } catch (Exception e) {
-            log.warn("활동 로그 생성 실패: {}", e.getMessage());
-        }
-        
         return convertToDTO(saved);
     }
 
@@ -291,7 +242,7 @@ public class OrganizationService {
     }
 
     // 사용자 상태 변경
-    public OrganizationDTO updateUserStatus(Long orgId, Organization.Status status, jakarta.servlet.http.HttpServletRequest request) {
+    public OrganizationDTO updateUserStatus(Long orgId, Organization.Status status) {
         return organizationRepository.findById(orgId).map(organization -> {
             Organization.Status oldStatus = organization.getStatus();
             organization.setStatus(status);
@@ -299,35 +250,6 @@ public class OrganizationService {
             
             // WebSocket을 통해 상태 변경 알림 전송
             sendStatusChangeNotification(organization, oldStatus, status);
-            
-            // 상태 변경 활동 로그 생성
-            try {
-                ActivityLog.ActivityType activityType = null;
-                String description = "";
-                
-                if (status == Organization.Status.ACTIVE) {
-                    activityType = ActivityLog.ActivityType.ADMIN_USER_ACTIVATE;
-                    description = "사용자 활성화: " + organization.getOrgName();
-                } else if (status == Organization.Status.SUSPENDED) {
-                    activityType = ActivityLog.ActivityType.ADMIN_USER_DEACTIVATE;
-                    description = "사용자 비활성화: " + organization.getOrgName();
-                }
-                
-                if (activityType != null) {
-                    activityLogService.createAdminActivityLog(
-                        activityType,
-                        null, // 관리자 ID는 별도로 전달받아야 함
-                        "ADMIN",
-                        "ADMIN",
-                        organization.getOrgId(),
-                        "ORGANIZATION",
-                        description,
-                        request
-                    );
-                }
-            } catch (Exception e) {
-                log.warn("활동 로그 생성 실패: {}", e.getMessage());
-            }
             
             return updatedOrg;
         }).orElse(null);

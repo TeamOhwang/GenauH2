@@ -22,6 +22,7 @@ export default function Sidebar() {
     const adminMenu = [
         { label: "관리자 페이지", to: PATHS.admin, icon: <ShieldUser /> },
         { label: "가입 요청", to: PATHS.requestJoin, icon: <ShieldUser /> },
+        { label: "활동 로그", to: PATHS.notificationLog, icon: <ShieldUser /> },
     ];
 
     const menu = role === "SUPERVISOR" ? [ ...adminMenu] : [ ...userMenu];

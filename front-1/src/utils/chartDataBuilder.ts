@@ -143,7 +143,7 @@ function buildDailyPlantChartData(plantData: any[], currentHour: number): ChartD
             {
                 label: "유휴 전력 발생량 (kWh)",
                 data: generationData,
-                borderColor: "rgba(255, 193, 7, 1)",
+                borderColor: "rgba(255, 193, 7, 1)", // 노란색 (실측값)
                 backgroundColor: "rgba(255, 193, 7, 0.2)",
                 pointRadius: 3,
                 fill: true,
@@ -152,8 +152,8 @@ function buildDailyPlantChartData(plantData: any[], currentHour: number): ChartD
             {
                 label: "유휴 전력 발생 예측량 (kWh)",
                 data: forecastData,
-                borderColor: "rgba(255, 193, 7, 0.6)",
-                backgroundColor: "rgba(255, 193, 7, 0.1)",
+                borderColor: "rgba(76, 175, 80, 1)", // 초록색 (예측값)
+                backgroundColor: "rgba(76, 175, 80, 0.1)",
                 pointRadius: 0,
                 borderDash: [5, 5],
                 type: "line"
@@ -212,20 +212,20 @@ function buildWeeklyPlantChartData(plantData: any[]): ChartData {
         labels: labels,
         datasets: [
             {
-                label: "총 발전량",
+                label: "유휴 전력 발생량 (kWh)",
                 data: generationData,
-                borderColor: "rgba(153,102,255,1)",
-                backgroundColor: "rgba(153,102,255,0.2)",
+                borderColor: "rgba(255, 193, 7, 1)", // 노란색 (실측값)
+                backgroundColor: "rgba(255, 193, 7, 0.6)",
                 pointRadius: 4,
                 type: "bar",
                 barPercentage: 0.8,      // 바의 너비 (0.8 = 80%)
                 categoryPercentage: 0.9  // 카테고리 간격 (0.9 = 90%)
             },
             {
-                label: "예측 발전량",
+                label: "유휴 전력 발생 예측량 (kWh)",
                 data: forecastData,
-                borderColor: "rgba(76, 175, 80, 1)",
-                backgroundColor: "rgba(76, 175, 80, 0.1)",
+                borderColor: "rgba(76, 175, 80, 1)", // 초록색 (예측값)
+                backgroundColor: "rgba(76, 175, 80, 0.3)",
                 pointRadius: 3,
                 borderDash: [1 , 1],
                 type: "line"

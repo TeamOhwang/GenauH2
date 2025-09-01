@@ -27,7 +27,7 @@ export default function FacilityDashboard() {
   const [hoverPred, setHoverPred] = useState<number | null>(null);
 
 
-  
+
 
   //  테이블용 skeleton 데이터
   const mappedData = useMemo(() => {
@@ -41,8 +41,8 @@ export default function FacilityDashboard() {
         facilityName: point?.facilityName ?? "-",
         productionKg: (point?.productionKg ?? 0) * 10.1,
         predictedMaxKg: point?.predictedMaxKg ?? 0,
-        orgId: point?.orgId ?? 0,   
-        facId: point?.facId ?? 0,   
+        orgId: point?.orgId ?? 0,
+        facId: point?.facId ?? 0,
       };
     });
   }, [data, selectedDay]);
@@ -59,72 +59,75 @@ export default function FacilityDashboard() {
     );
   }
 
-return (
-  <div className="flex bg-slate-900 text-white min-h-screen">
-    {/* 왼쪽: KPI + 차트 */}
-    <div className="flex flex-col w-2/3 p-6 space-y-6">
-      <TopControlBar
-        onDateSelect={(s, e, day) => {
-          setStart(s);
-          setEnd(e);
-          setSelectedDay(day);
-        }}
-      />
+  return (
+    <div className="flex flex-row-2 rounded-lg bg-slate-50 dark:bg-slate-900 dark:text-white">
+      <div className="h-full w-2/3">
+        {/* 왼쪽: KPI + 차트 */}
+        <div className="flex flex-col p-4 space-y-6">
+          <TopControlBar
+            onDateSelect={(s, e, day) => {
+              setStart(s);
+              setEnd(e);
+              setSelectedDay(day);
+            }}
+          />
 
-      {loading && (
-        <div className="text-gray-400 text-center mt-10">
-          📡 데이터 불러오는 중...
+          {loading && (
+            <div className="text-gray-400 text-center mt-10">
+              📡 데이터 불러오는 중...
+            </div>
+          )}
+          {error && (
+            <div className="text-red-500 text-center mt-10">⚠ {error}</div>
+          )}
+
+          {/* 날짜 선택 전 안내 문구 */}
+          {!loading && !error && !selectedDay && (
+            <div className="flex-1 flex items-center justify-center text-gray-400 text-lg">
+              📅 날짜를 클릭해주세요.
+            </div>
+          )}
+
+          {/* 날짜 선택 후 데이터 렌더링 */}
+          {!loading && !error && selectedDay && (
+            <>
+              {/* KPI 카드 */}
+              <div className="grid grid-cols-2 gap-4">
+                <KpiCard
+                  title={`${selectedDay} 최대 예측량`}
+                  value={hoverPred !== null ? hoverPred : totalPredicted}
+                  unit="kg"
+                />
+                <KpiCard
+                  title={`${selectedDay} 실제 생산량`}
+                  value={hoverProd !== null ? hoverProd : totalProduction}
+                  unit="kg"
+                />
+              </div>
+
+              {/*  차트 높이 = 테이블 높이와 자동 맞춤 */}
+              <div className="bg-white shadow dark:bg-slate-800 p-4 rounded-xl flex-1">
+                <FacilityLineChart
+                  data={data}
+                  selectedDay={selectedDay}
+                  onHover={(prod, pred) => {
+                    setHoverProd(prod);
+                    setHoverPred(pred);
+                  }}
+                />
+              </div>
+            </>
+          )}
         </div>
-      )}
-      {error && (
-        <div className="text-red-500 text-center mt-10">⚠ {error}</div>
-      )}
+      </div>
 
-      {/* 날짜 선택 전 안내 문구 */}
-      {!loading && !error && !selectedDay && (
-        <div className="flex-1 flex items-center justify-center text-gray-400 text-lg">
-          📅 날짜를 클릭해주세요.
+      {/* 오른쪽: 테이블 */}
+      <div className="w-full rounded-lg bg-slate-50 dark:bg-slate-900 p-4 flex flex-col">
+        <div className="flex-1">
+          <FacilityTable data={mappedData} start={start} end={end} />
         </div>
-      )}
-
-      {/* 날짜 선택 후 데이터 렌더링 */}
-      {!loading && !error && selectedDay && (
-        <>
-          {/* KPI 카드 */}
-          <div className="grid grid-cols-2 gap-4">
-            <KpiCard
-              title={`${selectedDay} 최대 예측량`}
-              value={hoverPred !== null ? hoverPred : totalPredicted}
-              unit="kg"
-            />
-            <KpiCard
-              title={`${selectedDay} 실제 생산량`}
-              value={hoverProd !== null ? hoverProd : totalProduction}
-              unit="kg"
-            />
-          </div>
-
-          {/*  차트 높이 = 테이블 높이와 자동 맞춤 */}
-         <div className="bg-slate-800 p-4 rounded-xl flex-1">
-            <FacilityLineChart 
-              data={data}
-              selectedDay={selectedDay}
-              onHover={(prod, pred) => {
-                setHoverProd(prod);
-                setHoverPred(pred);
-              }}
-            />
-          </div>
-        </>
-      )}
-    </div>
-
-    {/* 오른쪽: 테이블 */}
-    <div className="w-1/3 bg-slate-800 p-4 flex flex-col">
-      <div className="flex-1">
-        <FacilityTable data={mappedData} start={start} end={end} />
       </div>
     </div>
-  </div>
-);
+
+  );
 }

@@ -34,7 +34,7 @@ export default function FacilityTable({ data = [], start, end }: Props) {
   const table = useReactTable({ data, columns, getCoreRowModel: getCoreRowModel() });
 
   return (
-    <div className="text-sm h-full flex flex-col">
+    <div className="text-sm h-full flex flex-col bg-white dark:bg-slate-800 p-4 rounded-lg shadow">
       <div className="flex justify-between items-center mb-3">
         <h3 className="font-bold text-lg">선택된 날짜 데이터</h3>
         <ExportExcelButton data={data} start={start} end={end} />

@@ -4,6 +4,7 @@ import { Line } from "react-chartjs-2";
 import type { FacilityKpi } from "@/api/facilityApi";
 import zoomPlugin from "chartjs-plugin-zoom";
 import { Chart as ChartJS } from "chart.js";
+import { useDarkModeStore } from "@/stores/useDarkModeStore";
 
 ChartJS.register(zoomPlugin);
 
@@ -16,6 +17,8 @@ export default function FacilityLineChart({
   onHover?: (prod: number | null, pred: number | null, ts?: string) => void;
   selectedDay?: string; // YYYY-MM-DD
 }) {
+  const { isDarkMode } = useDarkModeStore();
+  
   //  0~23시 skeleton
   const hours = Array.from({ length: 24 }, (_, i) => i);
 
@@ -30,6 +33,11 @@ export default function FacilityLineChart({
   });
 
   const chartRef = useRef<any>(null);
+
+  // 다크모드에 따른 색상 설정
+  const textColor = isDarkMode ? "#e5e7eb" : "#374151";
+  const gridColor = isDarkMode ? "rgba(75, 85, 99, 0.2)" : "rgba(229, 231, 235, 0.5)";
+  const legendColor = isDarkMode ? "#e5e7eb" : "#374151";
 
   return (
      <div className="flex-1 flex flex-col">
@@ -68,10 +76,23 @@ export default function FacilityLineChart({
           },
           interaction: { mode: "nearest", intersect: false },
           plugins: {
-            legend: { position: "top" },
+            legend: { 
+              position: "top",
+              labels: {
+                color: legendColor,
+                font: {
+                  size: 12
+                }
+              }
+            },
             tooltip: {
               enabled: true,
               mode: "index",
+              backgroundColor: isDarkMode ? "rgba(31, 41, 55, 0.9)" : "rgba(255, 255, 255, 0.9)",
+              titleColor: isDarkMode ? "#e5e7eb" : "#374151",
+              bodyColor: isDarkMode ? "#e5e7eb" : "#374151",
+              borderColor: isDarkMode ? "#4b5563" : "#d1d5db",
+              borderWidth: 1,
               callbacks: {
                 title: (items) => items[0].label,
                 label: (context) => {
@@ -99,26 +120,24 @@ export default function FacilityLineChart({
             }
           },
           scales: {
-            x: {
-              title: { display: false, text: " ", color: "#ccc" },
-              grid: { color: "rgba(255,255,255,0.05)" },
-              ticks: { color: "#ccc", padding: 0 },
+            x: { 
+              title: { display: false, text: " ", color: textColor },
+              grid: { color: gridColor },
+              ticks: { color: textColor, padding: 0 },
             },
             y1: {
               title: { display: true, text: " ", color: "#36A2EB" },
               type: "linear",
               position: "left",
-              ticks: { color: "#36A2EB" ,},
-              
-              
-              
+              grid: { color: gridColor },
+              ticks: { color: "#36A2EB" },
             },
             y2: {
               title: { display: true, text: " ", color: "#FF6384" },
               type: "linear",
               position: "right",
-              grid: { drawOnChartArea: false },
-              ticks: { color: "#FF6384" ,stepSize: 50,},
+              grid: { drawOnChartArea: false, color: gridColor },
+              ticks: { color: "#FF6384", stepSize: 50 },
             },
           },
         }}

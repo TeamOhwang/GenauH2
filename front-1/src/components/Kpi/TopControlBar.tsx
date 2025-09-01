@@ -42,7 +42,7 @@ export default function TopControlBar({ onDateSelect }: Props) {
   };
 
   return (
-    <div className="flex flex-col gap-3 bg-slate-800 p-3 rounded-lg">
+    <div className="flex flex-col gap-3 bg-white dark:bg-slate-800 p-3 rounded-lg shadow">
       {/* 날짜 버튼 (이번 달 1일부터 말일까지, 좌우 스크롤) */}
       <div className="flex overflow-x-auto gap-2">
         {days.map((day, idx) => (
@@ -50,7 +50,7 @@ export default function TopControlBar({ onDateSelect }: Props) {
             key={day}
             onClick={() => handleDateSelect(day, idx)}
             className={`px-3 py-1 rounded whitespace-nowrap ${
-              selected === idx ? "bg-blue-600 text-white" : "bg-slate-700"
+              selected === idx ? "bg-blue-600 text-white" : "bg-white dark:bg-slate-700"
             }`}
           >
             {day.slice(5)} {/* MM-DD */}
@@ -66,7 +66,7 @@ export default function TopControlBar({ onDateSelect }: Props) {
           onChange={(e) => handleDateSelect(e.target.value)}
           className="text-black px-2 py-1 rounded"
         />
-        <span className="text-gray-400 text-sm">← 직접 날짜 선택</span>
+        <span className="text-black dark:text-gray-400 text-sm">← 직접 날짜 선택</span>
       </div>
     </div>
   );
