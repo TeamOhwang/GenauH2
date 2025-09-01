@@ -1,6 +1,8 @@
 import { useReactTable, getCoreRowModel, flexRender, ColumnDef } from "@tanstack/react-table";
 import type { FacilityKpi } from "@/api/facilityApi";
 import ExportExcelButton from "@/components/Kpi/ExportExcelButton";
+import { motion } from "framer-motion";
+import CountUp from "react-countup";
 
 type Props = {
   data?: FacilityKpi[];
@@ -21,12 +23,12 @@ export default function FacilityTable({ data = [], start, end }: Props) {
     {
       header: "최대예상(kg)",
       accessorKey: "predictedMaxKg",
-      cell: (info) => (info.getValue<number>() ?? 0).toFixed(2),
+      cell: (info) => <CountUp end={info.getValue<number>() ?? 0} decimals={1} duration={0.6} />,
     },
     {
       header: "실제생산(kg)",
       accessorKey: "productionKg",
-      cell: (info) => (info.getValue<number>() ?? 0).toFixed(2),
+      cell: (info) => <CountUp end={info.getValue<number>() ?? 0} decimals={1} duration={0.6} />,
     },
   ];
 
@@ -56,8 +58,14 @@ export default function FacilityTable({ data = [], start, end }: Props) {
             ))}
           </thead>
           <tbody>
-            {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="hover:bg-slate-700/50">
+            {table.getRowModel().rows.map((row, i) => (
+              <motion.tr
+                key={row.id}
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: i * 0.02 }}
+                className="hover:bg-slate-700/50"
+              >
                 {row.getVisibleCells().map((cell) => (
                   <td
                     key={cell.id}
@@ -66,7 +74,7 @@ export default function FacilityTable({ data = [], start, end }: Props) {
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
-              </tr>
+              </motion.tr>
             ))}
           </tbody>
         </table>

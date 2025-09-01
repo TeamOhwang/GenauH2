@@ -28,656 +28,633 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class OrganizationService {
 
-	private final OrganizationRepository organizationRepository;
-	private final PasswordEncoder passwordEncoder;
-	private final SimpMessagingTemplate messagingTemplate;
+   private final OrganizationRepository organizationRepository;
+   private final PasswordEncoder passwordEncoder;
+   private final SimpMessagingTemplate messagingTemplate;
 
-	private final FacilityService facilityService;
+   private final FacilityService facilityService;
 
-	private final WebSocketNotificationService webSocketNotificationService;
+   private final WebSocketNotificationService webSocketNotificationService;
 //    private final ActivityLogService activityLogService;
 
-	// 사용자 로그인 (ACTIVE 상태만 로그인 가능)
-	public OrganizationDTO login(String email, String password) {
-		System.out.println("=== 로그인 시도 ===");
-		System.out.println("입력된 이메일: " + email);
-		System.out.println("입력된 비밀번호: " + password);
-
-		// 먼저 이메일로만 사용자 조회 (상태 무관)
-		Optional<Organization> orgOpt = organizationRepository.findByEmail(email);
-		System.out.println("사용자 조회 결과: " + (orgOpt.isPresent() ? "찾음" : "못찾음"));
-
-		if (orgOpt.isPresent()) {
-			Organization organization = orgOpt.get();
-			System.out.println("찾은 사용자 이메일: " + organization.getEmail());
-			System.out.println("저장된 해시: " + organization.getPasswordHash());
-			System.out.println("상태: " + organization.getStatus());
-
-			// SUSPENDED 상태 체크
-			if (organization.getStatus() == Organization.Status.SUSPENDED) {
-				System.out.println("=== 로그인 실패: 계정 비활성화 ===");
-				throw new RuntimeException("현재 계정은 비활성화 상태입니다");
-			}
-
-			// ACTIVE 상태가 아닌 경우 (INVITED 등)
-			if (organization.getStatus() != Organization.Status.ACTIVE) {
-				System.out.println("=== 로그인 실패: 계정 미활성화 ===");
-				throw new RuntimeException("계정이 활성화되지 않았습니다");
-			}
-
-			// 비밀번호 확인
-			boolean passwordMatch = passwordEncoder.matches(password, organization.getPasswordHash());
-			System.out.println("비밀번호 매칭 결과: " + passwordMatch);
-
-    // 상태와 무관하게 이메일로 사용자 조회 (상태 확인용)
-    public OrganizationDTO getAnyUserByEmail(String email) {
-        return organizationRepository.findByEmail(email)
-                .map(this::convertToDTO)
-                .orElse(null);
-    }
-
-    // 일반 회원가입 - INVITED 상태로 생성
-    @Transactional
-    public OrganizationDTO createPendingUser(
-            String orgName,
-            String ownerName,
-            String bizRegNo,
-            String email,
-            String rawPassword,
-            String phoneNum,
-            List<FacilityRequestDTO> facilities) {
-        
-        // 전화번호 null 및 공백 검증 추가
-        if (phoneNum == null || phoneNum.trim().isEmpty()) {
-            throw new RuntimeException("전화번호는 필수 입력값입니다.");
-        }
-        
-        // 이메일 중복 검사
-        if (organizationRepository.existsByEmail(email)) {
-            throw new RuntimeException("이미 등록된 이메일입니다.");
-        }
-        
-        // 사업자등록번호 중복 검사 (선택사항)
-        if (bizRegNo != null && !bizRegNo.trim().isEmpty() && organizationRepository.existsByBizRegNo(bizRegNo)) {
-            throw new RuntimeException("이미 등록된 사업자등록번호입니다.");
-        }
-
-		System.out.println("=== 로그인 실패: 사용자 없음 ===");
-		throw new RuntimeException("이메일 또는 비밀번호가 올바르지 않습니다");
-	}
-
-	// 모든 조직/사용자 조회 (상태와 관계없이)
-	public List<OrganizationDTO> getAllUsers() {
-		List<Organization> organizations = organizationRepository.findAll();
-		return organizations.stream().map(this::convertToDTO).collect(Collectors.toList());
-	}
-
-	// 활성 조직/사용자만 조회
-	public List<OrganizationDTO> getActiveUsers() {
-		List<Organization> organizations = organizationRepository.findByStatus(Organization.Status.ACTIVE);
-		return organizations.stream().map(this::convertToDTO).collect(Collectors.toList());
-	}
-
-	// 승인 대기 중인 사용자 조회 (INVITED 상태)
-	public List<OrganizationDTO> getInvitedUsers() {
-		List<Organization> organizations = organizationRepository.findByStatus(Organization.Status.INVITED);
-		return organizations.stream().map(this::convertToDTO).collect(Collectors.toList());
-	}
-
-	// 정지된 조직/사용자만 조회
-	public List<OrganizationDTO> getSuspendedUsers() {
-		List<Organization> organizations = organizationRepository.findByStatus(Organization.Status.SUSPENDED);
-		return organizations.stream().map(this::convertToDTO).collect(Collectors.toList());
-	}
-
-	// 조직 ID로 조회
-	public OrganizationDTO getUserById(Long orgId) {
-		return organizationRepository.findById(orgId).map(this::convertToDTO).orElse(null);
-	}
-
-	// 이메일로 사용자 조회
-	public OrganizationDTO getUserByEmail(String email) {
-		return organizationRepository.findByEmailAndStatus(email, Organization.Status.ACTIVE).map(this::convertToDTO)
-				.orElse(null);
-	}
-
-	// 일반 회원가입 - INVITED 상태로 생성
-	@Transactional
-	public OrganizationDTO createPendingUser(String orgName, String ownerName, String bizRegNo, String email,
-			String rawPassword, String phoneNum, List<FacilityRequestDTO> facilities) {
-
-		// 전화번호 null 및 공백 검증 추가
-		if (phoneNum == null || phoneNum.trim().isEmpty()) {
-			throw new RuntimeException("전화번호는 필수 입력값입니다.");
-		}
-
-		// 이메일 중복 검사
-		if (organizationRepository.existsByEmail(email)) {
-			throw new RuntimeException("이미 등록된 이메일입니다.");
-		}
-
-		// 사업자등록번호 중복 검사 (선택사항)
-		if (bizRegNo != null && !bizRegNo.trim().isEmpty() && organizationRepository.existsByBizRegNo(bizRegNo)) {
-			throw new RuntimeException("이미 등록된 사업자등록번호입니다.");
-		}
-
-		Organization organization = new Organization();
-		// 사용자 정보 설정
-		organization.setEmail(email);
-		organization.setPasswordHash(passwordEncoder.encode(rawPassword));
-		organization.setRole(Organization.Role.USER); // 기본 역할은 USER
-		organization.setPhoneNum(phoneNum);
-		organization.setStatus(Organization.Status.INVITED); // 승인 대기 상태
-		organization.setEmailNotification(true);
-		organization.setSmsNotification(true);
-
-		// 조직 정보 설정
-		organization.setOrgName(orgName);
-		organization.setName(ownerName);
-		organization.setBizRegNo(bizRegNo);
-
-		Organization saved = organizationRepository.save(organization);
-
-		if (facilities != null && !facilities.isEmpty()) {
-			for (FacilityRequestDTO facilityDTO : facilities) {
-				Facility facility = convertToFacilityEntity(facilityDTO, saved.getOrgId());
-				facilityService.saveFacility(facility);
-			}
-		}
-
-		// WebSocket으로 관리자에게 새로운 회원가입 알림 전송
-		sendNewRegistrationNotification(saved);
-
-		// 관리자 통계 업데이트
-		updateAdminStats();
-
-		return convertToDTO(saved);
-	}
-
-	// 새로운 회원가입 알림 전송
-	private void sendNewRegistrationNotification(Organization organization) {
-		try {
-			Map<String, Object> notification = new HashMap<>();
-			notification.put("type", "NEW_REGISTRATION_REQUEST");
-			notification.put("orgId", organization.getOrgId());
-			notification.put("orgName", organization.getOrgName());
-			notification.put("email", organization.getEmail());
-			notification.put("name", organization.getName());
-			notification.put("bizRegNo", organization.getBizRegNo());
-			notification.put("phoneNum", organization.getPhoneNum());
-			notification.put("message", "새로운 가입 요청이 들어왔습니다: " + organization.getOrgName());
-			notification.put("timestamp", System.currentTimeMillis());
-
-			// 관리자에게 알림 전송
-			messagingTemplate.convertAndSend("/topic/admin/notifications", notification);
-
-			log.info("새로운 회원가입 알림 전송 완료: {}", organization.getOrgName());
-		} catch (Exception e) {
-			log.error("새로운 회원가입 알림 전송 실패", e);
-		}
-	}
-
-	// 관리자용 조직 및 사용자 생성 (ACTIVE 상태로 즉시 생성)
-	@Transactional
-	public OrganizationDTO createOrganizationAndUser(String orgName, String ownerName, String bizRegNo, String email,
-			String rawPassword, String phoneNum) {
-
-		// 이메일 중복 검사
-		if (organizationRepository.existsByEmail(email)) {
-			throw new RuntimeException("이미 등록된 이메일입니다.");
-		}
-
-		// 사업자등록번호 중복 검사 (선택사항)
-		if (bizRegNo != null && organizationRepository.existsByBizRegNo(bizRegNo)) {
-			throw new RuntimeException("이미 등록된 사업자등록번호입니다.");
-		}
-
-		Organization organization = new Organization();
-		// 사용자 정보 설정
-		organization.setEmail(email);
-		organization.setPasswordHash(passwordEncoder.encode(rawPassword));
-		organization.setRole(Organization.Role.USER);
-		organization.setPhoneNum(phoneNum);
-		organization.setStatus(Organization.Status.ACTIVE); // 관리자가 생성시 즉시 활성화
-		organization.setEmailNotification(true);
-		organization.setSmsNotification(true);
-
-		// 조직 정보 설정
-		organization.setOrgName(orgName);
-		organization.setName(ownerName);
-		organization.setBizRegNo(bizRegNo);
-
-		Organization saved = organizationRepository.save(organization);
-		return convertToDTO(saved);
-	}
-
-	// 사용자 역할 업데이트
-	public OrganizationDTO updateUserRole(Long orgId, Organization.Role role) {
-		return organizationRepository.findById(orgId).map(organization -> {
-			organization.setRole(role);
-			return convertToDTO(organizationRepository.save(organization));
-		}).orElse(null);
-	}
-
-	// 사용자 상태 변경
-	public OrganizationDTO updateUserStatus(Long orgId, Organization.Status status) {
-		return organizationRepository.findById(orgId).map(organization -> {
-			Organization.Status oldStatus = organization.getStatus();
-			organization.setStatus(status);
-			OrganizationDTO updatedOrg = convertToDTO(organizationRepository.save(organization));
-
-			// WebSocket을 통해 상태 변경 알림 전송
-			sendStatusChangeNotification(organization, oldStatus, status);
-
-			return updatedOrg;
-		}).orElse(null);
-	}
-
-	// WebSocket을 통한 상태 변경 알림 전송
-	private void sendStatusChangeNotification(Organization organization, Organization.Status oldStatus,
-			Organization.Status newStatus) {
-		try {
-			Map<String, Object> notification = new HashMap<>();
-			notification.put("type", "STATUS_CHANGED");
-			notification.put("orgId", organization.getOrgId());
-			notification.put("orgName", organization.getOrgName());
-			notification.put("email", organization.getEmail());
-			notification.put("oldStatus", oldStatus.name());
-			notification.put("newStatus", newStatus.name());
-			notification.put("timestamp", System.currentTimeMillis());
-
-			if (newStatus == Organization.Status.ACTIVE) {
-				notification.put("type", "REGISTRATION_APPROVED");
-				notification.put("message", "가입 요청이 승인되었습니다: " + organization.getOrgName());
-			} else if (newStatus == Organization.Status.SUSPENDED) {
-				notification.put("type", "USER_SUSPENDED");
-				notification.put("message", "사용자가 정지되었습니다: " + organization.getOrgName());
-			}
-
-			// 관리자에게 알림 전송
-			messagingTemplate.convertAndSend("/topic/admin/notifications", notification);
-
-			// 관리자 통계 업데이트
-			updateAdminStats();
-
-			log.info("상태 변경 알림 전송 완료: {} -> {}", oldStatus, newStatus);
-		} catch (Exception e) {
-			log.error("상태 변경 알림 전송 실패", e);
-		}
-	}
-
-	// 관리자 통계 업데이트 및 전송
-	private void updateAdminStats() {
-		try {
-			long totalUsers = organizationRepository.count();
-			long activeUsers = organizationRepository.countByStatus(Organization.Status.ACTIVE);
-			long suspendedUsers = organizationRepository.countByStatus(Organization.Status.SUSPENDED);
-			long invitedUsers = organizationRepository.countByStatus(Organization.Status.INVITED);
-
-			Map<String, Object> stats = new HashMap<>();
-			stats.put("type", "ADMIN_STATS");
-			stats.put("totalUsers", totalUsers);
-			stats.put("activeUsers", activeUsers);
-			stats.put("suspendedUsers", suspendedUsers);
-			stats.put("pendingCount", invitedUsers);
-			stats.put("timestamp", System.currentTimeMillis());
-
-			// 관리자에게 통계 전송
-			messagingTemplate.convertAndSend("/topic/admin/stats", stats);
-
-			log.info("관리자 통계 업데이트 완료");
-		} catch (Exception e) {
-			log.error("관리자 통계 업데이트 실패", e);
-		}
-	}
-
-	// 사용자 비밀번호 변경 (관리자용)
-	public boolean updateUserPassword(Long orgId, String newPassword) {
-		Optional<Organization> orgOpt = organizationRepository.findById(orgId);
-
-		if (orgOpt.isPresent()) {
-			Organization organization = orgOpt.get();
-
-			// 새 비밀번호를 해싱하여 저장
-			organization.setPasswordHash(passwordEncoder.encode(newPassword));
-			organization.setUpdatedAt(LocalDateTime.now());
-
-			organizationRepository.save(organization);
-			return true;
-		}
-
-		return false;
-	}
-
-	/**
-	 * 사용자의 현재 비밀번호 확인
-	 * 
-	 * @param orgId           조직 ID
-	 * @param currentPassword 확인할 현재 비밀번호
-	 * @return 비밀번호 일치 여부
-	 */
-	@Transactional(readOnly = true)
-	public boolean verifyPassword(Long orgId, String currentPassword) {
-		System.out.println("=== 비밀번호 확인 시작 ===");
-		System.out.println("조직 ID: " + orgId);
-
-		try {
-			Optional<Organization> orgOpt = organizationRepository.findById(orgId);
-
-			if (orgOpt.isPresent()) {
-				Organization organization = orgOpt.get();
-				System.out.println("사용자 찾음: " + organization.getEmail());
-				System.out.println("사용자 상태: " + organization.getStatus());
-
-				// ACTIVE 상태인 사용자만 비밀번호 확인 가능
-				if (organization.getStatus() != Organization.Status.ACTIVE) {
-					System.out.println("비활성 상태 사용자 - 비밀번호 확인 불가");
-					return false;
-				}
-
-				boolean passwordMatch = passwordEncoder.matches(currentPassword, organization.getPasswordHash());
-				System.out.println("비밀번호 매칭 결과: " + passwordMatch);
-
-				return passwordMatch;
-			} else {
-				System.out.println("사용자를 찾을 수 없음");
-				return false;
-			}
-		} catch (Exception e) {
-			System.err.println("비밀번호 확인 중 오류 발생: " + e.getMessage());
-			e.printStackTrace();
-			return false;
-		}
-	}
-
-	/**
-	 * 사용자 본인의 비밀번호 변경 (현재 비밀번호 확인 후 변경)
-	 * 
-	 * @param orgId           조직 ID
-	 * @param currentPassword 현재 비밀번호
-	 * @param newPassword     새 비밀번호
-	 * @return 변경 성공 여부
-	 */
-	@Transactional
-	public boolean changeUserPassword(Long orgId, String currentPassword, String newPassword) {
-		System.out.println("=== 사용자 비밀번호 변경 시작 ===");
-		System.out.println("조직 ID: " + orgId);
-
-		try {
-			Optional<Organization> orgOpt = organizationRepository.findById(orgId);
-
-			if (orgOpt.isPresent()) {
-				Organization organization = orgOpt.get();
-				System.out.println("사용자 찾음: " + organization.getEmail());
-				System.out.println("사용자 상태: " + organization.getStatus());
-
-				// ACTIVE 상태인 사용자만 비밀번호 변경 가능
-				if (organization.getStatus() != Organization.Status.ACTIVE) {
-					System.out.println("비활성 상태 사용자 - 비밀번호 변경 불가");
-					return false;
-				}
-
-				// 현재 비밀번호 확인
-				boolean currentPasswordMatch = passwordEncoder.matches(currentPassword, organization.getPasswordHash());
-				System.out.println("현재 비밀번호 확인 결과: " + currentPasswordMatch);
-
-				if (!currentPasswordMatch) {
-					System.out.println("현재 비밀번호가 일치하지 않음");
-					return false;
-				}
-
-				// 새 비밀번호와 현재 비밀번호가 같은지 확인
-				if (passwordEncoder.matches(newPassword, organization.getPasswordHash())) {
-					System.out.println("새 비밀번호가 현재 비밀번호와 동일함");
-					throw new RuntimeException("새 비밀번호는 현재 비밀번호와 다르게 설정해주세요.");
-				}
-
-				// 새 비밀번호로 변경
-				String encodedNewPassword = passwordEncoder.encode(newPassword);
-				organization.setPasswordHash(encodedNewPassword);
-				organization.setUpdatedAt(LocalDateTime.now());
-
-				organizationRepository.save(organization);
-				System.out.println("비밀번호 변경 완료");
-
-				return true;
-			} else {
-				System.out.println("사용자를 찾을 수 없음");
-				return false;
-			}
-		} catch (RuntimeException e) {
-			// 비즈니스 로직 예외는 그대로 던짐
-			throw e;
-		} catch (Exception e) {
-			System.err.println("비밀번호 변경 중 오류 발생: " + e.getMessage());
-			e.printStackTrace();
-			return false;
-		}
-	}
-
-	// 사용자 정지
-	public boolean suspendUser(Long orgId) {
-		return organizationRepository.findById(orgId).map(organization -> {
-			organization.setStatus(Organization.Status.SUSPENDED);
-			organizationRepository.save(organization);
-			return true;
-		}).orElse(false);
-	}
-
-	// 사업자등록번호별 사용자 조회
-	public List<OrganizationDTO> getUsersByOrg(String bizRegNo) {
-		return organizationRepository.findByBizRegNoAndStatus(bizRegNo, Organization.Status.ACTIVE).stream()
-				.map(this::convertToDTO).collect(Collectors.toList());
-	}
-
-	public List<OrganizationDTO> searchUsers(String keyword) {
-
-		return null;
-	}
-
-	// 사용자 삭제 (관리자 전용)
-	@Transactional
-	public boolean deleteUsers(List<?> orgIds) {
-		System.out.println("=== OrganizationService.deleteUsers 시작 ===");
-		System.out.println("입력받은 orgIds: " + orgIds);
-		System.out.println("orgIds 크기: " + (orgIds != null ? orgIds.size() : "null"));
-
-		try {
-			System.out.println("삭제 요청된 조직 ID 목록: " + orgIds);
-
-			for (Object orgIdObj : orgIds) {
-				try {
-					System.out.println("--- 조직 ID " + orgIdObj + " 처리 시작 ---");
-					System.out.println("orgIdObj 타입: " + orgIdObj.getClass().getSimpleName());
-
-					Long orgId;
-					if (orgIdObj instanceof Integer) {
-						orgId = ((Integer) orgIdObj).longValue();
-					} else if (orgIdObj instanceof String) {
-						orgId = Long.parseLong((String) orgIdObj);
-					} else {
-						orgId = Long.parseLong(orgIdObj.toString());
-					}
-
-					System.out.println("변환된 orgId: " + orgId + " (타입: " + orgId.getClass().getSimpleName() + ")");
-					System.out.println("조직 ID " + orgId + " 처리 중...");
-
-					Optional<Organization> orgOpt = organizationRepository.findById(orgId);
-					System.out.println("조직 조회 결과: " + (orgOpt.isPresent() ? "찾음" : "못찾음"));
-
-					if (orgOpt.isPresent()) {
-						Organization organization = orgOpt.get();
-						System.out
-								.println("조직 찾음: " + organization.getEmail() + ", 현재 상태: " + organization.getStatus());
-
-						// 실제 삭제 대신 상태를 SUSPENDED로 변경 (소프트 삭제)
-						try {
-							System.out.println("조직 상태 변경 전: " + organization.getStatus());
-							organization.setStatus(Organization.Status.SUSPENDED);
-							System.out.println("상태 변경 완료: " + organization.getStatus());
-
-							System.out.println("organizationRepository.save 호출 전...");
-							Organization savedOrg = organizationRepository.save(organization);
-							System.out.println("organizationRepository.save 호출 완료");
-							System.out.println("조직 상태 업데이트 완료: " + savedOrg.getStatus());
-						} catch (Exception saveException) {
-							System.err.println("조직 저장 중 오류: " + saveException.getMessage());
-							System.err.println("저장 오류 타입: " + saveException.getClass().getSimpleName());
-							System.err.println("저장 오류 상세:");
-							saveException.printStackTrace();
-
-							if (saveException.getCause() != null) {
-								System.err.println("원인 예외: " + saveException.getCause().getMessage());
-								System.err.println("원인 예외 타입: " + saveException.getCause().getClass().getSimpleName());
-							}
-
-							throw saveException;
-						}
-					} else {
-						System.out.println("조직 ID " + orgId + "를 찾을 수 없음");
-					}
-					System.out.println("--- 조직 ID " + orgIdObj + " 처리 완료 ---");
-				} catch (NumberFormatException e) {
-					System.err.println("잘못된 조직 ID 형식: " + orgIdObj);
-					e.printStackTrace();
-					throw e;
-				} catch (Exception e) {
-					System.err.println("조직 ID " + orgIdObj + " 처리 중 오류: " + e.getMessage());
-					System.err.println("오류 타입: " + e.getClass().getSimpleName());
-					e.printStackTrace();
-					throw e;
-				}
-			}
-			System.out.println("=== OrganizationService.deleteUsers 성공 완료 ===");
-			return true;
-		} catch (Exception e) {
-			System.err.println("deleteUsers 메서드에서 예외 발생: " + e.getMessage());
-			System.err.println("예외 타입: " + e.getClass().getSimpleName());
-			System.err.println("예외 스택트레이스:");
-			e.printStackTrace();
-			return false;
-		}
-	}
-
-	// 알림 설정 조회
-	@Transactional(readOnly = true)
-	public OrganizationDTO getNotificationSettings(Long orgId) {
-		return organizationRepository.findById(orgId).map(this::convertToDTO)
-				.orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + orgId));
-	}
-
-	// 알림 설정 업데이트
-	@Transactional
-	public OrganizationDTO updateNotificationSettings(Long orgId, NotificationSettingsDTO settingsDTO) {
-		Organization organization = organizationRepository.findById(orgId)
-				.orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + orgId));
-
-		// 요청에 emailNotification 값이 있으면 업데이트
-		if (settingsDTO.getEmailNotification() != null) {
-			organization.setEmailNotification(settingsDTO.getEmailNotification());
-		}
-		// 요청에 smsNotification 값이 있으면 업데이트
-		if (settingsDTO.getSmsNotification() != null) {
-			organization.setSmsNotification(settingsDTO.getSmsNotification());
-		}
-
-		Organization updatedOrg = organizationRepository.save(organization);
-		return convertToDTO(updatedOrg);
-	}
-
-	// Entity를 DTO로 변환
-	private OrganizationDTO convertToDTO(Organization organization) {
-		return new OrganizationDTO(organization.getOrgId(), organization.getEmail(), organization.getRole(),
-				organization.getPhoneNum(), organization.getStatus(), organization.isEmailNotification(),
-				organization.isSmsNotification(), organization.getOrgName(), organization.getName(),
-				organization.getBizRegNo(), organization.getCreatedAt(), organization.getUpdatedAt());
-	}
-
-	// 기존 convertToDTO 메서드 아래에 추가
-	private Facility convertToFacilityEntity(FacilityRequestDTO dto, Long orgId) {
-		return Facility.builder().orgId(orgId).name(dto.getName())
-				.type(Facility.ElectrolysisType.valueOf(dto.getType())).maker(dto.getMaker()).model(dto.getModel())
-				.powerKw(dto.getPowerKw() != null ? BigDecimal.valueOf(dto.getPowerKw()) : null)
-				.h2Rate(dto.getH2Rate() != null ? BigDecimal.valueOf(dto.getH2Rate()) : null)
-				.specKwh(dto.getSpecKwh() != null ? BigDecimal.valueOf(dto.getSpecKwh()) : null)
-				.purity(dto.getPurity() != null ? BigDecimal.valueOf(dto.getPurity()) : null)
-				.pressure(dto.getPressure() != null ? BigDecimal.valueOf(dto.getPressure()) : null)
-				.location(dto.getLocation()).install(dto.getInstall()).build();
-	}
-
-	/**
-	 * 사용자 회원탈퇴 (본인만 가능)
-	 * 
-	 * @param orgId           조직 ID
-	 * @param currentPassword 현재 비밀번호
-	 * @return 탈퇴 성공 여부
-	 */
-	@Transactional
-	public boolean withdrawUser(Long orgId, String currentPassword) {
-		System.out.println("=== 사용자 회원탈퇴 처리 시작 ===");
-		System.out.println("조직 ID: " + orgId);
-
-		try {
-			Optional<Organization> orgOpt = organizationRepository.findById(orgId);
-
-			if (orgOpt.isPresent()) {
-				Organization organization = orgOpt.get();
-				System.out.println("사용자 찾음: " + organization.getEmail());
-				System.out.println("현재 상태: " + organization.getStatus());
-
-				// ACTIVE 상태인 사용자만 탈퇴 가능
-				if (organization.getStatus() != Organization.Status.ACTIVE) {
-					System.out.println("비활성 상태 사용자 - 회원탈퇴 불가");
-					throw new RuntimeException("활성 상태의 계정만 탈퇴할 수 있습니다.");
-				}
-
-				// 현재 비밀번호 확인
-				boolean currentPasswordMatch = passwordEncoder.matches(currentPassword, organization.getPasswordHash());
-				System.out.println("현재 비밀번호 확인 결과: " + currentPasswordMatch);
-
-				if (!currentPasswordMatch) {
-					System.out.println("현재 비밀번호가 일치하지 않음");
-					return false;
-				}
-
-				// 관리자는 탈퇴할 수 없도록 제한 (선택사항)
-				if (organization.getRole() == Organization.Role.SUPERVISOR) {
-					System.out.println("관리자 계정은 탈퇴할 수 없음");
-					throw new RuntimeException("관리자 계정은 직접 탈퇴할 수 없습니다. 다른 관리자에게 문의해주세요.");
-				}
-
-				// 상태를 SUSPENDED로 변경 (소프트 삭제)
-				Organization.Status oldStatus = organization.getStatus();
-				organization.setStatus(Organization.Status.SUSPENDED);
-				organization.setUpdatedAt(LocalDateTime.now());
-
-				organizationRepository.save(organization);
-				System.out.println("회원탈퇴 처리 완료 - 상태 변경: " + oldStatus + " -> " + organization.getStatus());
-
-				// WebSocket으로 관리자에게 탈퇴 알림 전송
-				sendWithdrawalNotification(organization);
-
-				// 관리자 통계 업데이트
-				updateAdminStats();
-
-				return true;
-
-			} else {
-				System.out.println("사용자를 찾을 수 없음");
-				return false;
-			}
-
-		} catch (RuntimeException e) {
-			// 비즈니스 로직 예외는 그대로 던짐
-			throw e;
-		} catch (Exception e) {
-			System.err.println("회원탈퇴 처리 중 오류 발생: " + e.getMessage());
-			e.printStackTrace();
-			return false;
-		}
-	}
-
-	/**
+   // 사용자 로그인 (ACTIVE 상태만 로그인 가능)
+   public OrganizationDTO login(String email, String password) {
+      System.out.println("=== 로그인 시도 ===");
+      System.out.println("입력된 이메일: " + email);
+      System.out.println("입력된 비밀번호: " + password);
+
+      // 먼저 이메일로만 사용자 조회 (상태 무관)
+      Optional<Organization> orgOpt = organizationRepository.findByEmail(email);
+      System.out.println("사용자 조회 결과: " + (orgOpt.isPresent() ? "찾음" : "못찾음"));
+
+      if (orgOpt.isPresent()) {
+         Organization organization = orgOpt.get();
+         System.out.println("찾은 사용자 이메일: " + organization.getEmail());
+         System.out.println("저장된 해시: " + organization.getPasswordHash());
+         System.out.println("상태: " + organization.getStatus());
+
+         // SUSPENDED 상태 체크
+         if (organization.getStatus() == Organization.Status.SUSPENDED) {
+            System.out.println("=== 로그인 실패: 계정 비활성화 ===");
+            throw new RuntimeException("현재 계정은 비활성화 상태입니다");
+         }
+
+         // ACTIVE 상태가 아닌 경우 (INVITED 등)
+         if (organization.getStatus() != Organization.Status.ACTIVE) {
+            System.out.println("=== 로그인 실패: 계정 미활성화 ===");
+            throw new RuntimeException("계정이 활성화되지 않았습니다");
+         }
+
+         // 비밀번호 확인
+         boolean passwordMatch = passwordEncoder.matches(password, organization.getPasswordHash());
+         System.out.println("비밀번호 매칭 결과: " + passwordMatch);
+
+         if (passwordMatch) {
+            organization.setUpdatedAt(LocalDateTime.now());
+            organizationRepository.save(organization);
+            return convertToDTO(organization);
+         } else {
+            System.out.println("=== 로그인 실패: 비밀번호 불일치 ===");
+            throw new RuntimeException("비밀번호가 일치하지 않습니다");
+         }
+      }
+
+      System.out.println("=== 로그인 실패: 사용자 없음 ===");
+      throw new RuntimeException("이메일 또는 비밀번호가 올바르지 않습니다");
+   }
+
+   // 모든 조직/사용자 조회 (상태와 관계없이)
+   public List<OrganizationDTO> getAllUsers() {
+      List<Organization> organizations = organizationRepository.findAll();
+      return organizations.stream().map(this::convertToDTO).collect(Collectors.toList());
+   }
+
+   // 활성 조직/사용자만 조회
+   public List<OrganizationDTO> getActiveUsers() {
+      List<Organization> organizations = organizationRepository.findByStatus(Organization.Status.ACTIVE);
+      return organizations.stream().map(this::convertToDTO).collect(Collectors.toList());
+   }
+
+   // 승인 대기 중인 사용자 조회 (INVITED 상태)
+   public List<OrganizationDTO> getInvitedUsers() {
+      List<Organization> organizations = organizationRepository.findByStatus(Organization.Status.INVITED);
+      return organizations.stream().map(this::convertToDTO).collect(Collectors.toList());
+   }
+
+   // 정지된 조직/사용자만 조회
+   public List<OrganizationDTO> getSuspendedUsers() {
+      List<Organization> organizations = organizationRepository.findByStatus(Organization.Status.SUSPENDED);
+      return organizations.stream().map(this::convertToDTO).collect(Collectors.toList());
+   }
+
+   // 조직 ID로 조회
+   public OrganizationDTO getUserById(Long orgId) {
+      return organizationRepository.findById(orgId).map(this::convertToDTO).orElse(null);
+   }
+
+   // 이메일로 사용자 조회
+   public OrganizationDTO getUserByEmail(String email) {
+      return organizationRepository.findByEmailAndStatus(email, Organization.Status.ACTIVE).map(this::convertToDTO)
+            .orElse(null);
+   }
+
+   // 일반 회원가입 - INVITED 상태로 생성
+   @Transactional
+   public OrganizationDTO createPendingUser(String orgName, String ownerName, String bizRegNo, String email,
+         String rawPassword, String phoneNum, List<FacilityRequestDTO> facilities) {
+
+      // 전화번호 null 및 공백 검증 추가
+      if (phoneNum == null || phoneNum.trim().isEmpty()) {
+         throw new RuntimeException("전화번호는 필수 입력값입니다.");
+      }
+
+      // 이메일 중복 검사
+      if (organizationRepository.existsByEmail(email)) {
+         throw new RuntimeException("이미 등록된 이메일입니다.");
+      }
+
+      // 사업자등록번호 중복 검사 (선택사항)
+      if (bizRegNo != null && !bizRegNo.trim().isEmpty() && organizationRepository.existsByBizRegNo(bizRegNo)) {
+         throw new RuntimeException("이미 등록된 사업자등록번호입니다.");
+      }
+
+      Organization organization = new Organization();
+      // 사용자 정보 설정
+      organization.setEmail(email);
+      organization.setPasswordHash(passwordEncoder.encode(rawPassword));
+      organization.setRole(Organization.Role.USER); // 기본 역할은 USER
+      organization.setPhoneNum(phoneNum);
+      organization.setStatus(Organization.Status.INVITED); // 승인 대기 상태
+      organization.setEmailNotification(true);
+      organization.setSmsNotification(true);
+
+      // 조직 정보 설정
+      organization.setOrgName(orgName);
+      organization.setName(ownerName);
+      organization.setBizRegNo(bizRegNo);
+
+      Organization saved = organizationRepository.save(organization);
+
+      if (facilities != null && !facilities.isEmpty()) {
+         for (FacilityRequestDTO facilityDTO : facilities) {
+            Facility facility = convertToFacilityEntity(facilityDTO, saved.getOrgId());
+            facilityService.saveFacility(facility);
+         }
+      }
+
+      // WebSocket으로 관리자에게 새로운 회원가입 알림 전송
+      sendNewRegistrationNotification(saved);
+
+      // 관리자 통계 업데이트
+      updateAdminStats();
+
+      return convertToDTO(saved);
+   }
+
+   // 새로운 회원가입 알림 전송
+   private void sendNewRegistrationNotification(Organization organization) {
+      try {
+         Map<String, Object> notification = new HashMap<>();
+         notification.put("type", "NEW_REGISTRATION_REQUEST");
+         notification.put("orgId", organization.getOrgId());
+         notification.put("orgName", organization.getOrgName());
+         notification.put("email", organization.getEmail());
+         notification.put("name", organization.getName());
+         notification.put("bizRegNo", organization.getBizRegNo());
+         notification.put("phoneNum", organization.getPhoneNum());
+         notification.put("message", "새로운 가입 요청이 들어왔습니다: " + organization.getOrgName());
+         notification.put("timestamp", System.currentTimeMillis());
+
+         // 관리자에게 알림 전송
+         messagingTemplate.convertAndSend("/topic/admin/notifications", notification);
+
+         log.info("새로운 회원가입 알림 전송 완료: {}", organization.getOrgName());
+      } catch (Exception e) {
+         log.error("새로운 회원가입 알림 전송 실패", e);
+      }
+   }
+
+   // 관리자용 조직 및 사용자 생성 (ACTIVE 상태로 즉시 생성)
+   @Transactional
+   public OrganizationDTO createOrganizationAndUser(String orgName, String ownerName, String bizRegNo, String email,
+         String rawPassword, String phoneNum) {
+
+      // 이메일 중복 검사
+      if (organizationRepository.existsByEmail(email)) {
+         throw new RuntimeException("이미 등록된 이메일입니다.");
+      }
+
+      // 사업자등록번호 중복 검사 (선택사항)
+      if (bizRegNo != null && organizationRepository.existsByBizRegNo(bizRegNo)) {
+         throw new RuntimeException("이미 등록된 사업자등록번호입니다.");
+      }
+
+      Organization organization = new Organization();
+      // 사용자 정보 설정
+      organization.setEmail(email);
+      organization.setPasswordHash(passwordEncoder.encode(rawPassword));
+      organization.setRole(Organization.Role.USER);
+      organization.setPhoneNum(phoneNum);
+      organization.setStatus(Organization.Status.ACTIVE); // 관리자가 생성시 즉시 활성화
+      organization.setEmailNotification(true);
+      organization.setSmsNotification(true);
+
+      // 조직 정보 설정
+      organization.setOrgName(orgName);
+      organization.setName(ownerName);
+      organization.setBizRegNo(bizRegNo);
+
+      Organization saved = organizationRepository.save(organization);
+      return convertToDTO(saved);
+   }
+
+   // 사용자 역할 업데이트
+   public OrganizationDTO updateUserRole(Long orgId, Organization.Role role) {
+      return organizationRepository.findById(orgId).map(organization -> {
+         organization.setRole(role);
+         return convertToDTO(organizationRepository.save(organization));
+      }).orElse(null);
+   }
+
+   // 사용자 상태 변경
+   public OrganizationDTO updateUserStatus(Long orgId, Organization.Status status) {
+      return organizationRepository.findById(orgId).map(organization -> {
+         Organization.Status oldStatus = organization.getStatus();
+         organization.setStatus(status);
+         OrganizationDTO updatedOrg = convertToDTO(organizationRepository.save(organization));
+
+         // WebSocket을 통해 상태 변경 알림 전송
+         sendStatusChangeNotification(organization, oldStatus, status);
+
+         return updatedOrg;
+      }).orElse(null);
+   }
+
+   // WebSocket을 통한 상태 변경 알림 전송
+   private void sendStatusChangeNotification(Organization organization, Organization.Status oldStatus,
+         Organization.Status newStatus) {
+      try {
+         Map<String, Object> notification = new HashMap<>();
+         notification.put("type", "STATUS_CHANGED");
+         notification.put("orgId", organization.getOrgId());
+         notification.put("orgName", organization.getOrgName());
+         notification.put("email", organization.getEmail());
+         notification.put("oldStatus", oldStatus.name());
+         notification.put("newStatus", newStatus.name());
+         notification.put("timestamp", System.currentTimeMillis());
+
+         if (newStatus == Organization.Status.ACTIVE) {
+            notification.put("type", "REGISTRATION_APPROVED");
+            notification.put("message", "가입 요청이 승인되었습니다: " + organization.getOrgName());
+         } else if (newStatus == Organization.Status.SUSPENDED) {
+            notification.put("type", "USER_SUSPENDED");
+            notification.put("message", "사용자가 정지되었습니다: " + organization.getOrgName());
+         }
+
+         // 관리자에게 알림 전송
+         messagingTemplate.convertAndSend("/topic/admin/notifications", notification);
+
+         // 관리자 통계 업데이트
+         updateAdminStats();
+
+         log.info("상태 변경 알림 전송 완료: {} -> {}", oldStatus, newStatus);
+      } catch (Exception e) {
+         log.error("상태 변경 알림 전송 실패", e);
+      }
+   }
+
+   // 관리자 통계 업데이트 및 전송
+   private void updateAdminStats() {
+      try {
+         long totalUsers = organizationRepository.count();
+         long activeUsers = organizationRepository.countByStatus(Organization.Status.ACTIVE);
+         long suspendedUsers = organizationRepository.countByStatus(Organization.Status.SUSPENDED);
+         long invitedUsers = organizationRepository.countByStatus(Organization.Status.INVITED);
+
+         Map<String, Object> stats = new HashMap<>();
+         stats.put("type", "ADMIN_STATS");
+         stats.put("totalUsers", totalUsers);
+         stats.put("activeUsers", activeUsers);
+         stats.put("suspendedUsers", suspendedUsers);
+         stats.put("pendingCount", invitedUsers);
+         stats.put("timestamp", System.currentTimeMillis());
+
+         // 관리자에게 통계 전송
+         messagingTemplate.convertAndSend("/topic/admin/stats", stats);
+
+         log.info("관리자 통계 업데이트 완료");
+      } catch (Exception e) {
+         log.error("관리자 통계 업데이트 실패", e);
+      }
+   }
+
+   // 사용자 비밀번호 변경 (관리자용)
+   public boolean updateUserPassword(Long orgId, String newPassword) {
+      Optional<Organization> orgOpt = organizationRepository.findById(orgId);
+
+      if (orgOpt.isPresent()) {
+         Organization organization = orgOpt.get();
+
+         // 새 비밀번호를 해싱하여 저장
+         organization.setPasswordHash(passwordEncoder.encode(newPassword));
+         organization.setUpdatedAt(LocalDateTime.now());
+
+         organizationRepository.save(organization);
+         return true;
+      }
+
+      return false;
+   }
+
+   /**
+    * 사용자의 현재 비밀번호 확인
+    * 
+    * @param orgId           조직 ID
+    * @param currentPassword 확인할 현재 비밀번호
+    * @return 비밀번호 일치 여부
+    */
+   @Transactional(readOnly = true)
+   public boolean verifyPassword(Long orgId, String currentPassword) {
+      System.out.println("=== 비밀번호 확인 시작 ===");
+      System.out.println("조직 ID: " + orgId);
+
+      try {
+         Optional<Organization> orgOpt = organizationRepository.findById(orgId);
+
+         if (orgOpt.isPresent()) {
+            Organization organization = orgOpt.get();
+            System.out.println("사용자 찾음: " + organization.getEmail());
+            System.out.println("사용자 상태: " + organization.getStatus());
+
+            // ACTIVE 상태인 사용자만 비밀번호 확인 가능
+            if (organization.getStatus() != Organization.Status.ACTIVE) {
+               System.out.println("비활성 상태 사용자 - 비밀번호 확인 불가");
+               return false;
+            }
+
+            boolean passwordMatch = passwordEncoder.matches(currentPassword, organization.getPasswordHash());
+            System.out.println("비밀번호 매칭 결과: " + passwordMatch);
+
+            return passwordMatch;
+         } else {
+            System.out.println("사용자를 찾을 수 없음");
+            return false;
+         }
+      } catch (Exception e) {
+         System.err.println("비밀번호 확인 중 오류 발생: " + e.getMessage());
+         e.printStackTrace();
+         return false;
+      }
+   }
+
+   /**
+    * 사용자 본인의 비밀번호 변경 (현재 비밀번호 확인 후 변경)
+    * 
+    * @param orgId           조직 ID
+    * @param currentPassword 현재 비밀번호
+    * @param newPassword     새 비밀번호
+    * @return 변경 성공 여부
+    */
+   @Transactional
+   public boolean changeUserPassword(Long orgId, String currentPassword, String newPassword) {
+      System.out.println("=== 사용자 비밀번호 변경 시작 ===");
+      System.out.println("조직 ID: " + orgId);
+
+      try {
+         Optional<Organization> orgOpt = organizationRepository.findById(orgId);
+
+         if (orgOpt.isPresent()) {
+            Organization organization = orgOpt.get();
+            System.out.println("사용자 찾음: " + organization.getEmail());
+            System.out.println("사용자 상태: " + organization.getStatus());
+
+            // ACTIVE 상태인 사용자만 비밀번호 변경 가능
+            if (organization.getStatus() != Organization.Status.ACTIVE) {
+               System.out.println("비활성 상태 사용자 - 비밀번호 변경 불가");
+               return false;
+            }
+
+            // 현재 비밀번호 확인
+            boolean currentPasswordMatch = passwordEncoder.matches(currentPassword, organization.getPasswordHash());
+            System.out.println("현재 비밀번호 확인 결과: " + currentPasswordMatch);
+
+            if (!currentPasswordMatch) {
+               System.out.println("현재 비밀번호가 일치하지 않음");
+               return false;
+            }
+
+            // 새 비밀번호와 현재 비밀번호가 같은지 확인
+            if (passwordEncoder.matches(newPassword, organization.getPasswordHash())) {
+               System.out.println("새 비밀번호가 현재 비밀번호와 동일함");
+               throw new RuntimeException("새 비밀번호는 현재 비밀번호와 다르게 설정해주세요.");
+            }
+
+            // 새 비밀번호로 변경
+            String encodedNewPassword = passwordEncoder.encode(newPassword);
+            organization.setPasswordHash(encodedNewPassword);
+            organization.setUpdatedAt(LocalDateTime.now());
+
+            organizationRepository.save(organization);
+            System.out.println("비밀번호 변경 완료");
+
+            return true;
+         } else {
+            System.out.println("사용자를 찾을 수 없음");
+            return false;
+         }
+      } catch (RuntimeException e) {
+         // 비즈니스 로직 예외는 그대로 던짐
+         throw e;
+      } catch (Exception e) {
+         System.err.println("비밀번호 변경 중 오류 발생: " + e.getMessage());
+         e.printStackTrace();
+         return false;
+      }
+   }
+
+   // 사용자 정지
+   public boolean suspendUser(Long orgId) {
+      return organizationRepository.findById(orgId).map(organization -> {
+         organization.setStatus(Organization.Status.SUSPENDED);
+         organizationRepository.save(organization);
+         return true;
+      }).orElse(false);
+   }
+
+   // 사업자등록번호별 사용자 조회
+   public List<OrganizationDTO> getUsersByOrg(String bizRegNo) {
+      return organizationRepository.findByBizRegNoAndStatus(bizRegNo, Organization.Status.ACTIVE).stream()
+            .map(this::convertToDTO).collect(Collectors.toList());
+   }
+
+   public List<OrganizationDTO> searchUsers(String keyword) {
+
+      return null;
+   }
+
+   // 사용자 삭제 (관리자 전용)
+   @Transactional
+   public boolean deleteUsers(List<?> orgIds) {
+      System.out.println("=== OrganizationService.deleteUsers 시작 ===");
+      System.out.println("입력받은 orgIds: " + orgIds);
+      System.out.println("orgIds 크기: " + (orgIds != null ? orgIds.size() : "null"));
+
+      try {
+         System.out.println("삭제 요청된 조직 ID 목록: " + orgIds);
+
+         for (Object orgIdObj : orgIds) {
+            try {
+               System.out.println("--- 조직 ID " + orgIdObj + " 처리 시작 ---");
+               System.out.println("orgIdObj 타입: " + orgIdObj.getClass().getSimpleName());
+
+               Long orgId;
+               if (orgIdObj instanceof Integer) {
+                  orgId = ((Integer) orgIdObj).longValue();
+               } else if (orgIdObj instanceof String) {
+                  orgId = Long.parseLong((String) orgIdObj);
+               } else {
+                  orgId = Long.parseLong(orgIdObj.toString());
+               }
+
+               System.out.println("변환된 orgId: " + orgId + " (타입: " + orgId.getClass().getSimpleName() + ")");
+               System.out.println("조직 ID " + orgId + " 처리 중...");
+
+               Optional<Organization> orgOpt = organizationRepository.findById(orgId);
+               System.out.println("조직 조회 결과: " + (orgOpt.isPresent() ? "찾음" : "못찾음"));
+
+               if (orgOpt.isPresent()) {
+                  Organization organization = orgOpt.get();
+                  System.out
+                        .println("조직 찾음: " + organization.getEmail() + ", 현재 상태: " + organization.getStatus());
+
+                  // 실제 삭제 대신 상태를 SUSPENDED로 변경 (소프트 삭제)
+                  try {
+                     System.out.println("조직 상태 변경 전: " + organization.getStatus());
+                     organization.setStatus(Organization.Status.SUSPENDED);
+                     System.out.println("상태 변경 완료: " + organization.getStatus());
+
+                     System.out.println("organizationRepository.save 호출 전...");
+                     Organization savedOrg = organizationRepository.save(organization);
+                     System.out.println("organizationRepository.save 호출 완료");
+                     System.out.println("조직 상태 업데이트 완료: " + savedOrg.getStatus());
+                  } catch (Exception saveException) {
+                     System.err.println("조직 저장 중 오류: " + saveException.getMessage());
+                     System.err.println("저장 오류 타입: " + saveException.getClass().getSimpleName());
+                     System.err.println("저장 오류 상세:");
+                     saveException.printStackTrace();
+
+                     if (saveException.getCause() != null) {
+                        System.err.println("원인 예외: " + saveException.getCause().getMessage());
+                        System.err.println("원인 예외 타입: " + saveException.getCause().getClass().getSimpleName());
+                     }
+
+                     throw saveException;
+                  }
+               } else {
+                  System.out.println("조직 ID " + orgId + "를 찾을 수 없음");
+               }
+               System.out.println("--- 조직 ID " + orgIdObj + " 처리 완료 ---");
+            } catch (NumberFormatException e) {
+               System.err.println("잘못된 조직 ID 형식: " + orgIdObj);
+               e.printStackTrace();
+               throw e;
+            } catch (Exception e) {
+               System.err.println("조직 ID " + orgIdObj + " 처리 중 오류: " + e.getMessage());
+               System.err.println("오류 타입: " + e.getClass().getSimpleName());
+               e.printStackTrace();
+               throw e;
+            }
+         }
+         System.out.println("=== OrganizationService.deleteUsers 성공 완료 ===");
+         return true;
+      } catch (Exception e) {
+         System.err.println("deleteUsers 메서드에서 예외 발생: " + e.getMessage());
+         System.err.println("예외 타입: " + e.getClass().getSimpleName());
+         System.err.println("예외 스택트레이스:");
+         e.printStackTrace();
+         return false;
+      }
+   }
+
+   // 알림 설정 조회
+   @Transactional(readOnly = true)
+   public OrganizationDTO getNotificationSettings(Long orgId) {
+      return organizationRepository.findById(orgId).map(this::convertToDTO)
+            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + orgId));
+   }
+
+   // 알림 설정 업데이트
+   @Transactional
+   public OrganizationDTO updateNotificationSettings(Long orgId, NotificationSettingsDTO settingsDTO) {
+      Organization organization = organizationRepository.findById(orgId)
+            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + orgId));
+
+      // 요청에 emailNotification 값이 있으면 업데이트
+      if (settingsDTO.getEmailNotification() != null) {
+         organization.setEmailNotification(settingsDTO.getEmailNotification());
+      }
+      // 요청에 smsNotification 값이 있으면 업데이트
+      if (settingsDTO.getSmsNotification() != null) {
+         organization.setSmsNotification(settingsDTO.getSmsNotification());
+      }
+
+      Organization updatedOrg = organizationRepository.save(organization);
+      return convertToDTO(updatedOrg);
+   }
+
+   // Entity를 DTO로 변환
+   private OrganizationDTO convertToDTO(Organization organization) {
+      return new OrganizationDTO(organization.getOrgId(), organization.getEmail(), organization.getRole(),
+            organization.getPhoneNum(), organization.getStatus(), organization.isEmailNotification(),
+            organization.isSmsNotification(), organization.getOrgName(), organization.getName(),
+            organization.getBizRegNo(), organization.getCreatedAt(), organization.getUpdatedAt());
+   }
+
+   // 기존 convertToDTO 메서드 아래에 추가
+   private Facility convertToFacilityEntity(FacilityRequestDTO dto, Long orgId) {
+      return Facility.builder().orgId(orgId).name(dto.getName())
+            .type(Facility.ElectrolysisType.valueOf(dto.getType())).maker(dto.getMaker()).model(dto.getModel())
+            .powerKw(dto.getPowerKw() != null ? BigDecimal.valueOf(dto.getPowerKw()) : null)
+            .h2Rate(dto.getH2Rate() != null ? BigDecimal.valueOf(dto.getH2Rate()) : null)
+            .specKwh(dto.getSpecKwh() != null ? BigDecimal.valueOf(dto.getSpecKwh()) : null)
+            .purity(dto.getPurity() != null ? BigDecimal.valueOf(dto.getPurity()) : null)
+            .pressure(dto.getPressure() != null ? BigDecimal.valueOf(dto.getPressure()) : null)
+            .location(dto.getLocation()).install(dto.getInstall()).build();
+   }
+
+   /**
+    * 사용자 회원탈퇴 (본인만 가능)
+    * 
+    * @param orgId           조직 ID
+    * @param currentPassword 현재 비밀번호
+    * @return 탈퇴 성공 여부
+    */
+   @Transactional
+   public boolean withdrawUser(Long orgId, String currentPassword) {
+      System.out.println("=== 사용자 회원탈퇴 처리 시작 ===");
+      System.out.println("조직 ID: " + orgId);
+
+      try {
+         Optional<Organization> orgOpt = organizationRepository.findById(orgId);
+
+         if (orgOpt.isPresent()) {
+            Organization organization = orgOpt.get();
+            System.out.println("사용자 찾음: " + organization.getEmail());
+            System.out.println("현재 상태: " + organization.getStatus());
+
+            // ACTIVE 상태인 사용자만 탈퇴 가능
+            if (organization.getStatus() != Organization.Status.ACTIVE) {
+               System.out.println("비활성 상태 사용자 - 회원탈퇴 불가");
+               throw new RuntimeException("활성 상태의 계정만 탈퇴할 수 있습니다.");
+            }
+
+            // 현재 비밀번호 확인
+            boolean currentPasswordMatch = passwordEncoder.matches(currentPassword, organization.getPasswordHash());
+            System.out.println("현재 비밀번호 확인 결과: " + currentPasswordMatch);
+
+            if (!currentPasswordMatch) {
+               System.out.println("현재 비밀번호가 일치하지 않음");
+               return false;
+            }
+
+            // 관리자는 탈퇴할 수 없도록 제한 (선택사항)
+            if (organization.getRole() == Organization.Role.SUPERVISOR) {
+               System.out.println("관리자 계정은 탈퇴할 수 없음");
+               throw new RuntimeException("관리자 계정은 직접 탈퇴할 수 없습니다. 다른 관리자에게 문의해주세요.");
+            }
+
+            // 상태를 SUSPENDED로 변경 (소프트 삭제)
+            Organization.Status oldStatus = organization.getStatus();
+            organization.setStatus(Organization.Status.SUSPENDED);
+            organization.setUpdatedAt(LocalDateTime.now());
+
+            organizationRepository.save(organization);
+            System.out.println("회원탈퇴 처리 완료 - 상태 변경: " + oldStatus + " -> " + organization.getStatus());
+
+            // WebSocket으로 관리자에게 탈퇴 알림 전송
+            sendWithdrawalNotification(organization);
+
+            // 관리자 통계 업데이트
+            updateAdminStats();
+
+            return true;
+
+         } else {
+            System.out.println("사용자를 찾을 수 없음");
+            return false;
+         }
+
+      } catch (RuntimeException e) {
+         // 비즈니스 로직 예외는 그대로 던짐
+         throw e;
+      } catch (Exception e) {
+         System.err.println("회원탈퇴 처리 중 오류 발생: " + e.getMessage());
+         e.printStackTrace();
+         return false;
+      }
+   }
+
+   /**
      * 회원탈퇴 알림 전송
      */
     private void sendWithdrawalNotification(Organization organization) {

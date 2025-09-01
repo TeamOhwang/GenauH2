@@ -6,6 +6,7 @@ import TopControlBar from "@/components/Kpi/TopControlBar";
 import KpiCard from "@/components/Kpi/KpiCard";
 import FacilityLineChart from "@/components/Kpi/FacilityLineChart";
 import FacilityTable from "@/components/Kpi/FacilityTable";
+import { motion } from "framer-motion";
 
 export default function FacilityDashboard() {
   const orgId = useAuthStore((s) => s.orgId);
@@ -73,7 +74,12 @@ export default function FacilityDashboard() {
   }
 
   return (
-    <div className="flex bg-white dark:bg-slate-900 text-black dark:text-white min-h-screen">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className="flex bg-white dark:bg-slate-900 text-black dark:text-white min-h-screen"
+    >
       {/* 왼쪽: KPI + 차트 */}
       <div className="flex flex-col w-2/3 p-6 space-y-6">
         <TopControlBar
@@ -85,7 +91,7 @@ export default function FacilityDashboard() {
         />
 
         {loading && (
-          <div className="text-gray-600 dark:text-gray-400 text-center mt-10">
+          <div className="text-gray-600 dark:text-gray-400 text-center mt-10 animate-pulse">
             📡 데이터 불러오는 중...
           </div>
         )}
@@ -136,6 +142,6 @@ export default function FacilityDashboard() {
           <FacilityTable data={mappedData} start={start} end={end} />
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

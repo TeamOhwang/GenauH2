@@ -18,23 +18,9 @@ export default function FacilityLineChart({
   selectedDay?: string; // YYYY-MM-DD
 }) {
   const { isDarkMode } = useDarkModeStore();
-  
-  //  0~23시 skeleton
-  const hours = Array.from({ length: 24 }, (_, i) => i);
-
-  //  skeleton 데이터 (해당 시각에 매칭되는 값 있으면 채움)
-  const mappedData = hours.map((h) => {
-    const point = data.find((d) => new Date(d.ts).getHours() === h);
-    return {
-      ts: `${selectedDay}T${String(h).padStart(2, "0")}:00:00`,
-      productionKg: point?.productionKg ?? 0,
-      predictedMaxKg: point?.predictedMaxKg ?? 0,
-    };
-  });
-
   const chartRef = useRef<any>(null);
 
-  // 다크모드에 따른 색상 설정
+  // 다크모드 색상
   const textColor = isDarkMode ? "#e5e7eb" : "#374151";
   const gridColor = isDarkMode ? "rgba(75, 85, 99, 0.2)" : "rgba(229, 231, 235, 0.5)";
   const legendColor = isDarkMode ? "#e5e7eb" : "#374151";
@@ -50,20 +36,26 @@ export default function FacilityLineChart({
               label: "실제 생산량 (kg)",
               data: data.map((d) => d.productionKg),
               borderColor: "#36A2EB",
+              backgroundColor: "#36A2EB",
               borderWidth: 2,
-              pointRadius: 2,
+              pointRadius: 3,
+              pointHoverRadius: 6,
+              pointHoverBackgroundColor: "#36A2EB",
               fill: false,
-              tension: 0.1,
+              tension: 0.2,
               yAxisID: "y1",
             },
             {
               label: "최대 예측량 (kg)",
               data: data.map((d) => d.predictedMaxKg),
               borderColor: "#FF6384",
+              backgroundColor: "#FF6384",
               borderWidth: 2,
-              pointRadius: 2,
+              pointRadius: 3,
+              pointHoverRadius: 6,
+              pointHoverBackgroundColor: "#FF6384",
               fill: false,
-              tension: 0.1,
+              tension: 0.2,
               yAxisID: "y2",
             },
           ],
@@ -71,16 +63,18 @@ export default function FacilityLineChart({
         options={{
           responsive: true,
           maintainAspectRatio: false,
+          animation: {
+            duration: 800,
+            easing: "easeOutQuart",
+          },
           interaction: { mode: "nearest", intersect: false },
           plugins: {
-            legend: { 
+            legend: {
               position: "top",
               labels: {
                 color: legendColor,
-                font: {
-                  size: 12
-                }
-              }
+                font: { size: 12 },
+              },
             },
             tooltip: {
               enabled: true,
@@ -93,7 +87,7 @@ export default function FacilityLineChart({
               callbacks: {
                 label: (context) => {
                   const value = context.raw as number;
-                  return `${context.dataset.label}: ${value.toFixed(2)} kg`;
+                  return `${context.dataset.label}: ${value.toFixed(1)} kg`;
                 },
                 afterBody: (items) => {
                   if (onHover && items.length > 0) {
@@ -112,7 +106,7 @@ export default function FacilityLineChart({
             }
           },
           scales: {
-            x: { 
+            x: {
               title: { display: false, text: " ", color: textColor },
               grid: { color: gridColor },
               ticks: { color: textColor, padding: 0 },

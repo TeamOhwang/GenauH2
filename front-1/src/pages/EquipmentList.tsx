@@ -5,6 +5,7 @@ import HourlyTable from "@/components/model/ThreeDTable";
 import TopControlBar from "@/components/model/TopControlBar";
 import { useFacilityDashboard } from "@/hooks/threeDModel";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { motion } from "framer-motion";
 
 export default function Dashboard() {
   const orgId = useAuthStore((s) => s.orgId);
@@ -29,9 +30,13 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex h-screen">
+    <motion.div
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className="flex h-screen"
+    >
       <main className="flex-1 bg-slate-100 dark:bg-gray-900 text-gray-900 dark:text-white p-6 grid grid-cols-3 gap-6 h-full">
-
         {/* 메인 영역 (왼쪽: 이미지 + 차트) */}
         <section className="col-span-2 flex flex-col h-full gap-4">
           <TopControlBar
@@ -56,7 +61,9 @@ export default function Dashboard() {
               <DailyChart total={total} />
             </>
           ) : (
-            <p className="text-gray-600 dark:text-gray-400">설비를 선택해주세요</p>
+            <p className="text-gray-600 dark:text-gray-400">
+              설비를 선택해주세요
+            </p>
           )}
         </section>
 
@@ -73,6 +80,6 @@ export default function Dashboard() {
           />
         </section>
       </main>
-    </div>
+    </motion.div>
   );
 }
