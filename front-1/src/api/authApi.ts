@@ -39,7 +39,7 @@ export const AuthApi = {
     const res = await apiClient.post(AUTH_ENDPOINTS.login, body);
     const data = unwrap<any>(res);
     const token = data.token ?? data.accessToken ?? data.Authorization;
-    console.log("로그인그그그그그그그그그그그그그그그그그그그vv그그그그 후 받은 토큰:", token);  // 받은 토큰 확인
+    // console.log("로그인그그그그그그그그그그그그그그그그그그그vv그그그그 후 받은 토큰:", token);  // 받은 토큰 확인
 
     if (!token) throw new Error("로그인 응답에 토큰 없음");
     return token;
@@ -63,7 +63,7 @@ async register(body: RegisterReq): Promise<any> {
   async loginAndSyncRole(payload: LoginReq): Promise<Role | null> {
     const token = await this.login(payload);
     authToken.set(token);
-    console.log("토큰 저장 후 localStorage 확인:", token);  // 로컬 스토리지에서 확인
+    // console.log("토큰 저장 후 localStorage 확인:", token);  // 로컬 스토리지에서 확인
 
     const prof = await this.profile();
     const { setEmail, setOrgId, setRole, setOrgName } = useAuthStore.getState(); 

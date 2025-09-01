@@ -1,7 +1,8 @@
 import { NavLink } from "react-router-dom";
 import { PATHS } from "@/routes/paths";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { Bell, ChartLine, DollarSign, LayoutDashboard, Lock, Settings, ShieldUser, TestTube } from "lucide-react"
+import { ChartLine, DollarSign, LayoutDashboard, Lock, Settings, ShieldUser, TestTube } from "lucide-react"
+import TankDashboard from "@/pages/TankDashboard";
 
 
 export default function Sidebar() {
@@ -10,9 +11,11 @@ export default function Sidebar() {
 
     const userMenu = [
         { label: "대시보드", to: PATHS.dashboard, icon: <LayoutDashboard /> },
-        { label: "상세 데이터 일간 조회", to: PATHS.facilityPage, icon: <ChartLine /> },
-        { label: "상세 데이터 기간 조회", to: PATHS.equipmentList, icon: <ChartLine /> },
-        { label: "설비 모니터링", to: PATHS.test, icon: <TestTube /> },
+        { label: "생산 집계 데이터", to: PATHS.facilityPage, icon: <ChartLine /> },
+        { label: "설비 모니터링", to: PATHS.equipmentList, icon: <DollarSign /> },
+        { label: "수소탱크", to: PATHS.TankDashboard, icon: <DollarSign /> },
+        { label: "수소 가격 정보", to: PATHS.price, icon: <DollarSign /> },
+        { label: "그래프", to: PATHS.test, icon: <TestTube /> },
         { label: "수소 가격 정보", to: PATHS.price, icon: <DollarSign /> },
         { label: "알림 기록", to: PATHS.userAlam, icon: <Bell /> },
         { label: "설정", to: PATHS.setting, icon: <Settings /> },
