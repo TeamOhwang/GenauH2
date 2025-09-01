@@ -18,7 +18,6 @@ export default function FacilityTable({ data = [], start, end }: Props) {
         return value ? new Date(value).getHours() + "시" : "-";
       },
     },
-    { header: "설비명", accessorKey: "facilityName" },
     {
       header: "최대예상(kg)",
       accessorKey: "predictedMaxKg",

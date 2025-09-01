@@ -1,4 +1,3 @@
-// vite.config.ts
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "node:path";
@@ -13,10 +12,10 @@ export default defineConfig({
     alias: { "@": path.resolve(__dirname, "./src") },
   },
   define: {
-    global: 'globalThis',
+    global: "globalThis",
   },
   optimizeDeps: {
-    include: ['@stomp/stompjs'],
+    include: ["@stomp/stompjs"],
   },
   server: {
     port: 5174,

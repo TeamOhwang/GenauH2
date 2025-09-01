@@ -176,67 +176,53 @@ public interface PredictRepository extends JpaRepository<Predict, String> {
 
     /// 사업자 id 기준으로 등록된 설비 + 예측/실제 생산량 집계합 (페이지네이션 지원)
     @Query(value = """
-            SELECT a.orgId         AS orgId,
-                   a.facId         AS facId,
-                   f.name          AS facilityName,
-                   a.ts            AS ts,
-                   a.productionKg  AS productionKg,
-                   a.predictedMaxKg AS predictedMaxKg
-            FROM facility_kpi_agg a
-            JOIN facilities f ON a.facId = f.facId
-            WHERE a.orgId = :orgId
-              AND a.ts BETWEEN :start AND :end
-            ORDER BY a.ts ASC
-            """,
-            countQuery = """
-            SELECT COUNT(*)
-            FROM facility_kpi_agg a
-            WHERE a.orgId = :orgId
-              AND a.ts BETWEEN :start AND :end
-            """,
-            nativeQuery = true)
-Page<FacilityKpiDto> findByOrgIdWithName(
-    @Param("orgId") Long orgId,
-    @Param("start") LocalDateTime start,
-    @Param("end") LocalDateTime end,
-    Pageable pageable
-);
+    	    SELECT f.orgId          AS orgId,
+    	           f.facId          AS facId,
+    	           f.name           AS facilityName,
+    	           a.ts             AS ts,
+    	           COALESCE(a.productionKg, 0)   AS productionKg,
+    	           COALESCE(a.predictedMaxKg, 0) AS predictedMaxKg
+    	    FROM facilities f
+    	    LEFT JOIN facility_kpi_agg a 
+    	           ON f.facId = a.facId
+    	          AND a.ts BETWEEN :start AND :end
+    	    WHERE f.orgId = :orgId
+    	    ORDER BY a.ts ASC
+    	    """,
+    	    nativeQuery = true)
+    	Page<FacilityKpiDto> findByOrgIdWithName(
+    	    @Param("orgId") Long orgId,
+    	    @Param("start") LocalDateTime start,
+    	    @Param("end") LocalDateTime end,
+    	    Pageable pageable
+    	);
     
     
     
     
-    
-  
-  /// 사업자 id 기준으로 등록된  단일 설비 + 예측/실제 생산량 집계합
+    /// 사업자 id 기준으로 등록된 단일설비 + 예측/실제 생산량 집계합
     @Query(value = """
-            SELECT a.orgId         AS orgId,
-                   a.facId         AS facId,
-                   f.name          AS facilityName,
-                   a.ts            AS ts,
-                   a.productionKg  AS productionKg,
-                   a.predictedMaxKg AS predictedMaxKg
-            FROM facility_kpi_agg a
-            JOIN facilities f ON a.facId = f.facId
-            WHERE a.orgId = :orgId
-              AND a.ts BETWEEN :start AND :end
-              AND a.facId IN :facId
+            SELECT f.orgId                     AS orgId,
+                   f.facId                     AS facId,
+                   f.name                      AS facilityName,
+                   a.ts                        AS ts,
+                   COALESCE(a.productionKg, 0) AS productionKg,
+                   COALESCE(a.predictedMaxKg, 0) AS predictedMaxKg
+            FROM facilities f
+            LEFT JOIN facility_kpi_agg a 
+                   ON f.facId = a.facId
+                  AND a.ts BETWEEN :start AND :end
+            WHERE f.orgId = :orgId
+              AND f.facId IN (:facIds)
             ORDER BY a.ts ASC
-            """,
-            countQuery = """
-            SELECT COUNT(*)
-            FROM facility_kpi_agg a
-            WHERE a.orgId = :orgId
-              AND a.ts BETWEEN :start AND :end
-              AND a.facId IN :facId
             """,
             nativeQuery = true)
     List<FacilityKpiDto> findByOrgIdWithNameAndFacIds(
             @Param("orgId") Long orgId,
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end,
-            @Param("facId") List<Long> facId
+            @Param("facIds") List<Long> facIds
     );
-
     
     
     

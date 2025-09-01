@@ -49,7 +49,7 @@ export const FacilityApi = {
     end?: string;
     page?: number;
     size?: number;
-    facId?: number[]; // facIds 필터링 추가
+
   }): Promise<PageResponse<FacilityKpi>> {
     if (!params.orgId) {
       return {
@@ -69,7 +69,6 @@ export const FacilityApi = {
       size: params.size ?? 12,
       start: toDateTime(startDate),
       end: toDateTime(endDate),
-      facId: params.facId, // 추가된 facIds 파라미터
     };
 
     const res = await apiClient.get<PageResponse<FacilityKpi>>(

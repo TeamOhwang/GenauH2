@@ -40,15 +40,15 @@ export default function FacilityLineChart({
   const legendColor = isDarkMode ? "#e5e7eb" : "#374151";
 
   return (
-     <div className="flex-1 flex flex-col">
+    <div className="flex-1 flex flex-col">
       <Line
         ref={chartRef}
         data={{
-          labels: hours.map((h) => `${h}시`), 
+          labels: data.map((d) => new Date(d.ts).getHours() + "시"),
           datasets: [
             {
               label: "실제 생산량 (kg)",
-              data: mappedData.map((d) => d.productionKg *10.1),
+              data: data.map((d) => d.productionKg),
               borderColor: "#36A2EB",
               borderWidth: 2,
               pointRadius: 2,
@@ -58,7 +58,7 @@ export default function FacilityLineChart({
             },
             {
               label: "최대 예측량 (kg)",
-              data: mappedData.map((d) => d.predictedMaxKg ),
+              data: data.map((d) => d.predictedMaxKg),
               borderColor: "#FF6384",
               borderWidth: 2,
               pointRadius: 2,
@@ -71,9 +71,6 @@ export default function FacilityLineChart({
         options={{
           responsive: true,
           maintainAspectRatio: false,
-          layout: {
-            padding: { top: 10, bottom: 0 }, 
-          },
           interaction: { mode: "nearest", intersect: false },
           plugins: {
             legend: { 
@@ -94,7 +91,6 @@ export default function FacilityLineChart({
               borderColor: isDarkMode ? "#4b5563" : "#d1d5db",
               borderWidth: 1,
               callbacks: {
-                title: (items) => items[0].label,
                 label: (context) => {
                   const value = context.raw as number;
                   return `${context.dataset.label}: ${value.toFixed(2)} kg`;
@@ -102,12 +98,8 @@ export default function FacilityLineChart({
                 afterBody: (items) => {
                   if (onHover && items.length > 0) {
                     const idx = items[0].dataIndex;
-                    const point = mappedData[idx];
-
-                    const prod = point.productionKg * 10.1;
-                    const pred = point.predictedMaxKg ;
-
-                    onHover(prod, pred, point.ts);
+                    const point = data[idx];
+                    onHover(point.productionKg, point.predictedMaxKg, point.ts);
                   }
                   return "";
                 },

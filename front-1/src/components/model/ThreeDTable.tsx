@@ -1,4 +1,3 @@
-// src/components/model/HourlyTable.tsx
 import { HourlyData } from "@/hooks/threeDModel";
 
 type Props = {
@@ -8,7 +7,7 @@ type Props = {
   onPageChange: (p: number) => void;
   start?: string;   
   end?: string;     
-  selectedDate?: string;  // ✅ 선택된 일자
+  selectedDate?: string;  
 };
 
 export default function HourlyTable({
@@ -27,7 +26,7 @@ export default function HourlyTable({
         <h3 className="font-semibold">시간별 생산량</h3>
         {selectedDate && (
           <span className="text-sm text-blue-600 font-medium">
-            {selectedDate} {/* ✅ 현재 선택된 일자 표시 */}
+            {selectedDate} {/*  현재 선택된 일자 표시 */}
           </span>
         )}
       </div>
@@ -44,7 +43,7 @@ export default function HourlyTable({
           {data.map((d, i) => (
             <tr key={i} className="border-b hover:bg-blue-50 transition-colors">
               <td className="p-2">{d.time}</td>
-              <td className="p-2 text-right">{d.amount}</td>
+              <td className="p-2 text-right">{d.amount ?? 0}</td>
             </tr>
           ))}
         </tbody>
