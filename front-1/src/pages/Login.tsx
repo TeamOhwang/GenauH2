@@ -4,6 +4,7 @@ import { useLogin } from "@/hooks/useLogin";
 import LoginForm from "@/components/LoginForm";
 import SignupModal from "@/components/SignupModal";
 
+
 export default function LoginPage() {
   const { submit, loading, error } = useLogin();
   const [signupOpen, setSignupOpen] = useState(false);
@@ -12,12 +13,6 @@ export default function LoginPage() {
     <div className="flex h-screen w-screen">
       {/* 왼쪽 로그인 패널 */}
       <div className="flex w-full md:w-1/2 flex-col items-center justify-center p-8 bg-white">
-        {/* 로고 */}
-        <div className="flex items-center gap-2 mb-6">
-          <div className="w-5 h-5 bg-black rounded-sm" />
-          <span className="font-bold text-lg">SaveUp</span>
-        </div>
-
         <h2 className="text-2xl font-bold mb-6">로그인</h2>
 
         {/* 로그인 폼 */}
@@ -35,8 +30,8 @@ export default function LoginPage() {
       {/* 오른쪽 이미지 패널 */}
       <div className="hidden md:block md:w-1/2">
         <img
-          src="https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?q=80&w=1200"
-          alt="City view"
+          src="/images/img_h2.jpg"
+          alt="로그인 배경 이미지"
           className="h-full w-full object-cover"
         />
       </div>
