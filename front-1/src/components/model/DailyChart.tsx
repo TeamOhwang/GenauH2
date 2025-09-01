@@ -44,29 +44,46 @@ export default function DailyChart({ total }: Props) {
     },
   };
 
-  return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow flex flex-col items-center">
-      <h3 className="font-semibold mb-4 text-left text-gray-900 dark:text-white">
-        일자별 생산량 & 예측량
-      </h3>
-      <div className="flex items-center gap-8">
-        {/* 도넛 차트 */}
-        <div className="relative w-40 h-40">
-          <Doughnut data={chartData} options={chartOptions} />
-          {/* 중앙 텍스트 */}
-          <div className="absolute inset-0 flex items-center justify-center font-bold text-xl text-blue-600 dark:text-blue-400">
-            <CountUp end={production} duration={1.2} separator="," decimals={1} />kg
-          </div>
-        </div>
+return (
+  <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow flex flex-col items-center">
+    <h3 className="font-semibold mb-4 text-left text-gray-900 dark:text-white">
+      일자별 생산량 & 예측량
+    </h3>
 
-        {/* 예측 생산량 */}
-        <div className="flex flex-col items-center font-semibold text-xl text-gray-900 dark:text-white">
-          <span>예측량</span>
-          <span className="text-red-500 dark:text-red-400">
-            <CountUp end={predicted} duration={1.2} separator="," decimals={1} />kg
+    <div className="flex items-center gap-8">
+      {/* 도넛 차트 */}
+      <div className="relative w-60 h-60"> 
+        <Doughnut data={chartData} options={chartOptions} />
+
+        {/* 중앙: 생산량 */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center font-bold text-xl">
+          <span className="text-blue-600 dark:text-blue-400">생산량</span>
+          <span className="text-blue-600 dark:text-blue-400">
+            <CountUp
+              end={production}
+              duration={1.2}
+              separator=","
+              decimals={1}
+            />{" "}
+            kg
           </span>
         </div>
       </div>
+
+      {/* 오른쪽: 예측량 */}
+      <div className="flex flex-col items-center font-semibold text-xl text-gray-900 dark:text-white">
+        <span>예측량</span>
+        <span className="text-red-500 dark:text-red-400">
+          <CountUp
+            end={predicted}
+            duration={1.2}
+            separator=","
+            decimals={1}
+          />{" "}
+          kg
+        </span>
+      </div>
     </div>
-  );
+  </div>
+);
 }

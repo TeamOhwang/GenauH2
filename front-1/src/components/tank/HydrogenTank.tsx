@@ -60,7 +60,7 @@ export default function HydrogenTank({ totalProduction }: Props) {
       {/* 누적량 + 버튼 */}
       <div className="mt-4 flex items-center gap-3">
         <span className="text-xl font-bold text-black dark:text-white transition-colors duration-300">
-          <CountUp end={level} duration={1.2} separator="," /> / 5000 kg
+          <CountUp end={level} duration={1.2} separator="," /> / 5,000 kg
           <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">
             (누적 사이클 {cycles})
           </span>
