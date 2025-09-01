@@ -44,7 +44,7 @@ public class OrganizationController {
 	@Autowired
 	private PasswordResetService passwordResetService;
 
-	// 로그인
+	// 로그인 (상태코드는 401로 유지, 바디에 errorCode 제공)
 	@PostMapping("/login")
 	public ResponseEntity<Map<String, Object>> login(@RequestBody LoginRequestDTO loginRequest) {
 		String email = loginRequest.getEmail();
@@ -53,25 +53,60 @@ public class OrganizationController {
 		Map<String, Object> response = new HashMap<>();
 
 		try {
-			OrganizationDTO user = organizationService.login(email, password);
+			// 상태 확인 및 구체적 오류 제공
+			System.out.println("=== [CONTROLLER] 로그인 시도: " + email + " ===");
+			OrganizationDTO found = organizationService.getAnyUserByEmail(email);
+			System.out.println("사용자 조회 결과: " + (found != null ? "찾음" : "못찾음"));
+			if (found != null) {
+				System.out.println("사용자 상태: " + found.getStatus());
+			}
+			
+			if (found == null) {
+				System.out.println("사용자를 찾을 수 없음 - INVALID_CREDENTIALS 반환");
+				response.put("success", false);
+				response.put("errorCode", "INVALID_CREDENTIALS");
+				response.put("message", "이메일 또는 비밀번호가 올바르지 않습니다.");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+			}
 
+			if (found.getStatus() != null && !found.getStatus().equals(Organization.Status.ACTIVE)) {
+				System.out.println("비활성 상태 사용자 - 상태별 에러코드 반환");
+				response.put("success", false);
+				if (found.getStatus().equals(Organization.Status.SUSPENDED)) {
+					System.out.println("SUSPENDED 상태 - ACCOUNT_SUSPENDED 반환");
+					response.put("errorCode", "ACCOUNT_SUSPENDED");
+					response.put("message", "계정이 정지되었습니다. 관리자에게 문의하세요.");
+				} else if (found.getStatus().equals(Organization.Status.INVITED)) {
+					System.out.println("INVITED 상태 - PENDING_APPROVAL 반환");
+					response.put("errorCode", "PENDING_APPROVAL");
+					response.put("message", "관리자 승인 대기 중입니다.");
+				} else {
+					System.out.println("기타 비활성 상태 - ACCOUNT_INACTIVE 반환");
+					response.put("errorCode", "ACCOUNT_INACTIVE");
+					response.put("message", "계정이 활성화 상태가 아닙니다.");
+				}
+				System.out.println("응답 데이터: " + response);
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+			}
+
+			// 비밀번호 검증
+			System.out.println("ACTIVE 상태 사용자 - 비밀번호 검증 진행");
+			OrganizationDTO user = organizationService.login(email, password);
 			if (user != null) {
-				// JWT 토큰 생성 (orgId 사용)
 				String token = tokenProvider.create(user.getOrgId().toString());
-				 System.out.println("✅ ✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅v생성된 토큰: " + token); // 토큰 생성 확인
-				 
-				 
+				System.out.println("✅ 토큰 생성: " + token);
 				response.put("success", true);
 				response.put("token", token);
 				response.put("user", user);
 				response.put("message", "로그인 성공");
 				return ResponseEntity.ok(response);
-
-			} else {
-				response.put("success", false);
-				response.put("message", "이메일 또는 비밀번호가 올바르지 않습니다.");
-				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
 			}
+
+			System.out.println("비밀번호 불일치 - INVALID_CREDENTIALS 반환");
+			response.put("success", false);
+			response.put("errorCode", "INVALID_CREDENTIALS");
+			response.put("message", "이메일 또는 비밀번호가 올바르지 않습니다.");
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
 		} catch (Exception e) {
 			System.err.println("로그인 오류 발생:");
 			System.err.println("오류 타입: " + e.getClass().getSimpleName());

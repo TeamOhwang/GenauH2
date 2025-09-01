@@ -5,7 +5,7 @@ import Button from "./ui/Button";
 
 type Props = {
   loading?: boolean;
-  error?: string | null;
+  error?: { message: string } | null;
   onSubmit: (v: LoginValues) => Promise<boolean>;
 };
 
@@ -42,7 +42,7 @@ export default function LoginForm({ loading = false, error, onSubmit }: Props) {
         disabled={loading}
         className="border rounded px-3 py-2"
       />
-      {error && <p className="text-red-500 text-sm">{error}</p>}
+      {error && <p className="text-red-500 text-sm">{error.message}</p>}
       <Button type="submit" disabled={loading}>
         {loading ? "로그인 중..." : "로그인"}
       </Button>

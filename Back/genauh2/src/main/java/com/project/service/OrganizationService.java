@@ -69,15 +69,38 @@ public class OrganizationService {
 			boolean passwordMatch = passwordEncoder.matches(password, organization.getPasswordHash());
 			System.out.println("비밀번호 매칭 결과: " + passwordMatch);
 
-			if (passwordMatch) {
-				organization.setUpdatedAt(LocalDateTime.now());
-				organizationRepository.save(organization);
-				return convertToDTO(organization);
-			} else {
-				System.out.println("=== 로그인 실패: 비밀번호 불일치 ===");
-				throw new RuntimeException("비밀번호가 일치하지 않습니다");
-			}
-		}
+    // 상태와 무관하게 이메일로 사용자 조회 (상태 확인용)
+    public OrganizationDTO getAnyUserByEmail(String email) {
+        return organizationRepository.findByEmail(email)
+                .map(this::convertToDTO)
+                .orElse(null);
+    }
+
+    // 일반 회원가입 - INVITED 상태로 생성
+    @Transactional
+    public OrganizationDTO createPendingUser(
+            String orgName,
+            String ownerName,
+            String bizRegNo,
+            String email,
+            String rawPassword,
+            String phoneNum,
+            List<FacilityRequestDTO> facilities) {
+        
+        // 전화번호 null 및 공백 검증 추가
+        if (phoneNum == null || phoneNum.trim().isEmpty()) {
+            throw new RuntimeException("전화번호는 필수 입력값입니다.");
+        }
+        
+        // 이메일 중복 검사
+        if (organizationRepository.existsByEmail(email)) {
+            throw new RuntimeException("이미 등록된 이메일입니다.");
+        }
+        
+        // 사업자등록번호 중복 검사 (선택사항)
+        if (bizRegNo != null && !bizRegNo.trim().isEmpty() && organizationRepository.existsByBizRegNo(bizRegNo)) {
+            throw new RuntimeException("이미 등록된 사업자등록번호입니다.");
+        }
 
 		System.out.println("=== 로그인 실패: 사용자 없음 ===");
 		throw new RuntimeException("이메일 또는 비밀번호가 올바르지 않습니다");

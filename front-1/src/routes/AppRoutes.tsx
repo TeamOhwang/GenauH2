@@ -6,6 +6,7 @@ import { PATHS, roleHome, type Role } from "./paths";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { authToken } from "@/stores/authStorage";
 import RequestJoin from "@/pages/RequestJoin";
+import UserAlam from "@/pages/UserAlam";
 
 const Login = lazy(() => import("@/pages/Login"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
@@ -72,6 +73,7 @@ export default function AppRouter() {
             <Route path={PATHS.TankDashboard} element={<TankDashboard />} />
             <Route path={PATHS.equipmentList} element={<EquipmentList />} /> 
             <Route path={PATHS.setting} element={<Setting />} />
+            <Route path={PATHS.userAlam} element={<UserAlam />} />
             <Route path={PATHS.test} element={<About />} />
           </Route>
 
