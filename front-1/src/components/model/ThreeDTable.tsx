@@ -31,6 +31,23 @@ export default function HourlyTable({
             {selectedDate}
           </span>
         )}
+            {/* 페이지네이션 */}
+      <div className="flex justify-center gap-2 mt-2">
+        <button
+          onClick={() => onPageChange(Math.max(0, page - 1))}
+          disabled={page === 0}
+          className="px-3 py-1 rounded border text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 disabled:opacity-50"
+        >
+          이전
+        </button>
+        <button
+          onClick={() => onPageChange(Math.min(totalPages - 1, page + 1))}
+          disabled={page === totalPages - 1}
+          className="px-3 py-1 rounded border text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 disabled:opacity-50"
+        >
+          다음
+        </button>
+      </div>
       </div>
 
       {/* 데이터 테이블 */}
@@ -56,23 +73,7 @@ export default function HourlyTable({
         </tbody>
       </table>
 
-      {/* 페이지네이션 */}
-      <div className="flex justify-center gap-2 mt-2">
-        <button
-          onClick={() => onPageChange(Math.max(0, page - 1))}
-          disabled={page === 0}
-          className="px-3 py-1 rounded border text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 disabled:opacity-50"
-        >
-          이전
-        </button>
-        <button
-          onClick={() => onPageChange(Math.min(totalPages - 1, page + 1))}
-          disabled={page === totalPages - 1}
-          className="px-3 py-1 rounded border text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 disabled:opacity-50"
-        >
-          다음
-        </button>
-      </div>
+  
     </div>
   );
 }
