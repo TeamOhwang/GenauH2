@@ -56,6 +56,12 @@ export default defineConfig({
         secure: false,
         rewrite: (path) => path.replace(/^\/cloud/, "/api"),
       },
+      // 5. Flask 서버 프록시 (SSE 스트림용)
+      "/stream": {
+        target: "http://127.0.0.1:5000",
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
 });

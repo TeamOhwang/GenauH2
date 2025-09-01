@@ -171,7 +171,7 @@ const About = () => {
 
   const connectToStream = () => {
     try {
-      const eventSource = new EventSource('http://127.0.0.1:5000/stream')
+      const eventSource = new EventSource('/stream')
 
       eventSource.onopen = () => {
         console.log('SSE connection opened')
@@ -187,17 +187,15 @@ const About = () => {
           setLastUpdate(new Date())
         } catch (error) {
           console.error('Error parsing stream data:', error)
-          // 파싱 오류 시 시뮬레이션 데이터 사용
-          simulateData()
+          setIsConnected(false)
+          resetSensorDataToZero()
         }
       }
 
       eventSource.onerror = (error) => {
         console.error('SSE connection error:', error)
         setIsConnected(false)
-
-        // 시뮬레이션 데이터로 대체
-        simulateData()
+        resetSensorDataToZero()
 
         // EventSource 정리
         if (eventSource.readyState !== EventSource.CLOSED) {
@@ -206,9 +204,7 @@ const About = () => {
 
         // 5초 후 재연결 시도
         setTimeout(() => {
-          if (!isConnected) {
-            connectToStream()
-          }
+          connectToStream()
         }, 5000)
       }
 
@@ -216,84 +212,30 @@ const About = () => {
     } catch (error) {
       console.error('Failed to connect to stream:', error)
       setIsConnected(false)
-      // 연결 실패 시 시뮬레이션 데이터 시작
-      startSimulation()
+      resetSensorDataToZero()
       return null
     }
   }
 
-  const simulateData = () => {
+  const resetSensorDataToZero = () => {
     const currentTime = new Date().toLocaleTimeString()
 
     setSensorData(prev => prev.map(sensor => {
-      // OFF 상태인 센서는 데이터 업데이트하지 않음
-      if (!sensor.isOn) {
-        return sensor
-      }
-
-      const baseValue = sensor.value
-      const variation = baseValue * 0.05 // 5% 변동
-      const newValue = baseValue + (Math.random() - 0.5) * variation
-
-      let newStatus: 'HIGH' | 'NORMAL' | 'LOW' | 'FAULT' = 'NORMAL'
-
-      // 각 센서별 임계값 체크
-      switch (sensor.id) {
-        case 'temp':
-          newStatus = newValue > 75 ? 'HIGH' : newValue < 35 ? 'LOW' : 'NORMAL'
-          break
-        case 'stackPress':
-          newStatus = newValue > 35 ? 'HIGH' : newValue < 10 ? 'LOW' : 'NORMAL'
-          break
-        case 'outletPress':
-          newStatus = newValue > 32 ? 'HIGH' : newValue < 28 ? 'LOW' : 'NORMAL'
-          break
-        case 'voltage':
-          newStatus = newValue > 420 ? 'HIGH' : newValue < 50 ? 'LOW' : 'NORMAL'
-          break
-        case 'current':
-          newStatus = newValue > 1500 ? 'HIGH' : newValue < 100 ? 'LOW' : 'NORMAL'
-          break
-        case 'purity':
-          newStatus = newValue < 99.5 ? 'LOW' : 'NORMAL'
-          break
-      }
-
-      // 변화량 계산
-      const finalValue = Math.max(0, newValue)
-      const change = Math.abs(finalValue - sensor.value)
-      const changeDirection: 'up' | 'down' | 'same' =
-        finalValue > sensor.value ? 'up' :
-          finalValue < sensor.value ? 'down' : 'same'
-
       return {
         ...sensor,
         previousValue: sensor.value,
-        value: finalValue,
-        status: newStatus,
-        change: change,
-        changeDirection: changeDirection,
+        value: 0,
+        status: 'LOW',
+        change: Math.abs(0 - sensor.value),
+        changeDirection: 'down' as const,
         history: [
           ...sensor.history.slice(1),
-          { time: currentTime, value: finalValue }
+          { time: currentTime, value: 0 }
         ]
       }
     }))
 
     setLastUpdate(new Date())
-  }
-
-  const startSimulation = () => {
-    // 2초마다 시뮬레이션 데이터 업데이트
-    const interval = setInterval(() => {
-      if (!isConnected) {
-        simulateData()
-      } else {
-        clearInterval(interval)
-      }
-    }, 2000)
-
-    return interval
   }
 
   const updateSensorDataFromStream = (data: StreamData) => {
@@ -474,7 +416,7 @@ const About = () => {
               <div className="text-center mb-4">
                 <div className="flex items-center justify-center gap-2 mb-1">
                   <div className="text-3xl font-bold text-white">
-                    {sensor.id === 'purity' ? sensor.value.toFixed(0) : sensor.value.toFixed(2)}
+                    {sensor.id === 'purity' ? sensor.value.toFixed(4) : sensor.value.toFixed(2)}
                   </div>
                   <div className="text-sm font-bold flex items-center gap-1">
                     {sensor.changeDirection === 'same' || sensor.change === 0 ? (
@@ -485,7 +427,7 @@ const About = () => {
                           {sensor.changeDirection === 'up' ? '⬆' : '⬇'}
                         </span>
                         <span className={sensor.changeDirection === 'up' ? 'text-red-400' : 'text-blue-400'}>
-                          {sensor.id === 'purity' ? sensor.change.toFixed(0) :
+                          {sensor.id === 'purity' ? sensor.change.toFixed(4) :
                             sensor.id === 'current' ? sensor.change.toFixed(0) :
                               sensor.id === 'voltage' ? sensor.change.toFixed(0) :
                                 sensor.change.toFixed(2)}

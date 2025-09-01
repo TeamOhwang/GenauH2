@@ -128,7 +128,7 @@ export default function Setting() {
         <div className="flex flex-col gap-4">
             <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
                 <p className="text-xl font-bold">비밀번호 변경</p>
-                <button onClick={handleChangePassword} className="text-blue-500 dark:text-blue-400 text-xs font-light border border-blue-500 dark:border-blue-400 rounded-md px-2 py-1 mt-3">비밀번호 변경</button>
+                <button onClick={handleChangePassword} className="text-blue-500 dark:text-blue-400 text-sm font-medium border border-blue-500 dark:border-blue-400 rounded-md px-2 py-1 mt-3">비밀번호 변경</button>
                 {isPasswordReset && <p className="text-red-500 dark:text-red-400 text-xs font-light mt-3">비밀번호 변경 메일이 발송되었습니다.</p>}
             </div>
 
