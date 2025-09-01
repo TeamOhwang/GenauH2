@@ -14,7 +14,7 @@ export default function Dashboard() {
   const [end, setEnd] = useState<string>();
   const [page, setPage] = useState(0);
 
-  const { daily, hourly, loading, totalPages, total } = useFacilityDashboard(
+  const { daily, hourly, totalPages, total } = useFacilityDashboard(
     orgId,
     selected,
     start,
