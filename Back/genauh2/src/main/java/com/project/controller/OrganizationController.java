@@ -438,6 +438,60 @@ public class OrganizationController {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
 		}
 	}
+	
+	@PostMapping("/withdrawal")
+	public ResponseEntity<Map<String, Object>> withdrawUser(
+	        @RequestBody Map<String, String> request,
+	        @RequestHeader(value = "Authorization", required = false) String token) {
+
+	    Map<String, Object> response = new HashMap<>();
+
+	    try {
+	        // JWT 토큰에서 사용자 ID 추출 (기존 헬퍼 메서드 활용)
+	        Long currentUserId = getAuthenticatedUserId();
+
+	        String currentPassword = request.get("currentPassword");
+	        String confirmWithdrawal = request.get("confirmWithdrawal");
+
+	        // 입력값 검증
+	        if (currentPassword == null || currentPassword.trim().isEmpty()) {
+	            response.put("success", false);
+	            response.put("message", "현재 비밀번호를 입력해주세요.");
+	            return ResponseEntity.badRequest().body(response);
+	        }
+
+	        if (confirmWithdrawal == null || !confirmWithdrawal.equals("CONFIRM")) {
+	            response.put("success", false);
+	            response.put("message", "회원탈퇴 확인이 필요합니다.");
+	            return ResponseEntity.badRequest().body(response);
+	        }
+
+	        // 회원탈퇴 처리 (토큰에서 추출한 사용자 ID 사용)
+	        boolean withdrawalResult = organizationService.withdrawUser(currentUserId, currentPassword);
+
+	        if (withdrawalResult) {
+	            response.put("success", true);
+	            response.put("message", "회원탈퇴가 완료되었습니다. 그동안 이용해주셔서 감사합니다.");
+	            return ResponseEntity.ok(response);
+	        } else {
+	            response.put("success", false);
+	            response.put("message", "현재 비밀번호가 올바르지 않습니다.");
+	            return ResponseEntity.badRequest().body(response);
+	        }
+
+	    } catch (SecurityException e) {
+	        response.put("success", false);
+	        response.put("message", "인증이 필요합니다.");
+	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+	    } catch (Exception e) {
+	        System.err.println("회원탈퇴 처리 중 오류 발생: " + e.getMessage());
+	        e.printStackTrace();
+	        
+	        response.put("success", false);
+	        response.put("message", "회원탈퇴 처리 중 오류가 발생했습니다: " + e.getMessage());
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+	    }
+	}
 
 	// 현재 비밀번호 확인 API
 	@PostMapping("/verify-password")
