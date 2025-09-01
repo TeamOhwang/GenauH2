@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import com.project.service.RealService;
 import com.project.dto.HourlyProductionDTO;
 import com.project.dto.RealDTO;
+import com.project.dto.WeeklyProductionDTO;
 
 @RestController
 @RequestMapping("/real")
@@ -168,6 +169,22 @@ public class RealController {
             BigDecimal result = realService.getTotalProduction(orgId);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+   
+    /**
+     * [신규 추가] 특정 조직(org)의 주차별 수소 생산량 합계를 조회합니다.
+     */
+    @GetMapping("/weekly-production/{orgId}")
+    public ResponseEntity<List<WeeklyProductionDTO>> getWeeklyProduction(@PathVariable Long orgId) {
+        try {
+            List<WeeklyProductionDTO> results = realService.getWeeklyProduction(orgId);
+            return ResponseEntity.ok(results);
+        } catch (Exception e) {
+            // 오류 발생 시 서버 로그에 스택 트레이스를 출력하여 원인 파악을 돕습니다.
+            e.printStackTrace(); 
             return ResponseEntity.internalServerError().build();
         }
     }

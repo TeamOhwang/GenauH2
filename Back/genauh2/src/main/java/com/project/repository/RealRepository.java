@@ -162,4 +162,11 @@ public interface RealRepository extends JpaRepository<Real, Long> {
         @Query("SELECT SUM(r.productionKg) FROM Real r WHERE r.orgid = :orgId")
         BigDecimal findTotalProductionByOrgId(@Param("orgId") Long orgId);
 
+        @Query(value = "SELECT YEAR(r.ts) as year, MONTH(r.ts) as month, (DAYOFMONTH(r.ts) - 1) DIV 7 + 1 as weekOfMonth, SUM(r.productionkg) as totalProduction " +
+                       "FROM production_real r " +
+                       "WHERE r.orgid = :orgId " +
+                       "GROUP BY year, month, weekOfMonth " +
+                       "ORDER BY year, month, weekOfMonth", nativeQuery = true)
+        List<Object[]> findWeeklyProductionByOrgId(@Param("orgId") Long orgId);
+
 }

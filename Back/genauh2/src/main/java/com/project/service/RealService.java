@@ -6,20 +6,20 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.project.repository.RealRepository;
 import com.project.dto.HourlyProductionDTO;
+import com.project.dto.WeeklyProductionDTO;
 import com.project.dto.RealDTO;
 import com.project.entity.Real;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 //import java.time.LocalTime;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.*;
-
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -163,6 +163,28 @@ public class RealService {
     @Transactional(readOnly = true)
     public BigDecimal getTotalProduction(Long orgId) {
         return realRepository.findTotalProductionByOrgId(orgId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<WeeklyProductionDTO> getWeeklyProduction(Long orgId) {
+        List<Object[]> results = realRepository.findWeeklyProductionByOrgId(orgId);
+        return results.stream()
+            .map(result -> {
+                int year = ((Number) result[0]).intValue();
+                int month = ((Number) result[1]).intValue();
+                int weekOfMonth = ((Number) result[2]).intValue();
+                BigDecimal totalProduction = (BigDecimal) result[3];
+                String weekLabel = String.format("%d월 %d주차", month, weekOfMonth);
+
+                return WeeklyProductionDTO.builder()
+                    .year(year)
+                    .month(month)
+                    .weekOfMonth(weekOfMonth)
+                    .weekLabel(weekLabel)
+                    .totalProductionKg(totalProduction)
+                    .build();
+            })
+            .collect(Collectors.toList());
     }
 
     /**
