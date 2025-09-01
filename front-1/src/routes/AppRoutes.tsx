@@ -17,7 +17,8 @@ const Admin = lazy(() => import("@/pages/Admin"));
 const About = lazy(() => import("@/pages/About"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const WebSocketTest = lazy(() => import("@/components/WebSocketTest"));
-const NotificationLog = lazy(() => import("@/pages/NotificationLog")); // 추가
+const NotificationLog = lazy(() => import("@/pages/NotificationLog")); 
+const TankDashboard = lazy(()=> import("@/pages/TankDashboard"));
 
 // 통합된 ChangePassword 컴포넌트 (일반 모드 + 이메일 리셋 모드 지원)
 const ChangePassword = lazy(() => import("@/pages/ChangePassword"));
@@ -68,6 +69,7 @@ export default function AppRouter() {
             <Route path={PATHS.dashboard} element={<Dashboard />} />
             <Route path={PATHS.price} element={<Price />} />
             <Route path={PATHS.facilityPage} element={<FacilityPage />} /> 
+            <Route path={PATHS.TankDashboard} element={<TankDashboard />} />
             <Route path={PATHS.equipmentList} element={<EquipmentList />} /> 
             <Route path={PATHS.setting} element={<Setting />} />
             <Route path={PATHS.test} element={<About />} />

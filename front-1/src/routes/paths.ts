@@ -10,6 +10,7 @@ export const PATHS = {
     detailed: "/detailed",
     facilityPage: "/facilityPage",
     equipmentList: "/equipmentList",
+    TankDashboard: "/TankDashboard",
     price: "/price",
     setting: "/setting",
     test: "/test", // 테스트 페이지 추가

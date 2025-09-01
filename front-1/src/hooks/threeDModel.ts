@@ -35,15 +35,15 @@ export function useFacilityDashboard(
         const date = kst.toISOString().slice(0, 10);
 
         if (!dailyMap[date]) dailyMap[date] = { production: 0, predicted: 0 };
-        dailyMap[date].production += (cur.productionKg ?? 0) * 10.1;
-        dailyMap[date].predicted += (cur.predictedMaxKg ?? 0) / 2;
+        dailyMap[date].production += (cur.productionKg ?? 0) ;
+        dailyMap[date].predicted += (cur.predictedMaxKg ?? 0) ;
       });
 
       const sortedDates = Object.keys(dailyMap).sort();
       const dailyData = sortedDates.map((d) => ({
         date: d,
-        production: dailyMap[d].production,
-        predicted: dailyMap[d].predicted,
+  production: parseFloat((dailyMap[d].production * 10.1).toFixed(1)), 
+  predicted: parseFloat((dailyMap[d].predicted / 2).toFixed(1)),  
       }));
       setDaily(dailyData);
 
@@ -62,7 +62,7 @@ export function useFacilityDashboard(
       });
 
       setHourly(
-        Object.entries(hourlyMap).map(([time, amount]) => ({ time, amount }))
+        Object.entries(hourlyMap).map(([time, amount]) => ({ time, amount: parseFloat(amount.toFixed(2)), }))
       );
     } finally {
       setLoading(false);
