@@ -43,7 +43,8 @@ public class OrganizationService {
 		System.out.println("입력된 이메일: " + email);
 		System.out.println("입력된 비밀번호: " + password);
 
-		Optional<Organization> orgOpt = organizationRepository.findByEmailAndStatus(email, Organization.Status.ACTIVE);
+		// 먼저 이메일로만 사용자 조회 (상태 무관)
+		Optional<Organization> orgOpt = organizationRepository.findByEmail(email);
 		System.out.println("사용자 조회 결과: " + (orgOpt.isPresent() ? "찾음" : "못찾음"));
 
 		if (orgOpt.isPresent()) {
@@ -52,6 +53,19 @@ public class OrganizationService {
 			System.out.println("저장된 해시: " + organization.getPasswordHash());
 			System.out.println("상태: " + organization.getStatus());
 
+			// SUSPENDED 상태 체크
+			if (organization.getStatus() == Organization.Status.SUSPENDED) {
+				System.out.println("=== 로그인 실패: 계정 비활성화 ===");
+				throw new RuntimeException("현재 계정은 비활성화 상태입니다");
+			}
+
+			// ACTIVE 상태가 아닌 경우 (INVITED 등)
+			if (organization.getStatus() != Organization.Status.ACTIVE) {
+				System.out.println("=== 로그인 실패: 계정 미활성화 ===");
+				throw new RuntimeException("계정이 활성화되지 않았습니다");
+			}
+
+			// 비밀번호 확인
 			boolean passwordMatch = passwordEncoder.matches(password, organization.getPasswordHash());
 			System.out.println("비밀번호 매칭 결과: " + passwordMatch);
 
@@ -59,11 +73,14 @@ public class OrganizationService {
 				organization.setUpdatedAt(LocalDateTime.now());
 				organizationRepository.save(organization);
 				return convertToDTO(organization);
+			} else {
+				System.out.println("=== 로그인 실패: 비밀번호 불일치 ===");
+				throw new RuntimeException("비밀번호가 일치하지 않습니다");
 			}
 		}
 
-		System.out.println("=== 로그인 실패 ===");
-		return null;
+		System.out.println("=== 로그인 실패: 사용자 없음 ===");
+		throw new RuntimeException("이메일 또는 비밀번호가 올바르지 않습니다");
 	}
 
 	// 모든 조직/사용자 조회 (상태와 관계없이)
@@ -658,6 +675,6 @@ public class OrganizationService {
         } catch (Exception e) {
             log.error("회원탈퇴 알림 전송 실패", e);
         }
-    
+    }
     
 }

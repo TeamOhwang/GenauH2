@@ -17,7 +17,26 @@ export function useLogin() {
       await AuthApi.loginAndSyncRole(v);
       return true;
     } catch (e: any) {
-      const msg = e?.message ?? "이메일 또는 비밀번호가 올바르지 않습니다.";
+      let msg = "이메일 또는 비밀번호가 올바르지 않습니다.";
+      
+      // 백엔드에서 보낸 에러 메시지 우선 사용
+      const backendMessage = e?.response?.data?.message || e?.message || "";
+      
+      if (backendMessage) {
+        // 백엔드에서 명시적으로 보낸 메시지가 있으면 그대로 사용
+        if (backendMessage.includes("현재 계정은 비활성화 상태입니다")) {
+          msg = "현재 계정은 비활성화 상태입니다";
+        } else if (backendMessage.includes("비밀번호가 일치하지 않습니다")) {
+          msg = "비밀번호가 일치하지 않습니다";
+        } else if (backendMessage.includes("계정이 활성화되지 않았습니다")) {
+          msg = "계정이 활성화되지 않았습니다";
+        } else if (backendMessage.includes("이메일 또는 비밀번호가 올바르지 않습니다")) {
+          msg = "이메일 또는 비밀번호가 올바르지 않습니다";
+        } else {
+          msg = backendMessage;
+        }
+      }
+      
       setError(msg);
       return false;
     } finally {
