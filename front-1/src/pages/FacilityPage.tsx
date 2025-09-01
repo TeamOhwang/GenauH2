@@ -76,7 +76,7 @@ const mappedData = useMemo(() => {
   }
 
   return (
-    <div className="flex bg-slate-900 text-white min-h-screen">
+    <div className="flex bg-slate-50 dark:bg-slate-900 dark:text-white min-h-screen">
       {/* 왼쪽: KPI + 차트 */}
       <div className="flex flex-col w-2/3 p-6 space-y-6">
         <TopControlBar
@@ -121,7 +121,7 @@ const mappedData = useMemo(() => {
             </div>
 
             {/* 차트 */}
-            <div className="bg-slate-800 p-4 rounded-xl flex-1 min-h-[500px]">
+            <div className="bg-white dark:bg-slate-800 p-4 rounded-xl flex-1 min-h-[500px]">
               <FacilityLineChart
                 data={mappedData} // 합산된 데이터 전달
                 selectedDay={selectedDay}
@@ -136,7 +136,7 @@ const mappedData = useMemo(() => {
       </div>
 
       {/* 오른쪽: 테이블 */}
-      <div className="w-1/3 bg-slate-800 p-4 flex flex-col">
+      <div className="w-1/3 bg-slate-50 dark:bg-slate-900 p-4 flex flex-col">
         <div className="flex-1">
           <FacilityTable data={mappedData} start={start} end={end} />
         </div>

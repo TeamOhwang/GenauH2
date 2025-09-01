@@ -7,7 +7,8 @@ interface DashboardChartsProps {
     activeTimeFrame: TimeFrame;
     selectedPlant: Plant;
     chartOptions: Record<Plant, ChartOptions>;
-    h2Data: any;
+    h2Data: any; // 수소 생산량 차트 데이터
+    h2ChartOptions: ChartOptions;
     chart1Title: string;
     chart2Title: string;
     onPlantChange: (plant: Plant) => void;
@@ -19,6 +20,7 @@ export default function DashboardCharts({
     selectedPlant,
     chartOptions,
     h2Data,
+    h2ChartOptions,
     chart1Title,
     chart2Title,
     onPlantChange,
@@ -51,9 +53,23 @@ export default function DashboardCharts({
         }
     };
 
+    // 탭별 수소 생산량 차트 타입 선택
+    const getH2ChartType = () => {
+        switch (activeTimeFrame) {
+            case "daily":
+                return "line"; // 일별: 라인 차트
+            case "weekly":
+                return "bar"; // 주별: 막대 차트
+            case "monthly":
+                return "bar"; // 월별: 바 차트
+            default:
+                return "line";
+        }
+    };
 
     const currentChartOptions = getChartOptions();
     const currentChartType = getChartType();
+    const currentH2ChartType = getH2ChartType();
 
     return (
         <div className="grid grid-cols-2 gap-4">
@@ -72,19 +88,19 @@ export default function DashboardCharts({
                     </select>
                 </div>
                 <ChartComponent 
-                    data={solaData[activeTimeFrame][selectedPlant]} 
+                    data={solaData[activeTimeFrame][selectedPlant] as any} 
                     options={currentChartOptions[selectedPlant]} 
                     chartType={currentChartType}
                 />
             </div>
 
             {/* 수소 생산량 차트 */}
-                <div className="m-0 bg-white dark:bg-gray-800 rounded-2xl shadow p-4 mb-6">
+            <div className="m-0 bg-white dark:bg-gray-800 rounded-2xl shadow p-4 mb-6">
                 <p className="text-xl font-bold text-gray-800 dark:text-white mb-3">{chart2Title}</p>
                 <ChartComponent 
                     data={h2Data} 
-                    options={currentChartOptions.plant1} 
-                    chartType={currentChartType}
+                    options={h2ChartOptions} 
+                    chartType={currentH2ChartType}
                 />
             </div>
         </div>

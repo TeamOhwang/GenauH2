@@ -999,3 +999,282 @@ export function calDailyErrorRate(plantDataArr: any[][], currentHour: number): n
 
     return (totalError / totalActual) * 100;
 }
+
+// 수소 생산량 라인 차트 옵션 (데일리용)
+export function buildH2LineChartOptions(): ChartOptions {
+    return {
+        responsive: true,
+        scales: {
+            y: {
+                type: "linear",
+                display: true,
+                position: "left",
+                min: 0,
+                max: 100, // 수소 생산량 최대값 (kg)
+                ticks: {
+                    stepSize: 10,
+                    callback: (value: number) => `${value}kg`,
+                },
+                grid: {
+                    drawOnChartArea: true,
+                },
+            },
+        },
+        plugins: {
+            legend: {
+                position: "bottom",
+                labels: {
+                    usePointStyle: true,
+                    padding: 20,
+                    font: {
+                        size: 12
+                    }
+                }
+            },
+            tooltip: {
+                mode: "index",
+                intersect: false,
+                callbacks: {
+                    label: function(context: any) {
+                        const label = context.dataset.label || '';
+                        const value = context.parsed.y;
+                        if (value === null || value === undefined || value < 0) return `${label}: 0.00kg`;
+                        return `${label}: ${value.toFixed(2)}kg`;
+                    }
+                }
+            },
+        },
+        interaction: {
+            mode: "index",
+            intersect: false,
+        },
+        elements: {
+            line: {
+                spanGaps: true, // null 값 사이의 간격을 연결
+            }
+        }
+    };
+}
+
+// 수소 생산량 바 차트 옵션 (주간/월간용)
+export function buildH2BarChartOptions(): ChartOptions {
+    return {
+        responsive: true,
+        scales: {
+            y: {
+                type: "linear",
+                display: true,
+                position: "left",
+                min: 0,
+                max: 1000, // 주간/월간 수소 생산량 최대값 (kg)
+                ticks: {
+                    stepSize: 100,
+                    callback: (value: number) => `${value}kg`,
+                },
+                grid: {
+                    drawOnChartArea: true,
+                },
+            },
+        },
+        plugins: {
+            legend: {
+                position: "bottom",
+                labels: {
+                    usePointStyle: true,
+                    padding: 20,
+                    font: {
+                        size: 12
+                    }
+                }
+            },
+            tooltip: {
+                mode: "index",
+                intersect: false,
+                callbacks: {
+                    label: function(context: any) {
+                        const label = context.dataset.label || '';
+                        const value = context.parsed.y;
+                        if (value === null || value === undefined || value < 0) return `${label}: 0.00kg`;
+                        return `${label}: ${value.toFixed(2)}kg`;
+                    }
+                }
+            },
+        },
+        interaction: {
+            mode: "index",
+            intersect: false,
+        }
+    };
+}
+
+// 수소 생산량 차트 옵션 (시간대별)
+export function buildH2TimeChartOptions(): ChartOptions {
+    return {
+        responsive: true,
+        scales: {
+            y: {
+                type: "linear",
+                display: true,
+                position: "left",
+                min: 0,
+                max: 5, // 시간별 수소 생산량 최대값 (kg)
+                ticks: {
+                    // stepSize: 5,
+                    callback: (value: number) => `${value}kg`,
+                },
+                grid: {
+                    drawOnChartArea: true,
+                },
+            },
+        },
+        plugins: {
+            legend: {
+                position: "bottom",
+                labels: {
+                    usePointStyle: true,
+                    padding: 20,
+                    font: {
+                        size: 12
+                    }
+                }
+            },
+            tooltip: {
+                mode: "index",
+                intersect: false,
+                callbacks: {
+                    label: function(context: any) {
+                        const label = context.dataset.label || '';
+                        const value = context.parsed.y;
+                        if (value === null || value === undefined || value < 0) return `${label}: 0.00kg`;
+                        return `${label}: ${value.toFixed(2)}kg`;
+                    }
+                }
+            },
+        },
+        interaction: {
+            mode: "index",
+            intersect: false,
+        },
+        elements: {
+            line: {
+                spanGaps: true, // null 값 사이의 간격을 연결
+            }
+        }
+    };
+}
+
+// 수소 생산량 일별 차트 데이터 (시간별)
+export function buildH2DailyChartData(h2Data: any[], currentHour?: number): ChartData {
+    // 24시간 데이터 생성
+    const timeLabels = Array.from({ length: 25 }, (_, i) => `${i}시`);
+    
+    // 수소 생산량 데이터 (실제 데이터 또는 기본값)
+    const productionData = timeLabels.map((_, index) => {
+        // 현재 시간 이후는 null로 설정
+        if (currentHour && index > currentHour) {
+            return null;
+        }
+
+        // 실제 데이터에서 해당 시간의 수소 생산량 찾기
+        const h2Point = h2Data?.find(item => {
+            if (!item) return false;
+            const hour = item.hour ?? item.hour_of_day ?? item.timestamp;
+            return hour === index;
+        });
+        
+        if (h2Point) {
+            return h2Point.productionKg ?? 0;
+        }
+        
+        // 데이터가 없으면 0으로 설정
+        return 0;
+    });
+
+    return {
+        labels: timeLabels,
+        datasets: [
+            {
+                label: "시간별 수소 생산량 (kg)",
+                data: productionData,
+                borderColor: "rgba(33, 150, 243, 1)",
+                backgroundColor: "rgba(33, 150, 243, 0.2)",
+                pointRadius: 3,
+                fill: true,
+                type: "line"
+            },
+        ],
+    };
+}
+
+// 수소 생산량 주간 차트 데이터 (요일별)
+export function buildH2WeeklyChartData(h2Data: any[]): ChartData {
+    const days = ['월', '화', '수', '목', '금', '토', '일'];
+    
+    // 요일별 수소 생산량 데이터 생성
+    const productionData = days.map(day => {
+        const dayData = h2Data?.find(item => {
+            if (!item) return false;
+            const itemDate = new Date(item.date);
+            const dayOfWeek = itemDate.getDay();
+            const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+            return dayNames[dayOfWeek] === day;
+        });
+        
+        return dayData?.productionKg ?? 0;
+    });
+
+    return {
+        labels: days,
+        datasets: [
+            {
+                label: "요일별 수소 생산량 (kg)",
+                data: productionData,
+                borderColor: "rgba(33, 150, 243, 1)",
+                backgroundColor: "rgba(33, 150, 243, 0.6)",
+                pointRadius: 4,
+                type: "bar",
+                barPercentage: 0.8,
+                categoryPercentage: 0.9
+            },
+        ],
+    };
+}
+
+// 수소 생산량 월간 차트 데이터 (주차별)
+export function buildH2MonthlyChartData(h2Data: any[]): ChartData {
+    // 주차별 라벨 생성 (예: 1주차, 2주차, ...)
+    const weekLabels = ['1주차', '2주차', '3주차', '4주차', '5주차'];
+    
+    // 주차별 수소 생산량 데이터 생성
+    const productionData = weekLabels.map((_, weekIndex) => {
+        const weekData = h2Data?.filter(item => {
+            if (!item) return false;
+            const itemDate = new Date(item.date);
+            const weekOfMonth = Math.ceil(itemDate.getDate() / 7);
+            return weekOfMonth === weekIndex + 1;
+        });
+        
+        if (weekData && weekData.length > 0) {
+            return weekData.reduce((sum, item) => sum + (item.productionKg ?? 0), 0);
+        }
+        
+        return 0;
+    });
+
+    return {
+        labels: weekLabels,
+        datasets: [
+            {
+                label: "주차별 수소 생산량 (kg)",
+                data: productionData,
+                borderColor: "rgba(33, 150, 243, 1)",
+                backgroundColor: "rgba(33, 150, 243, 0.6)",
+                pointRadius: 0,
+                type: "bar",
+                barPercentage: 0.8,
+                categoryPercentage: 0.9,
+                borderWidth: 1
+            },
+        ],
+    };
+}

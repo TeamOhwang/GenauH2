@@ -35,7 +35,7 @@ public class OrganizationService {
     private final FacilityService facilityService;
     
     private final WebSocketNotificationService webSocketNotificationService;
-    private final ActivityLogService activityLogService;
+//    private final ActivityLogService activityLogService;
 
     // 사용자 로그인 (ACTIVE 상태만 로그인 가능)
     public OrganizationDTO login(String email, String password) {

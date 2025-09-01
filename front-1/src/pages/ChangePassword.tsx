@@ -236,7 +236,7 @@ const ChangePassword = () => {
             <div className="max-w-md w-full space-y-8">
                 {/* 서비스 로고 */}
                 <div className="text-center">
-                    <div className="text-2xl font-bold">GenauH2</div>
+                    <div className="text-2xl font-bold text-blue-600">GenauH2</div>
                     <h2 className="mt-6 text-3xl font-bold text-gray-900">
                         {isResetMode ? '새 비밀번호 설정' : '비밀번호 변경'}
                     </h2>
@@ -288,7 +288,7 @@ const ChangePassword = () => {
                                 value={newPassword}
                                 onChange={(e) => setNewPassword(e.target.value)}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="새 비밀번호를 입력하세요 (최소 6자)"
+                                placeholder="새 비밀번호를 입력하세요 (최소 8자)"
                             />
                             <button
                                 type="button"
@@ -302,8 +302,8 @@ const ChangePassword = () => {
                                 )}
                             </button>
                         </div>
-                        {newPassword && newPassword.length < 6 && (
-                            <p className="mt-1 text-sm text-red-600">비밀번호는 최소 6자 이상이어야 합니다.</p>
+                        {newPassword && newPassword.length < 8 && (
+                            <p className="mt-1 text-sm text-red-600">비밀번호는 최소 8자 이상이어야 합니다.</p>
                         )}
                     </div>
 
@@ -327,9 +327,9 @@ const ChangePassword = () => {
                                 className="absolute inset-y-0 right-0 pr-3 flex items-center"
                             >
                                 {showConfirmPassword ? (
-                                    <EyeOff className="h-5 w-5 text-gray-400" />
-                                ) : (
                                     <Eye className="h-5 w-5 text-gray-400" />
+                                ) : (
+                                    <EyeOff className="h-5 w-5 text-gray-400" />
                                 )}
                             </button>
                         </div>

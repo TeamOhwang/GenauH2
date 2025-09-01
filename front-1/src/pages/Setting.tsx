@@ -128,8 +128,8 @@ export default function Setting() {
         <div className="flex flex-col gap-4">
             <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
                 <p className="text-xl font-bold">비밀번호 변경</p>
-                <button onClick={handleChangePassword}>비밀번호 변경</button>
-                {isPasswordReset && <p className="text-red-500 dark:text-red-400 text-xs font-light mb-3">비밀번호 변경 메일이 발송되었습니다.</p>}
+                <button onClick={handleChangePassword} className="text-blue-500 dark:text-blue-400 text-xs font-light border border-blue-500 dark:border-blue-400 rounded-md px-2 py-1 mt-3">비밀번호 변경</button>
+                {isPasswordReset && <p className="text-red-500 dark:text-red-400 text-xs font-light mt-3">비밀번호 변경 메일이 발송되었습니다.</p>}
             </div>
 
             {/* 알림 설정 섹션 */}
@@ -169,25 +169,29 @@ export default function Setting() {
                         <div className="flex-1">
                             <h3 className="text-lg font-bold text-black dark:text-white mb-2">SMS</h3>
                             <p className="text-black dark:text-white mb-3">SMS로 알림을 발송합니다.</p>
-                            <p className="text-black dark:text-white mb-3">등록된 번호 : {notificationSms}</p>
-                            {!isSmsOpen && <button
-                                className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-                                onClick={handleSmsButtonClick}
-                            >
-                                번호 변경
-                            </button>}
-                            {isSmsOpen && (
-                                <div className="mt-4">
-                                    <input
-                                        type="text"
-                                        placeholder="등록 번호 변경"
-                                        value={smsInput}
-                                        onChange={(e) => setSmsInput(e.target.value)}
-                                        onKeyPress={handleSmsKeyPress}
-                                        className="w-1/3 p-2 border border-gray-300 rounded-md mr-2"
-                                    />
-                                    <Button type="submit" onClick={handleSmsUpdate}>변경</Button>
-                                </div>
+                            {smsNotification && (
+                                <>
+                                    <p className="text-black dark:text-white mb-3">등록된 번호 : {notificationSms}</p>
+                                    {!isSmsOpen && <button
+                                        className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                                        onClick={handleSmsButtonClick}
+                                    >
+                                        번호 변경
+                                    </button>}
+                                    {isSmsOpen && (
+                                        <div className="mt-4">
+                                            <input
+                                                type="text"
+                                                placeholder="등록 번호 변경"
+                                                value={smsInput}
+                                                onChange={(e) => setSmsInput(e.target.value)}
+                                                onKeyPress={handleSmsKeyPress}
+                                                className="w-1/3 p-2 border border-gray-300 rounded-md mr-2"
+                                            />
+                                            <Button type="submit" onClick={handleSmsUpdate}>변경</Button>
+                                        </div>
+                                    )}
+                                </>
                             )}
                         </div>
                         <label className="inline-flex items-center cursor-pointer ml-4">

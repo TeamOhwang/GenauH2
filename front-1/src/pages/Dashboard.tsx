@@ -5,7 +5,13 @@ import {
     buildWeeklyChartOptions,
     buildMonthlyChartOptions,
     buildH2Data,
-    buildTimeFrameData
+    buildTimeFrameData,
+    buildH2LineChartOptions,
+    buildH2BarChartOptions,
+    buildH2TimeChartOptions,
+    buildH2DailyChartData,
+    buildH2WeeklyChartData,
+    buildH2MonthlyChartData
 } from "@/utils/chartDataBuilder";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import TimeFrameTabs from "@/components/dashboard/TimeFrameTabs";
@@ -55,8 +61,37 @@ export default function Dashboard() {
         }
     };
 
+    // 탭별 수소 생산량 차트 옵션 선택
+    const getH2ChartOptions = () => {
+        switch (activeTimeFrame) {
+            case "daily":
+                return buildH2TimeChartOptions();
+            case "weekly":
+                return buildH2BarChartOptions();
+            case "monthly":
+                return buildH2BarChartOptions();
+            default:
+                return buildH2TimeChartOptions();
+        }
+    };
+
+    // 탭별 수소 생산량 차트 데이터 생성
+    const getH2ChartData = () => {
+        switch (activeTimeFrame) {
+            case "daily":
+                return buildH2DailyChartData(hourlyHydrogenProduction || [], currentHour);
+            case "weekly":
+                return buildH2WeeklyChartData(hourlyHydrogenProduction || []);
+            case "monthly":
+                return buildH2MonthlyChartData(hourlyHydrogenProduction || []);
+            default:
+                return buildH2DailyChartData(hourlyHydrogenProduction || [], currentHour);
+        }
+    };
+
     const chartOptions = getChartOptions();
-    const h2Data = buildH2Data(currentHour, hourlyHydrogenProduction);
+    const h2ChartOptions = getH2ChartOptions();
+    const h2ChartData = getH2ChartData();
     const timeFrameData = buildTimeFrameData(plant1, plant2, plant3, currentHour);
 
     const currentData = timeFrameData[activeTimeFrame];
@@ -92,7 +127,8 @@ export default function Dashboard() {
                     activeTimeFrame={activeTimeFrame}
                     selectedPlant={selectedPlant}
                     chartOptions={chartOptions}
-                    h2Data={h2Data}
+                    h2Data={h2ChartData}
+                    h2ChartOptions={h2ChartOptions}
                     chart1Title={currentData.chart1Title}
                     chart2Title={currentData.chart2Title}
                     onPlantChange={setSelectedPlant}

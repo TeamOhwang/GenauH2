@@ -40,7 +40,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
         // 네이티브 WebSocket 엔드포인트 (SockJS 없이)
         registry.addEndpoint("/ws-native")
-            .setAllowedOriginPatterns("*");
+            .setAllowedOriginPatterns("*"); // 네이티브 WebSocket 지원
         
         log.info("WebSocket STOMP 엔드포인트 등록 완료: /ws, /ws-native");
     }
@@ -48,6 +48,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void configureWebSocketTransport(WebSocketTransportRegistration registration) {
         log.info("WebSocket 전송 설정 시작");
+        
+        // 메시지 크기 제한 설정
         registration.setMessageSizeLimit(64 * 1024); // 64KB
         registration.setSendBufferSizeLimit(512 * 1024); // 512KB
         registration.setSendTimeLimit(20000); // 20초
