@@ -4,8 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-
-@Entity
+@Entity(name = "ProductionRealEntity")
 @Table(name = "production_real")
 @Data
 @NoArgsConstructor
@@ -15,30 +14,30 @@ public class Real {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "hydrogenactualid")
-    private Long hydrogenActualId;
+    @Column(name = "hydrogenActualId")  // DB 컬럼명만 수정
+    private Long hydrogenActualId;      // 필드명은 그대로
     
     @Column(name = "facid")
     private Long facid;
     
-    @Column(name = "orgid") 
-    private Long orgid;
+    @Column(name = "orgId")             // DB 컬럼명만 수정
+    private Long orgid;                 // 필드명은 그대로
     
-    @Column(name = "plant_id", length = 16)
+    @Column(name = "plant_id")
     private String plantId;
     
     @Column(name = "ts")
     private LocalDateTime ts;
     
-    @Column(name = "idlepowerkw", precision = 10, scale = 3)
-    private BigDecimal idlepowerkw;
+    @Column(name = "idlePowerKw")       // DB 컬럼명만 수정
+    private BigDecimal idlepowerkw;     // 필드명은 그대로
     
-    @Column(name = "productionkg", precision = 12, scale = 3)
-    private BigDecimal productionKg;
+    @Column(name = "productionKg")      // DB 컬럼명만 수정
+    private BigDecimal productionKg;    // 필드명은 그대로
     
-    @Column(name = "powerconsumedkwh", precision = 12, scale = 3)
-    private BigDecimal powerConsumedKwh;
+    @Column(name = "powerConsumedKwh")  // DB 컬럼명만 수정
+    private BigDecimal powerConsumedKwh; // 필드명은 그대로
     
-    @Column(name = "utilizationrate", precision = 10, scale = 3)
-    private BigDecimal utilizationRate;
+    @Column(name = "utilizationRate")   // DB 컬럼명만 수정
+    private BigDecimal utilizationRate; // 필드명은 그대로
 }

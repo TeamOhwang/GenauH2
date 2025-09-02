@@ -8,7 +8,7 @@ import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Entity
+@Entity(name = "HydrogenActualEntity") 
 @Table(name = "production_real")
 @Data
 public class HydrogenActual {
@@ -21,7 +21,7 @@ public class HydrogenActual {
     @Column(name = "facid", nullable = false)
     private Long facilityId;
     
-    @Column(name = "orgid")
+    @Column(name = "orgId")
     private Long orgId;
 
     @Column(name = "plant_id")

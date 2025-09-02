@@ -122,7 +122,7 @@ public interface RealRepository extends JpaRepository<Real, Long> {
          * @param endDate   종료 일시
          * @return 총 수소 생산량 합계
          */
-        @Query("SELECT SUM(r.productionKg) FROM Real r WHERE r.plantId = :plantId AND r.ts BETWEEN :startDate AND :endDate")
+        @Query("SELECT SUM(r.productionKg) FROM ProductionRealEntity r WHERE r.plantId = :plantId AND r.ts BETWEEN :startDate AND :endDate")
         BigDecimal sumProductionKgByPlantIdAndTsBetween(
                         @Param("plantId") String plantId,
                         @Param("startDate") LocalDateTime startDate,
@@ -153,13 +153,13 @@ public interface RealRepository extends JpaRepository<Real, Long> {
         @Query(value = "SELECT ts, idlepowerkw FROM production_real WHERE DATE(ts) = :date ORDER BY ts ASC", nativeQuery = true)
         List<Object[]> findIdlePowerByDate(@Param("date") String date);
 
-        @Query("SELECT FUNCTION('HOUR', r.ts) as hour, SUM(r.productionKg) as totalProductionKg FROM Real r WHERE r.orgid = :orgId AND r.ts >= :start AND r.ts < :end GROUP BY hour ORDER BY hour ASC")
+        @Query("SELECT FUNCTION('HOUR', r.ts) as hour, SUM(r.productionKg) as totalProductionKg FROM ProductionRealEntity r WHERE r.orgid = :orgId AND r.ts >= :start AND r.ts < :end GROUP BY hour ORDER BY hour ASC")
         List<Object[]> findHourlyProductionByOrgId(@Param("orgId") Long orgId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
-        @Query("SELECT SUM(r.productionKg) FROM Real r WHERE r.orgid = :orgId AND r.ts >= :start AND r.ts < :end")
+        @Query("SELECT SUM(r.productionKg) FROM ProductionRealEntity r WHERE r.orgid = :orgId AND r.ts >= :start AND r.ts < :end")
         BigDecimal findTotalProductionByOrgIdForLastSixMonths(@Param("orgId") Long orgId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
-        @Query("SELECT SUM(r.productionKg) FROM Real r WHERE r.orgid = :orgId")
+        @Query("SELECT SUM(r.productionKg) FROM ProductionRealEntity r WHERE r.orgid = :orgId")
         BigDecimal findTotalProductionByOrgId(@Param("orgId") Long orgId);
 
         @Query(value = "SELECT YEAR(r.ts) as year, MONTH(r.ts) as month, (DAYOFMONTH(r.ts) - 1) DIV 7 + 1 as weekOfMonth, SUM(r.productionkg) as totalProduction " +

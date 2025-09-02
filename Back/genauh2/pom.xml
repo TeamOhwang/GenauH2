@@ -52,11 +52,11 @@
 		</dependency>
 
 		<!-- H2 Database for development -->
-		<dependency>
+		<!-- <dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
 			<scope>runtime</scope>
-		</dependency>
+		</dependency> --> 
 
 		<!-- Spring Security -->
 		<dependency>
@@ -117,7 +117,7 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-redis</artifactId>
-		</dependency>
+		</dependency> 
 
 		<!-- CoolSMS SDK -->
 		<dependency>
