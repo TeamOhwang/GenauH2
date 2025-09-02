@@ -6,17 +6,75 @@ interface Stat {
     diffType?: 'positive' | 'negative' | 'neutral' | string; // 차이 타입 (양수/음수/중립)
 }
 
-interface DashboardStatsProps {
-    stats: Stat[];
+interface EfficiencyData {
+    daily: { 
+        efficiency: number; 
+        target: number; 
+        unit: string;
+        details?: {
+            energyEfficiency: number;
+            capacityUtilization: number;
+        };
+    };
+    weekly: { 
+        efficiency: number; 
+        target: number; 
+        unit: string;
+        details?: {
+            consistency: number;
+            stability: number;
+        };
+    };
+    monthly: { 
+        efficiency: number; 
+        target: number; 
+        unit: string;
+        details?: {
+            growth: number;
+            predictionAccuracy: number;
+        };
+    };
 }
 
-export default function DashboardStats({ stats }: DashboardStatsProps) {
-    // 효율 지표 계산 (예시 데이터)
-    const efficiencyData = {
-        daily: { efficiency: 78.1, target: 80, unit: "%" },
-        weekly: { efficiency: 75.3, target: 78, unit: "%" },
-        monthly: { efficiency: 72.8, target: 75, unit: "%" }
+interface DashboardStatsProps {
+    stats: Stat[];
+    efficiencyData?: EfficiencyData;
+}
+
+export default function DashboardStats({ stats, efficiencyData }: DashboardStatsProps) {
+    // 기본 효율 지표 데이터 (실제 데이터가 없을 때 사용)
+    const defaultEfficiencyData = {
+        daily: { 
+            efficiency: 0, 
+            target: 50, 
+            unit: "%",
+            details: {
+                energyEfficiency: 0,
+                capacityUtilization: 0
+            }
+        },
+        weekly: { 
+            efficiency: 0, 
+            target: 300, 
+            unit: "%",
+            details: {
+                consistency: 0,
+                stability: 0
+            }
+        },
+        monthly: { 
+            efficiency: 0, 
+            target: 1000, 
+            unit: "%",
+            details: {
+                growth: 0,
+                predictionAccuracy: 0
+            }
+        }
     };
+
+    // 실제 데이터가 있으면 사용, 없으면 기본값 사용
+    const currentEfficiencyData = efficiencyData || defaultEfficiencyData;
 
     return (
         <div className="mb-6">
@@ -77,19 +135,25 @@ export default function DashboardStats({ stats }: DashboardStatsProps) {
                                     stroke="#10b981"
                                     strokeWidth="8"
                                     fill="none"
-                                    strokeDasharray={`${(efficiencyData.daily.efficiency / 100) * 251.2} 251.2`}
+                                    strokeDasharray={`${(currentEfficiencyData.daily.efficiency / 100) * 251.2} 251.2`}
                                     strokeLinecap="round"
                                 />
                             </svg>
                             <div className="absolute inset-0 flex items-center justify-center">
                                 <span className="text-lg font-bold text-gray-800 dark:text-white">
-                                    {efficiencyData.daily.efficiency}%
+                                    {currentEfficiencyData.daily.efficiency.toFixed(1)}%
                                 </span>
                             </div>
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400">
-                            목표: {efficiencyData.daily.target}%
+                            목표: {currentEfficiencyData.daily.target}kg
                         </div>
+                        {currentEfficiencyData.daily.details && (
+                            <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                                에너지효율: {currentEfficiencyData.daily.details.energyEfficiency.toFixed(2)} kg/kWh<br/>
+                                가동률: {currentEfficiencyData.daily.details.capacityUtilization.toFixed(1)}%
+                            </div>
+                        )}
                     </div>
 
                     {/* 주간 효율 */}
@@ -114,19 +178,25 @@ export default function DashboardStats({ stats }: DashboardStatsProps) {
                                     stroke="#3b82f6"
                                     strokeWidth="8"
                                     fill="none"
-                                    strokeDasharray={`${(efficiencyData.weekly.efficiency / 100) * 251.2} 251.2`}
+                                    strokeDasharray={`${(currentEfficiencyData.weekly.efficiency / 100) * 251.2} 251.2`}
                                     strokeLinecap="round"
                                 />
                             </svg>
                             <div className="absolute inset-0 flex items-center justify-center">
                                 <span className="text-lg font-bold text-gray-800 dark:text-white">
-                                    {efficiencyData.weekly.efficiency}%
+                                    {currentEfficiencyData.weekly.efficiency.toFixed(1)}%
                                 </span>
                             </div>
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400">
-                            목표: {efficiencyData.weekly.target}%
+                            목표: {currentEfficiencyData.weekly.target}kg
                         </div>
+                        {currentEfficiencyData.weekly.details && (
+                            <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                                일관성: {currentEfficiencyData.weekly.details.consistency.toFixed(1)}%<br/>
+                                안정성: {currentEfficiencyData.weekly.details.stability.toFixed(1)}%
+                            </div>
+                        )}
                     </div>
 
                     {/* 월간 효율 */}
@@ -151,19 +221,25 @@ export default function DashboardStats({ stats }: DashboardStatsProps) {
                                     stroke="#f59e0b"
                                     strokeWidth="8"
                                     fill="none"
-                                    strokeDasharray={`${(efficiencyData.monthly.efficiency / 100) * 251.2} 251.2`}
+                                    strokeDasharray={`${(currentEfficiencyData.monthly.efficiency / 100) * 251.2} 251.2`}
                                     strokeLinecap="round"
                                 />
                             </svg>
                             <div className="absolute inset-0 flex items-center justify-center">
                                 <span className="text-lg font-bold text-gray-800 dark:text-white">
-                                    {efficiencyData.monthly.efficiency}%
+                                    {currentEfficiencyData.monthly.efficiency.toFixed(1)}%
                                 </span>
                             </div>
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400">
-                            목표: {efficiencyData.monthly.target}%
+                            목표: {currentEfficiencyData.monthly.target}kg
                         </div>
+                        {currentEfficiencyData.monthly.details && (
+                            <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                                성장률: {currentEfficiencyData.monthly.details.growth.toFixed(1)}%<br/>
+                                예측정확도: {currentEfficiencyData.monthly.details.predictionAccuracy.toFixed(1)}%
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

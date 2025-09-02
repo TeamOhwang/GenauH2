@@ -234,6 +234,13 @@ public interface PredictRepository extends JpaRepository<Predict, String> {
          */
         @Query(value = "SELECT ts, idlepowerkw FROM production_real WHERE DATE(ts) = :date ORDER BY ts ASC", nativeQuery = true)
         List<Object[]> findIdlePowerByDate(@Param("date") String date);
+        
+        @Query(value = "SELECT YEAR(p.ts) as year, MONTH(p.ts) as month, (DAYOFMONTH(p.ts) - 1) DIV 7 + 1 as weekOfMonth, SUM(p.predictedcurrentkg) as totalPredict " +
+        			   "FROM production_predict p " +
+        			   "WHERE p.orgid = :orgId " +
+        			   "GROUP BY year, month, weekOfMonth " +
+        			   "ORDER BY year, month, weekOfMonth", nativeQuery = true)
+        List<Object[]> findWeeklyPredictedByOrgId(@Param("orgId") Long orgId);
 
 
 

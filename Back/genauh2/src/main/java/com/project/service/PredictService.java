@@ -8,12 +8,15 @@ import org.springframework.transaction.annotation.Transactional;
 import com.project.repository.PredictRepository;
 import com.project.dto.FacilityKpiDto;
 import com.project.dto.PredictDTO;
+import com.project.dto.WeeklyPredictedDTO;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -132,6 +135,46 @@ public class PredictService {
     public List<FacilityKpiDto> getOneFacilityKpis(Long orgId, LocalDateTime start, LocalDateTime end, List<Long> facId) {
         return predictRepository.findByOrgIdWithNameAndFacIds(orgId, start, end, facId);
     }
+    
+    
+    @Transactional(readOnly = true)
+	public List<WeeklyPredictedDTO> getWeeklyPredicted(Long orgId) {
+    	System.out.println("=== PREDICT SERVICE ===");
+    	System.out.println("Service received orgId: " + orgId);
+    	
+    	List<Object[]> results = predictRepository.findWeeklyPredictedByOrgId(orgId);
+    	System.out.println("Repository returned " + results.size() + " raw results");
+    	
+    	for (int i = 0; i < results.size(); i++) {
+    		Object[] result = results.get(i);
+    		System.out.println("Raw result[" + i + "]: " + java.util.Arrays.toString(result));
+    	}
+    	
+    	List<WeeklyPredictedDTO> dtoResults = results.stream()
+    			.map(result -> {
+    				int year = ((Number) result[0]).intValue();
+    				int month = ((Number) result[1]).intValue();
+    				int weekOfMonth = ((Number) result[2]).intValue();
+    				BigDecimal totalPredicted = (BigDecimal) result[3];
+    				String weekLabel = String.format("%d월 %d주차", month, weekOfMonth);
+    				
+    				System.out.println("Converting: " + year + "-" + month + "-" + weekOfMonth + " = " + totalPredicted + "kg");
+    				
+    				return WeeklyPredictedDTO.builder()
+    						.year(year)
+    						.month(month)
+    						.weekOfMonth(weekOfMonth)
+    						.weekLabel(weekLabel)
+    						.totalPredictedKg(totalPredicted)
+    						.build();
+    			})
+		.collect(Collectors.toList());
+		
+		System.out.println("Service returning " + dtoResults.size() + " DTO results");
+		System.out.println("=======================");
+		
+		return dtoResults;
+	}
 }
     
     

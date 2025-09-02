@@ -20,6 +20,7 @@ import com.project.service.PredictService;
 import org.springframework.data.domain.Sort;
 import com.project.dto.FacilityKpiDto;
 import com.project.dto.PredictDTO;
+import com.project.dto.WeeklyPredictedDTO;
 
 
 @RestController
@@ -153,6 +154,32 @@ public class PredictController {
 
         // 서비스 호출해서 데이터 조회
         return predictService.getOneFacilityKpis(orgId, start, end, facId);
+    }
+    
+    
+    // 특정 조직(org)의 주차별 수소 예측 생산량 합계를 조회합니다.
+    @GetMapping("/weekly-production/{orgId}")
+    public ResponseEntity<List<WeeklyPredictedDTO>> getWeeklyPredicted(@PathVariable Long orgId) {
+    	try {
+    		System.out.println("=== WEEKLY PREDICTED CONTROLLER ===");
+    		System.out.println("Received orgId: " + orgId);
+    		System.out.println("===================================");
+    		
+    		List<WeeklyPredictedDTO> results = predictService.getWeeklyPredicted(orgId);
+    		
+    		System.out.println("Service returned " + results.size() + " results");
+    		for (int i = 0; i < results.size(); i++) {
+    			WeeklyPredictedDTO dto = results.get(i);
+    			System.out.println("Result[" + i + "]: " + dto.getYear() + "-" + dto.getMonth() + "-" + dto.getWeekOfMonth() + 
+    							   " (" + dto.getWeekLabel() + ") = " + dto.getTotalPredictedKg() + "kg");
+    		}
+    		
+    		return ResponseEntity.ok(results);
+    	} catch (Exception e) {
+    		System.out.println("Error in getWeeklyPredicted: " + e.getMessage());
+    		e.printStackTrace();
+    		return ResponseEntity.internalServerError().build();
+    	}
     }
  }
     

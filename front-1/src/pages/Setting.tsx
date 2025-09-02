@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useTargetSettingStore } from "@/stores/useTargetSettingStore";
 import { TARGET_RATE_OPTIONS } from "@/utils/chartDataBuilder";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { useNavigate } from "react-router-dom";
 
 export default function Setting() {
 
@@ -28,6 +30,8 @@ export default function Setting() {
     const { hydrogenTargetRate, setHydrogenTargetRate, resetHydrogenTargetRate } = useTargetSettingStore();
 
     const { updateUserStatusAction } = useAdmin();
+    const { orgId, logout } = useAuthStore();
+    const navigate = useNavigate();
 
     // 알림 설정 불러오기
     const loadNotificationSettings = async () => {
@@ -110,12 +114,18 @@ export default function Setting() {
         requestPasswordResetApi().then((res: any) => {
             setIsPasswordReset(!isPasswordReset);
             console.log(res);
+            
+            // 비밀번호 변경 메일 발송 후 로그아웃 및 로그인 페이지로 이동
+            setTimeout(() => {
+                logout();
+                navigate('/login');
+            }, 2000); // 2초 후 로그아웃 (사용자가 메시지를 볼 수 있도록)
         });
     }
 
-    const handleWithdrawal = async () => {
+    const handleWithdrawal = (orgId: string) => {
         console.log("회원 탈퇴 클릭");
-        const result = await updateUserStatusAction(orgId, "SUSPENDED");
+        updateUserStatusAction(orgId, "SUSPENDED");
     }
 
     useEffect(() => {

@@ -16,7 +16,7 @@ export default function Sidebar() {
         { label: "수소탱크", to: PATHS.TankDashboard, icon: <Fuel /> },
         { label: "수소 전해조 모니터링", to: PATHS.test, icon: <Gauge /> },
         { label: "수소 가격 정보", to: PATHS.price, icon: <DollarSign /> },
-        { label: "알림 기록", to: PATHS.userAlam, icon: <Bell /> },
+        // { label: "알림 기록", to: PATHS.userAlam, icon: <Bell /> },
         { label: "설정", to: PATHS.setting, icon: <Settings /> },
         // { label: "비밀번호 변경", to: PATHS.changePassword, icon: <Lock /> },
     ];

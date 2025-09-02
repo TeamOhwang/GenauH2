@@ -73,7 +73,7 @@ export default function AppRouter() {
             <Route path={PATHS.TankDashboard} element={<TankDashboard />} />
             <Route path={PATHS.equipmentList} element={<EquipmentList />} /> 
             <Route path={PATHS.setting} element={<Setting />} />
-            <Route path={PATHS.userAlam} element={<UserAlam />} />
+            {/* <Route path={PATHS.userAlam} element={<UserAlam />} /> */}
             <Route path={PATHS.test} element={<About />} />
           </Route>
 
