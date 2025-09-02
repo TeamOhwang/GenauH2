@@ -15,7 +15,7 @@ import {
     buildH2WeeklyChartData,
     buildH2MonthlyChartData,
     buildWeeklyH2DataFromRange,
-    buildMonthlyH2Data
+    buildMonthlyH2Data,
 } from "@/utils/chartDataBuilder";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import TimeFrameTabs from "@/components/dashboard/TimeFrameTabs";
@@ -35,6 +35,7 @@ export default function Dashboard() {
         weeklyData,
         weeklyHydrogenRangeData, // 주간 수소 생산량 범위 데이터 추가
         monthlyData,
+        monthlyHydrogenProductionData, // 월간 수소 생산량 데이터 추가
         hourlyHydrogenProduction,
         lastUpdateTime,
         isUpdating,
@@ -56,7 +57,7 @@ export default function Dashboard() {
     //     monthlyData: monthlyData.length,
     // });
 
-    const solaData = buildSolaData(plant1, plant2, plant3, currentHour, weeklyData);
+    const solaData = buildSolaData(plant1, plant2, plant3, currentHour, weeklyData, monthlyData);
     // console.log('  - 생성된 solaData:', solaData);
 
     // 탭별 차트 옵션 선택
@@ -97,7 +98,9 @@ export default function Dashboard() {
                 console.log('  - 주간 수소 차트 데이터 생성 중...');
                 return buildWeeklyH2DataFromRange(weeklyHydrogenRangeData || []);
             case "monthly":
-                return buildMonthlyH2Data(hourlyHydrogenProduction || []);
+                console.log('  - 월간 수소 차트 데이터 생성 중...');
+                console.log('  - monthlyHydrogenProductionData:', monthlyHydrogenProductionData);
+                return buildMonthlyH2Data(monthlyHydrogenProductionData || []);
             default:
                 return buildH2DailyChartData(hourlyHydrogenProduction || [], currentHour);
         }

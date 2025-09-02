@@ -43,9 +43,9 @@ export async function getHourlyHydrogenProductionApi() {
 }
 
 // 주간 수소 생산량 조회
-export async function getWeeklyProductionApi(facId: string) {
+export async function getWeeklyProductionApi(orgId: string) {
     try {
-        const res = await apiClient.get(`${GENERATION_ENDPOINTS.getWeeklyProduction}/${facId}`);
+        const res = await apiClient.get(`${GENERATION_ENDPOINTS.getWeeklyProduction}/${orgId}`);
         return res.data ?? [];
     } catch (error) {
         console.error('❌ getWeeklyProductionApi 오류:', error);

@@ -87,11 +87,11 @@ export function useGeneration() {
         }
     }, [])
 
-    const getWeeklyProduction = useCallback(async (facId: string) => {
+    const getWeeklyProduction = useCallback(async (orgId: string) => {
         setLoading(true);
         setError(null);
         try {
-            const data = await getWeeklyProductionApi(facId);
+            const data = await getWeeklyProductionApi(orgId);
             return data;
         } catch (e: any) {
             console.error('❌ getWeeklyProduction 오류:', e);
@@ -132,6 +132,21 @@ export function useGeneration() {
         }
     }, [])
 
+    const getMonthlyHydrogenProduction = useCallback(async (orgId: string) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await getWeeklyProductionApi(orgId);
+            return data;
+        } catch (e: any) {
+            console.error('❌ getMonthlyHydrogenProduction 오류:', e);
+            setError(e?.message ?? "월간 수소 생산량 조회 실패");
+            return null;
+        } finally {
+            setLoading(false);
+        }
+    }, [])
+
 
 
     return { 
@@ -142,6 +157,7 @@ export function useGeneration() {
         getHourlyHydrogenProduction, 
         getWeeklyProduction, 
         getWeeklyHydrogenRange,
-        getWeeklyHydrogenPredictRange
+        getWeeklyHydrogenPredictRange,
+        getMonthlyHydrogenProduction
     };
 }

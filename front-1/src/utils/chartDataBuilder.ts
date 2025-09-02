@@ -79,6 +79,7 @@ export function buildSolaData(
     plant3: any[],
     currentHour: number,
     weeklyData: any[],
+    monthlyData: any[],
 ): SolaDataStructure {
     return {
         daily: {
@@ -92,9 +93,9 @@ export function buildSolaData(
             plant3: buildWeeklyPlantChartData(weeklyData),  
         },
         monthly: {
-            plant1: buildMonthlyPlantChartData(weeklyData),
-            plant2: buildMonthlyPlantChartData(weeklyData),
-            plant3: buildMonthlyPlantChartData(weeklyData),
+            plant1: buildMonthlyPlantChartData(monthlyData),
+            plant2: buildMonthlyPlantChartData(monthlyData),
+            plant3: buildMonthlyPlantChartData(monthlyData),
         },
     };
 }
@@ -164,14 +165,23 @@ function buildDailyPlantChartData(plantData: any[], currentHour: number): ChartD
 function buildWeeklyPlantChartData(plantData: any[]): ChartData {
 
     const currentDate = new Date();
+    
+    // 현재 주의 월요일 계산
+    const dayOfWeek = currentDate.getDay();
+    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // 일요일이면 6일 전, 아니면 (요일-1)일 전
+    const currentWeekMonday = new Date(currentDate);
+    currentWeekMonday.setDate(currentDate.getDate() - daysToMonday);
+
+    // 현재 주 월요일 이전 데이터만 필터링
+    const filteredData = plantData.filter((item: any) => {
+        if (!item.date) return false;
+        const dateObj = new Date(item.date);
+        return dateObj < currentWeekMonday; // 현재 주 월요일 이전 데이터만
+    });
 
     // 요일별 라벨 생성
-    const labels = plantData.map((item: any) => {
-        if (!item.date) return '날짜 없음';
-        
+    const labels = filteredData.map((item: any) => {
         const date = new Date(item.date);
-        if (isNaN(date.getTime())) return '날짜 오류';
-        
         const month = date.getMonth() + 1;
         const day = date.getDate();
         const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()];
@@ -181,17 +191,12 @@ function buildWeeklyPlantChartData(plantData: any[]): ChartData {
     
 
     // 발전량 데이터 (백엔드에서 genKwhTotal로 제공)
-    const generationData = plantData.map((item) => {
-        const dateObj = new Date(item.date);
-
-        if (dateObj > currentDate) {
-            return null; // 현재 날짜 이후는 null로 설정하여 표시하지 않음
-        }
+    const generationData = filteredData.map((item) => {
         return item ? (item.genKwhTotal - 300 || 0) : 0;
     });
 
     // 예측 발전량 데이터 (백엔드에서 predKwhTotal로 제공)
-    const forecastData = plantData.map((item) => {
+    const forecastData = filteredData.map((item) => {
         return item ? (item.predKwhTotal - 300 || 0) : 0;
     });
     
@@ -243,7 +248,10 @@ function buildMonthlyPlantChartData(plantData: any[]): ChartData {
 
     const currentDate = new Date();
     const currentWeekStart = new Date(currentDate);
-    currentWeekStart.setDate(currentDate.getDate() - currentDate.getDay()); // 이번 주 일요일
+    // 월요일을 주의 시작으로 계산 (일요일은 0이므로 6을 빼서 월요일로 조정)
+    const dayOfWeek = currentDate.getDay();
+    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // 일요일이면 6일 전, 아니면 (요일-1)일 전
+    currentWeekStart.setDate(currentDate.getDate() - daysToMonday); // 이번 주 월요일
 
     // 주차별로 데이터 그룹화
     const weeklyGroups: { [weekKey: string]: any[] } = {};
@@ -254,10 +262,12 @@ function buildMonthlyPlantChartData(plantData: any[]): ChartData {
         const date = new Date(item.date);
         if (isNaN(date.getTime())) return;
         
-        // 주차 계산 (월의 몇 번째 주인지)
+        // 주차 계산 (월의 몇 번째 주인지) - 월요일을 주의 시작으로 계산
         const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
         const firstDayWeekday = firstDayOfMonth.getDay();
-        const weekNumber = Math.ceil((date.getDate() + firstDayWeekday) / 7);
+        // 일요일(0)을 7로 변환하여 월요일(1)을 주의 시작으로 계산
+        const adjustedFirstDayWeekday = firstDayWeekday === 0 ? 7 : firstDayWeekday;
+        const weekNumber = Math.ceil((date.getDate() + adjustedFirstDayWeekday - 1) / 7);
         
         // 연도-월-주차 순으로 정렬되도록 키 생성 (예: "2024-08-04")
         const weekKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(weekNumber).padStart(2, '0')}`;
@@ -274,48 +284,35 @@ function buildMonthlyPlantChartData(plantData: any[]): ChartData {
     const generationData: (number | null)[] = [];
     const forecastData: number[] = [];
 
-    // 현재 주 정보를 저장할 배열
-    const isCurrentWeekArray: boolean[] = [];
+
     
     sortedWeeks.forEach(weekKey => {
         const [year, month, weekNum] = weekKey.split('-');
         const weekData = weeklyGroups[weekKey];
         
-        // 주차 라벨 생성 (예: "8월 1주차", "8월 2주차")
-        // 해당 주의 데이터가 현재 주인지 확인
-        const isCurrentWeek = weekData.some((item: any) => {
+        // 해당 주의 데이터가 현재 주 이후인지 확인 (현재 주 포함하여 제외)
+        const isCurrentOrFutureWeek = weekData.some((item: any) => {
             const itemDate = new Date(item.date);
             return itemDate >= currentWeekStart;
         });
         
-        // 현재 주 여부를 배열에 저장
-        isCurrentWeekArray.push(isCurrentWeek);
-        
-        // 현재 주에는 "(현재)" 표시 추가
-        if (isCurrentWeek) {
-            labels.push(`${month}월 ${weekNum}주차 (현재)`);
-        } else {
-            labels.push(`${month}월 ${weekNum}주차`);
+        // 현재 주 이후 데이터는 제외
+        if (isCurrentOrFutureWeek) {
+            return;
         }
         
-        if (isCurrentWeek) {
-            // 현재 주는 예측값만 표시
-            const weekForecastTotal = weekData.reduce((sum: number, item: any) => {
-                return sum + (item.predKwhTotal || 0);
-            }, 0);
-            generationData.push(null); // 실제값은 null로 설정
-            forecastData.push(weekForecastTotal - (300 * weekData.length)); // 유휴 전력량 계산
-        } else {
-            // 과거 주는 실제값과 예측값 모두 표시
-            const weekGenerationTotal = weekData.reduce((sum: number, item: any) => {
-                return sum + (item.genKwhTotal || 0);
-            }, 0);
-            const weekForecastTotal = weekData.reduce((sum: number, item: any) => {
-                return sum + (item.predKwhTotal || 0);
-            }, 0);
-            generationData.push(weekGenerationTotal - (300 * weekData.length)); // 유휴 전력량 계산
-            forecastData.push(weekForecastTotal - (300 * weekData.length)); // 예측 유휴 전력량 계산
-        }
+        // 주차 라벨 생성 (예: "8월 1주차", "8월 2주차")
+        labels.push(`${month}월 ${weekNum}주차`);
+        
+        // 과거 주는 실제값과 예측값 모두 표시
+        const weekGenerationTotal = weekData.reduce((sum: number, item: any) => {
+            return sum + (item.genKwhTotal || 0);
+        }, 0);
+        const weekForecastTotal = weekData.reduce((sum: number, item: any) => {
+            return sum + (item.predKwhTotal || 0);
+        }, 0);
+        generationData.push(weekGenerationTotal - (300 * weekData.length)); // 유휴 전력량 계산
+        forecastData.push(weekForecastTotal - (300 * weekData.length)); // 예측 유휴 전력량 계산
     });
 
     // console.log('  - 생성된 주차별 데이터:', {
@@ -905,76 +902,37 @@ export function buildWeeklyH2DataFromRange(rangeData: any[]): ChartData {
 }
 
 // 월간 탭용 주차별 수소 생산량 데이터 생성
-export function buildMonthlyH2Data(plantData: any[]): ChartData {
-    if (plantData.length === 0) {
+export function buildMonthlyH2Data(hydrogenData: any[]): ChartData {
+    if (hydrogenData.length === 0) {
         return {
             labels: [],
             datasets: []
         };
-    }
+    };
 
-    const currentDate = new Date();
-    const currentWeekStart = new Date(currentDate);
-    currentWeekStart.setDate(currentDate.getDate() - currentDate.getDay()); // 이번 주 일요일
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    const firstDayWeekday = firstDay.getDay();
 
-    // 주차별로 데이터 그룹화
-    const weeklyGroups: { [weekKey: string]: any[] } = {};
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    const filteredMonth = hydrogenData.filter((item) => item.month < month && item.year <= year && item.month >= (month-2));
+
+    const dayOfMonth = now.getDate();
+    const adjustedDate = dayOfMonth + firstDayWeekday;
+    const weekNumber = Math.ceil(adjustedDate / 7);
+
+    const filteredWeek = hydrogenData.filter((item) => item.weekNumber < weekNumber && item.month === month && item.year === year);
     
-    plantData.forEach((item: any) => {
-        if (!item.date) return;
-        
-        const date = new Date(item.date);
-        if (isNaN(date.getTime())) return;
-        
-        // 주차 계산 (월의 몇 번째 주인지)
-        const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
-        const firstDayWeekday = firstDayOfMonth.getDay();
-        const weekNumber = Math.ceil((date.getDate() + firstDayWeekday) / 7);
-        
-        const weekKey = `${date.getFullYear()}-${date.getMonth() + 1}-${weekNumber}`;
-        
-        if (!weeklyGroups[weekKey]) {
-            weeklyGroups[weekKey] = [];
-        }
-        weeklyGroups[weekKey].push(item);
-    });
+    const filteredData = [...filteredMonth, ...filteredWeek];
 
-    // 주차별로 정렬하고 라벨과 데이터 생성
-    const sortedWeeks = Object.keys(weeklyGroups).sort();
     const labels: string[] = [];
     const productionData: (number | null)[] = [];
-    const forecastData: number[] = [];
 
-    sortedWeeks.forEach(weekKey => {
-        const [year, month, weekNum] = weekKey.split('-');
-        const weekData = weeklyGroups[weekKey];
-        
-        // 주차 라벨 생성 (예: "8월 1주차", "8월 2주차")
-        labels.push(`${month}월 ${weekNum}주차`);
-        
-        // 해당 주의 데이터가 현재 주인지 확인
-        const isCurrentWeek = weekData.some((item: any) => {
-            const itemDate = new Date(item.date);
-            return itemDate >= currentWeekStart;
-        });
-        
-        if (isCurrentWeek) {
-            // 현재 주는 예측값만 표시 (수소 생산량은 발전량과 연관)
-            const weekForecastTotal = weekData.reduce((sum: number, item: any) => {
-                return sum + (item.predKwhTotal || 0);
-            }, 0);
-            productionData.push(null); // 실제값은 null로 설정
-            forecastData.push(weekForecastTotal * 0.1); // 발전량의 10%로 수소 생산량 예측
-        } else {
-            // 과거 주는 실제값 표시 (수소 생산량은 발전량과 연관)
-            const weekGenerationTotal = weekData.reduce((sum: number, item: any) => {
-                return sum + (item.genKwhTotal || 0);
-            }, 0);
-            productionData.push(weekGenerationTotal * 0.1); // 발전량의 10%로 수소 생산량 계산
-            forecastData.push(0); // 예측값은 0으로 설정 (표시하지 않음)
-        }
-    });
-
+    filteredData.forEach((item) => {
+        labels.push(item.weekLabel)
+        productionData.push(item.totalProductionKg)
+    })
 
     return {
         labels: labels,
@@ -988,16 +946,6 @@ export function buildMonthlyH2Data(plantData: any[]): ChartData {
                 fill: false,
                 type: "line"
             },
-            {
-                label: "주차별 수소 생산 예측량 (kg)",
-                data: forecastData,
-                borderColor: "rgba(33, 150, 243, 0.6)",
-                backgroundColor: "rgba(33, 150, 243, 0.1)",
-                pointRadius: 3,
-                borderDash: [5, 5],
-                fill: false,
-                type: "line"
-            }
         ],
     };
 }

@@ -22,7 +22,7 @@ const getPlantIdForBackend = (plant: Plant): string => {
 };
 
 export function useDashboardData() {
-    const { getRawGeneration, getDailyGeneration, getHourlyHydrogenProduction, getWeeklyProduction, getWeeklyHydrogenRange } = useGeneration();
+    const { getRawGeneration, getDailyGeneration, getHourlyHydrogenProduction, getWeeklyProduction, getWeeklyHydrogenRange, getMonthlyHydrogenProduction } = useGeneration();
     const [activeTimeFrame, setActiveTimeFrame] = useState<TimeFrame>("daily");
     const [selectedPlant, setSelectedPlant] = useState<Plant>("plant1");
     const [data, setData] = useState<any[]>([]);
@@ -32,6 +32,7 @@ export function useDashboardData() {
     const [weeklyData, setWeeklyData] = useState<any[]>([]);
     const [monthlyData, setMonthlyData] = useState<any[]>([]);
     const [weeklyHydrogenRangeData, setWeeklyHydrogenRangeData] = useState<any[]>([]); // 주간 수소 생산량 범위 데이터
+    const [monthlyHydrogenProductionData, setMonthlyHydrogenProductionData] = useState<any[]>([]); // 월간 수소 생산량 데이터
     const [currentHour, setCurrentHour] = useState(new Date().getHours());
     const [currentDate, setCurrentDate] = useState(new Date().toISOString().split('T')[0]);
     const [lastUpdateTime, setLastUpdateTime] = useState<Date | null>(null);
@@ -136,6 +137,14 @@ export function useDashboardData() {
                 setMonthlyData([]);
             }
 
+            // 월간 수소 생산 데이터 조회 (orgId는 2로 고정, 실제로는 사용자 조직 ID를 사용해야 함)
+            const monthlyHydrogenResult = await getMonthlyHydrogenProduction("2");
+            if (Array.isArray(monthlyHydrogenResult) && monthlyHydrogenResult.length > 0) {
+                setMonthlyHydrogenProductionData(monthlyHydrogenResult);
+            } else {
+                setMonthlyHydrogenProductionData([]);
+            }
+
         } catch (error) {
             console.error('❌ 데이터 갱신 실패:', error);
         } finally {
@@ -198,6 +207,7 @@ export function useDashboardData() {
 
         // 월간 데이터
         monthlyData,
+        monthlyHydrogenProductionData,
 
         // 액션
         setActiveTimeFrame,
