@@ -1,6 +1,9 @@
 import { getNotificationSettingsApi, requestPasswordResetApi, updateNotificationSettingsApi } from "@/api/userApi";
 import Button from "@/components/ui/Button";
 import { useEffect, useState } from "react";
+import { useTargetSettingStore } from "@/stores/useTargetSettingStore";
+import { TARGET_RATE_OPTIONS } from "@/utils/chartDataBuilder";
+import { useAdmin } from "@/hooks/useAdmin";
 
 export default function Setting() {
 
@@ -20,6 +23,11 @@ export default function Setting() {
 
     // 입력값 상태 추가
     const [smsInput, setSmsInput] = useState("");
+
+    // 목표 설정 스토어
+    const { hydrogenTargetRate, setHydrogenTargetRate, resetHydrogenTargetRate } = useTargetSettingStore();
+
+    const { updateUserStatusAction } = useAdmin();
 
     // 알림 설정 불러오기
     const loadNotificationSettings = async () => {
@@ -103,6 +111,11 @@ export default function Setting() {
             setIsPasswordReset(!isPasswordReset);
             console.log(res);
         });
+    }
+
+    const handleWithdrawal = async () => {
+        console.log("회원 탈퇴 클릭");
+        const result = await updateUserStatusAction(orgId, "SUSPENDED");
     }
 
     useEffect(() => {
@@ -215,11 +228,58 @@ export default function Setting() {
                 </div>
             </div>
 
+            {/* 수소 생산량 목표 설정 섹션 */}
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+                <h2 className="text-xl font-bold text-black dark:text-white mb-6">수소 생산량 목표 설정</h2>
+                
+                <div className="mb-6">
+                    <h3 className="text-lg font-semibold text-black dark:text-white mb-3">목표 비율 설정</h3>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">
+                        예측 생산량 대비 목표 비율을 설정합니다. 예를 들어 80%로 설정하면 예측치의 80%를 목표로 합니다.
+                    </p>
+                    
+                    <div className="flex items-center space-x-4">
+                        <label htmlFor="target-rate" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            목표 비율:
+                        </label>
+                        <select
+                            id="target-rate"
+                            value={hydrogenTargetRate}
+                            onChange={(e) => setHydrogenTargetRate(Number(e.target.value))}
+                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            {TARGET_RATE_OPTIONS.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                    {option.label}
+                                </option>
+                            ))}
+                        </select>
+                        <button
+                            onClick={resetHydrogenTargetRate}
+                            className="px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        >
+                            기본값으로 리셋
+                        </button>
+                    </div>
+                    
+                    <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                        <p className="text-sm text-blue-800 dark:text-blue-200">
+                            <strong>현재 설정:</strong> 예측 생산량의 {(hydrogenTargetRate * 100).toFixed(0)}%를 목표로 설정
+                        </p>
+                        <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
+                            이 설정은 대시보드의 수소 생산량 달성률 계산에 사용됩니다.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
             <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
                 <p className="text-xl font-bold text-black dark:text-white">시설 추가 / 수정 요청</p>
             </div>
             <div>
-                <button className="text-red-500 text-md dark:bg-red-500 dark:text-white font-medium border border-red-500 dark:border-red-500 rounded-md px-2 py-1 mt-3">회원 탈퇴</button>
+                <button 
+                className="text-red-500 text-md dark:bg-red-500 dark:text-white font-medium border border-red-500 dark:border-red-500 rounded-md px-2 py-1 mt-3"
+                onClick={handleWithdrawal}>회원 탈퇴</button>
             </div>
         </div>
     )

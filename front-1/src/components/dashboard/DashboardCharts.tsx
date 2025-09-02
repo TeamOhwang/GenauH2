@@ -59,7 +59,7 @@ export default function DashboardCharts({
             case "daily":
                 return "line"; // 일별: 라인 차트
             case "weekly":
-                return "bar"; // 주별: 막대 차트
+                return "line"; // 주별: 라인 차트
             case "monthly":
                 return "bar"; // 월별: 바 차트
             default:

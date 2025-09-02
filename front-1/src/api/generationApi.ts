@@ -4,10 +4,11 @@ export const GENERATION_ENDPOINTS = {
     getRaw: "/generation/raw",
     getLatest: "/generation/latest",
     getDaily: "/generation/daily",
-    // getHourlyAvg: "/generation/hourly-avg",
-    // getSummary: "/generation/summary",
-    // getDetailed: "/generation/detailed",
+ 
     getHourlyHydrogenProduction: "/storage/hourly-hydrogen-production",
+    getWeeklyProduction: "/real/weekly-production",
+    getRangeData: "/real/range",
+    getPredictRangeData: "/predict/range",
 }
 
 // 원시 데이터 조회
@@ -19,16 +20,10 @@ export async function getRawGenerationApi(startDate: string, endDate: string) {
 // 최신 데이터 조회
 // 일별 데이터 조회
 export async function getDailyGenerationApi(plantId: string, startDate: string, endDate: string) {
-    console.log('🌐 generationApi.getDailyGenerationApi 호출');
-    console.log('  - URL:', GENERATION_ENDPOINTS.getDaily);
-    console.log('  - 파라미터:', { plantId, start: startDate, end: endDate, limit: 2000 });
-    
     try {
         const res = await apiClient.get(GENERATION_ENDPOINTS.getDaily, { 
             params: { plantId: plantId, start: startDate, end: endDate, limit: 2000 } 
         });
-        console.log('  - API 응답 상태:', res.status);
-        console.log('  - API 응답 데이터:', res.data);
         return res.data ?? [];
     } catch (error) {
         console.error('❌ getDailyGenerationApi 오류:', error);
@@ -36,14 +31,10 @@ export async function getDailyGenerationApi(plantId: string, startDate: string, 
     }
 }
 
+// 시간별 수소 생산량 조회
 export async function getHourlyHydrogenProductionApi() {
-    console.log('🌐 generationApi.getHourlyHydrogenProductionApi 호출');
-    console.log('  - URL:', GENERATION_ENDPOINTS.getHourlyHydrogenProduction);
-    
     try {
         const res = await apiClient.get(GENERATION_ENDPOINTS.getHourlyHydrogenProduction);
-        console.log('  - API 응답 상태:', res.status);
-        console.log('  - API 응답 데이터:', res.data);
         return res.data ?? [];
     } catch (error) {
         console.error('❌ getHourlyHydrogenProductionApi 오류:', error);
@@ -51,26 +42,54 @@ export async function getHourlyHydrogenProductionApi() {
     }
 }
 
-// 시간별 평균 데이터 조회
-// export async function getHourlyAvgGenerationApi(startDate: string, endDate: string) {
-//     const res = await apiClient.get(GENERATION_ENDPOINTS.getHourlyAvg, { params: { start: startDate, end: endDate, limit:2000 } });
-//     return res.data ?? [];
-// }
+// 주간 수소 생산량 조회
+export async function getWeeklyProductionApi(facId: string) {
+    try {
+        const res = await apiClient.get(`${GENERATION_ENDPOINTS.getWeeklyProduction}/${facId}`);
+        return res.data ?? [];
+    } catch (error) {
+        console.error('❌ getWeeklyProductionApi 오류:', error);
+        throw error;
+    }
+}
 
-// 요약 데이터 조회
-// export async function getSummaryGenerationApi(startDate: string, endDate: string) {
-//     const res = await apiClient.get(GENERATION_ENDPOINTS.getSummary, { params: { start: startDate, end: endDate, limit:2000 } });
-//     return res.data ?? [];
-// }
+// 기간별 수소 생산량 데이터 조회 (이번 주 + 저번 주)
+export async function getWeeklyHydrogenRangeApi(orgId: string, startDate: string, endDate: string) {
+    try {
+        console.log('🔧 getWeeklyHydrogenRangeApi 호출:', { orgId, startDate, endDate });
+        const res = await apiClient.get(GENERATION_ENDPOINTS.getRangeData, { 
+            params: { startDate, endDate } 
+        });
+        console.log('🔧 getWeeklyHydrogenRangeApi 응답:', res.data);
+        
+        // orgId가 일치하는 데이터만 필터링
+        const filteredData = res.data?.filter((item: any) => item.orgid === parseInt(orgId)) ?? [];
+        console.log('🔧 orgId 필터링 후 데이터:', filteredData);
+        
+        return filteredData;
+    } catch (error) {
+        console.error('❌ getWeeklyHydrogenRangeApi 오류:', error);
+        throw error;
+    }
+}
 
-// 상세 데이터 조회
-// export async function getDetailedGenerationApi(startDate: string, endDate: string) {
-//     const res = await apiClient.get(GENERATION_ENDPOINTS.getDetailed, { params: { start: startDate, end: endDate, limit:2000 } });
-//     return res.data ?? [];
-// }
+// 기간별 수소 생산량 예측 데이터 조회 (이번 주 + 저번 주)
+export async function getWeeklyHydrogenPredictRangeApi(orgId: string, startDate: string, endDate: string) {
+    try {
+        console.log('🔧 getWeeklyHydrogenPredictRangeApi 호출:', { orgId, startDate, endDate });
+        const res = await apiClient.get(GENERATION_ENDPOINTS.getPredictRangeData, { 
+            params: { startDate, endDate } 
+        });
+        console.log('🔧 getWeeklyHydrogenPredictRangeApi 응답:', res.data);
+        
+        // orgId가 일치하는 데이터만 필터링
+        const filteredData = res.data?.filter((item: any) => item.orgid === parseInt(orgId)) ?? [];
+        console.log('🔧 예측 데이터 orgId 필터링 후:', filteredData);
+        
+        return filteredData;
+    } catch (error) {
+        console.error('❌ getWeeklyHydrogenPredictRangeApi 오류:', error);
+        throw error;
+    }
+}
 
-// 시간별 수소 생산량 조회
-// export async function getHourlyHydrogenApi(plantId: string, startDate: string, endDate: string) {
-//     const res = await apiClient.get(GENERATION_ENDPOINTS.getHourlyHydrogen, { params: { plantId: plantId, start: startDate, end: endDate, limit: 2000 } });
-//     return res.data ?? [];
-// }

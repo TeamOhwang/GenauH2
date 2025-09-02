@@ -1,9 +1,9 @@
-import { StatItem } from '@/types/dashboard';
-
 interface Stat {
     label: string;
     value: string;
     diff: string;
+    detail?: string;
+    diffType?: 'positive' | 'negative' | 'neutral' | string; // 차이 타입 (양수/음수/중립)
 }
 
 interface DashboardStatsProps {
@@ -22,13 +22,31 @@ export default function DashboardStats({ stats }: DashboardStatsProps) {
         <div className="mb-6">
             {/* 기존 통계 카드들 */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                {stats.map((stat, index) => (
-                    <div key={index} className="bg-white dark:bg-gray-800 rounded-2xl shadow p-4">
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{stat.label}</p>
-                        <p className="text-2xl font-bold text-gray-800 dark:text-white mb-1">{stat.value}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{stat.diff}</p>
-                    </div>
-                ))}
+                {stats.map((stat, index) => {
+                    // 차이 타입에 따른 색상 결정
+                    const getDiffColor = () => {
+                        switch (stat.diffType) {
+                            case 'positive':
+                                return 'text-green-600 dark:text-green-400'; // 목표 초과 (좋음)
+                            case 'negative':
+                                return 'text-red-600 dark:text-red-400'; // 목표 미달 (나쁨)
+                            case 'neutral':
+                            default:
+                                return 'text-gray-500 dark:text-gray-400'; // 기본 색상
+                        }
+                    };
+
+                    return (
+                        <div key={index} className="bg-white dark:bg-gray-800 rounded-2xl shadow p-4">
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{stat.label}</p>
+                            <p className="text-2xl font-bold text-gray-800 dark:text-white mb-1">{stat.value}</p>
+                            <p className={`text-xs font-medium ${getDiffColor()}`}>{stat.diff}</p>
+                            {stat.detail && (
+                                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{stat.detail}</p>
+                            )}
+                        </div>
+                    );
+                })}
             </div>
 
             {/* 효율 지표 섹션 */}

@@ -1,4 +1,4 @@
-import { getHourlyHydrogenProductionApi } from "@/api/generationApi";
+import { getHourlyHydrogenProductionApi, getWeeklyProductionApi, getWeeklyHydrogenRangeApi, getWeeklyHydrogenPredictRangeApi } from "@/api/generationApi";
 import { fetchDailyGeneration, fetchRawGeneration } from "@/api/generationService";
 import { useState, useCallback } from "react";
 
@@ -75,10 +75,7 @@ export function useGeneration() {
         setLoading(true);
         setError(null);
         try {
-            console.log('🔧 useGeneration.getHourlyHydrogenProduction 호출');
-            
             const data = await getHourlyHydrogenProductionApi();
-            console.log('  - 수소 생산량 데이터:', data);
             return data;
         }
         catch (e: any) {
@@ -90,47 +87,61 @@ export function useGeneration() {
         }
     }, [])
 
-    // const getHourlyAvgGeneration = useCallback(async (startDate: string, endDate: string) => {
-    //     setLoading(true);
-    //     setError(null);
-    //     try {
-    //         const data = await fetchHourlyAvgGeneration(startDate, endDate);
-    //         return data;
-    //     } catch (e: any) {
-    //         setError(e?.message ?? "시간별 평균 데이터 조회 실패");
-    //         return null;
-    //     } finally {
-    //         setLoading(false);
-    //     }
-    // }, [])
+    const getWeeklyProduction = useCallback(async (facId: string) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await getWeeklyProductionApi(facId);
+            return data;
+        } catch (e: any) {
+            console.error('❌ getWeeklyProduction 오류:', e);
+            setError(e?.message ?? "주간 수소 생산량 조회 실패");
+            return null;
+        } finally {
+            setLoading(false);
+        }
+    }, [])
 
-    // const getSummaryGeneration = useCallback(async (startDate: string, endDate: string) => {
-    //     setLoading(true);
-    //     setError(null);
-    //     try {
-    //         const data = await fetchSummaryGeneration(startDate, endDate);
-    //         return data;
-    //     } catch (e: any) {
-    //         setError(e?.message ?? "요약 데이터 조회 실패");
-    //         return null;
-    //     } finally {
-    //         setLoading(false);
-    //     }
-    // }, [])
+    const getWeeklyHydrogenRange = useCallback(async (orgId: string, startDate: string, endDate: string) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await getWeeklyHydrogenRangeApi(orgId, startDate, endDate);
+            return data;
+        } catch (e: any) {
+            console.error('❌ getWeeklyHydrogenRange 오류:', e);
+            setError(e?.message ?? "주간 수소 생산량 범위 조회 실패");
+            return null;
+        } finally {
+            setLoading(false);
+        }
+    }, [])
 
-    // const getDetailedGeneration = useCallback(async (startDate: string, endDate: string) => {
-    //     setLoading(true);
-    //     setError(null);
-    //     try {
-    //         const data = await fetchDetailedGeneration(startDate, endDate);
-    //         return data;
-    //     } catch (e: any) {
-    //         setError(e?.message ?? "상세 데이터 조회 실패");
-    //         return null;
-    //     } finally {
-    //         setLoading(false);
-    //     }
-    // }, [])
+    const getWeeklyHydrogenPredictRange = useCallback(async (orgId: string, startDate: string, endDate: string) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await getWeeklyHydrogenPredictRangeApi(orgId, startDate, endDate);
+            return data;
+        } catch (e: any) {
+            console.error('❌ getWeeklyHydrogenPredictRange 오류:', e);
+            setError(e?.message ?? "주간 수소 생산량 예측 범위 조회 실패");
+            return null;
+        } finally {
+            setLoading(false);
+        }
+    }, [])
 
-    return { loading, error, getRawGeneration, getDailyGeneration, getHourlyHydrogenProduction };
+
+
+    return { 
+        loading, 
+        error, 
+        getRawGeneration, 
+        getDailyGeneration, 
+        getHourlyHydrogenProduction, 
+        getWeeklyProduction, 
+        getWeeklyHydrogenRange,
+        getWeeklyHydrogenPredictRange
+    };
 }
