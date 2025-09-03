@@ -4,6 +4,7 @@ import { useHourlyUpdater } from './useHourlyUpdater';
 import { TimeFrame, Plant } from '@/types/dashboard';
 import { getFacilityListApi } from '@/api/adminApi';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { getHydrogenPredictApi } from '@/api/generationApi';
 
 // 발전소별 capacity_Kw 값 상수 정의
 const PLANT_CAPACITIES = {
@@ -23,7 +24,7 @@ const getPlantIdForBackend = (plant: Plant): string => {
 };
 
 export function useDashboardData() {
-    const { getRawGeneration, getDailyGeneration, getHourlyHydrogenProduction, getWeeklyProduction, getWeeklyHydrogenRange, getWeeklyHydrogenPredictRange, getMonthlyHydrogenProduction } = useGeneration();
+    const { getRawGeneration, getDailyGeneration, getHourlyHydrogenProduction, getWeeklyProduction, getWeeklyHydrogenRange, getWeeklyHydrogenPredictRange, getMonthlyHydrogenProduction, getMonthlyHydrogenPredict } = useGeneration();
     const orgId = useAuthStore((state) => state.orgId);
     const [activeTimeFrame, setActiveTimeFrame] = useState<TimeFrame>("daily");
     const [selectedPlant, setSelectedPlant] = useState<Plant>("plant1");
@@ -120,13 +121,15 @@ export function useDashboardData() {
             }
 
             // 주간 수소 생산량 예측 데이터 조회 (같은 기간)
-            const weeklyHydrogenPredictResult = await getWeeklyHydrogenPredictRange(orgId?.toString() || "2", startDate, endDate);
+            const weeklyHydrogenPredictResult = await getHydrogenPredictApi(orgId?.toString() || "2", startDate, endDate);
             if (weeklyHydrogenPredictResult && Array.isArray(weeklyHydrogenPredictResult)) {
                 weeklyHydrogenPredictResult.forEach((item, index) => {
+
+                    console.log("🔍 주간 수소 생산량 예측 데이터:", item);
                 });
                 setWeeklyHydrogenPredictData(weeklyHydrogenPredictResult)
             } else {
-
+                console.log("❌ 주간 수소 생산량 예측 데이터 없음");
                 setWeeklyHydrogenPredictData([]);
             }
 
@@ -242,6 +245,7 @@ export function useDashboardData() {
         weeklyData,
         weeklyHydrogenRangeData, // 주간 수소 생산량 범위 데이터 추가
         weeklyHydrogenPredictData, // 주간 수소 생산량 예측 데이터 추가
+        
 
         // 월간 데이터
         monthlyData,

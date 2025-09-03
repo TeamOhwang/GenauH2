@@ -9,6 +9,7 @@ export const GENERATION_ENDPOINTS = {
     getWeeklyProduction: "/real/weekly-production",
     getRangeData: "/real/range",
     getPredictRangeData: "/predict/range",
+    getHydrogenPredict: (orgId: string) => `/predict/${orgId}/kpis`,
 }
 
 // 원시 데이터 조회
@@ -71,10 +72,9 @@ export async function getWeeklyHydrogenRangeApi(orgId: string, startDate: string
 }
 
 // 주차별 수소 생산량 예측 데이터 조회
-export async function getWeeklyHydrogenPredictRangeApi(orgId: string, startDate: string, endDate: string) {
+export async function getWeeklyHydrogenPredictRangeApi(orgId: string) {
     try {
         console.log("🔍 API 호출 시작 - getWeeklyHydrogenPredictRangeApi");
-        console.log("🔍 API 파라미터 - orgId:", orgId, "startDate:", startDate, "endDate:", endDate);
         console.log("🔍 API URL:", `/predict/weekly-production/${orgId}`);
         
         const res = await apiClient.get(`/predict/weekly-production/${orgId}`);
@@ -87,6 +87,15 @@ export async function getWeeklyHydrogenPredictRangeApi(orgId: string, startDate:
         return res.data ?? [];
     } catch (error) {
         console.error("❌ API 호출 실패 - getWeeklyHydrogenPredictRangeApi:", error);
+        throw error;
+    }
+}
+
+export async function getHydrogenPredictApi(orgId: string, start: string, end: string) {
+    try {
+        const res = await apiClient.get(`${GENERATION_ENDPOINTS.getHydrogenPredict(orgId)}`, { params: { start, end } });
+        return res.data ?? [];
+    } catch (error) {
         throw error;
     }
 }

@@ -88,3 +88,4 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
     @Query("SELECT a.severity, COUNT(a) FROM AuditLog a GROUP BY a.severity ORDER BY COUNT(a) DESC")
     List<Object[]> countLogsBySeverity();
 }
+

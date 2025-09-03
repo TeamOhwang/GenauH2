@@ -286,3 +286,4 @@ public class AuditLogController {
                 || "SUPERVISOR".equals(user.getRole().toString()));
     }
 }
+

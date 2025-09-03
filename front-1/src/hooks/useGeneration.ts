@@ -95,11 +95,11 @@ export function useGeneration() {
         }
     }, [])
 
-    const getWeeklyHydrogenPredictRange = useCallback(async (orgId: string, startDate: string, endDate: string) => {
+    const getWeeklyHydrogenPredictRange = useCallback(async (orgId: string) => {
         setLoading(true);
         setError(null);
         try {
-            const data = await getWeeklyHydrogenPredictRangeApi(orgId, startDate, endDate);
+            const data = await getWeeklyHydrogenPredictRangeApi(orgId);
             return data;
         } catch (e: any) {
 

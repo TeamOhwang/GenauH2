@@ -1,22 +1,22 @@
 package com.project.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import com.project.repository.PredictRepository;
-import com.project.dto.FacilityKpiDto;
-import com.project.dto.PredictDTO;
-import com.project.dto.WeeklyPredictedDTO;
-
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.project.dto.FacilityKpiDto;
+import com.project.dto.PredictDTO;
+import com.project.dto.WeeklyPredictedDTO;
+import com.project.repository.PredictRepository;
 
 
 @Service
@@ -145,7 +145,9 @@ public class PredictService {
     				int year = ((Number) result[0]).intValue();
     				int month = ((Number) result[1]).intValue();
     				int weekOfMonth = ((Number) result[2]).intValue();
-    				BigDecimal totalPredicted = (BigDecimal) result[3];
+    				// Double을 BigDecimal로 안전하게 변환
+    				BigDecimal totalPredicted = result[3] != null ? 
+    					new BigDecimal(result[3].toString()) : BigDecimal.ZERO;
     				String weekLabel = String.format("%d월 %d주차", month, weekOfMonth);
     				
     				return WeeklyPredictedDTO.builder()
