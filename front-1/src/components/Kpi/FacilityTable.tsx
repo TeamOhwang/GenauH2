@@ -30,6 +30,19 @@ export default function FacilityTable({ data = [], start, end }: Props) {
       accessorKey: "productionKg",
       cell: (info) => <CountUp end={info.getValue<number>() ?? 0} decimals={1} duration={0.6} />,
     },
+    {
+      header: "달성률(%)",
+      id: "achievementRate",
+      cell: (info) => {
+        const row = info.row.original as FacilityKpi;
+        const rate =
+          row.predictedMaxKg > 0
+            ? (row.productionKg / row.predictedMaxKg) * 100
+            : 0;
+        return <CountUp end={rate} decimals={1} duration={0.6} suffix="%" />;
+      },
+    },
+
   ];
 
   const table = useReactTable({ data, columns, getCoreRowModel: getCoreRowModel() });

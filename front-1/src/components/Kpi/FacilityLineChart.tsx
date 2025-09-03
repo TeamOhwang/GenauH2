@@ -1,12 +1,33 @@
 import { useRef } from "react";
 import "@/utils/register";
-import { Line } from "react-chartjs-2";
+import { Chart } from "react-chartjs-2";
 import type { FacilityKpi } from "@/api/facilityApi";
 import zoomPlugin from "chartjs-plugin-zoom";
-import { Chart as ChartJS, TooltipItem } from "chart.js";
+import {
+  Chart as ChartJS,
+  TooltipItem,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
 import { useDarkModeStore } from "@/stores/useDarkModeStore";
 
-ChartJS.register(zoomPlugin);
+ChartJS.register(
+  zoomPlugin,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 export default function FacilityLineChart({
   data = [],
@@ -27,8 +48,9 @@ export default function FacilityLineChart({
 
   return (
     <div className="flex-1 flex flex-col">
-      <Line
+      <Chart
         ref={chartRef}
+        type="line" // 기본 타입
         data={{
           labels: data.map(
             (d) =>
@@ -36,6 +58,7 @@ export default function FacilityLineChart({
           ),
           datasets: [
             {
+              type: "line" as const,
               label: "실제 생산량 (kg)",
               data: data.map((d) => d.productionKg),
               borderColor: "#36A2EB",
@@ -49,6 +72,7 @@ export default function FacilityLineChart({
               yAxisID: "y1",
             },
             {
+              type: "line" as const,
               label: "최대 예측량 (kg)",
               data: data.map((d) => d.predictedMaxKg),
               borderColor: "#FF6384",
@@ -61,12 +85,24 @@ export default function FacilityLineChart({
               tension: 0.2,
               yAxisID: "y2",
             },
+            {
+              type: "bar" as const, // ✅ 이제 에러 안 남
+              label: "달성률 (%)",
+              data: data.map((d) =>
+                d.predictedMaxKg > 0
+                  ? (d.productionKg / d.predictedMaxKg) * 100
+                  : 0
+              ),
+              backgroundColor: "rgba(16, 185, 129, 0.6)",
+              borderColor: "#10B981",
+              borderWidth: 1,
+              yAxisID: "y3",
+            },
           ],
         }}
         options={{
           responsive: true,
           maintainAspectRatio: false,
-          animation: { duration: 800, easing: "easeOutQuart" },
           interaction: { mode: "nearest", intersect: false },
           plugins: {
             legend: {
@@ -89,12 +125,14 @@ export default function FacilityLineChart({
               callbacks: {
                 label: (context: TooltipItem<"line">) => {
                   const value = context.raw as number;
+                  if (context.dataset.label === "달성률 (%)") {
+                    return `달성률: ${value.toFixed(1)}%`;
+                  }
                   return `${context.dataset.label}: ${value.toFixed(1)} kg`;
                 },
               },
             },
           },
-          //  hover 시 값 전달, 벗어나면 0으로 리셋
           onHover: (_, elements) => {
             if (!onHover) return;
             if (elements.length === 0) {
@@ -126,6 +164,17 @@ export default function FacilityLineChart({
               position: "right",
               grid: { drawOnChartArea: false, color: gridColor },
               ticks: { color: "#FF6384", stepSize: 50 },
+            },
+            y3: {
+              type: "linear",
+              position: "right",
+              grid: { drawOnChartArea: false },
+              min: 0,
+              max: 120,
+              ticks: {
+                color: "#10B981",
+                callback: (val) => val + "%",
+              },
             },
           },
         }}

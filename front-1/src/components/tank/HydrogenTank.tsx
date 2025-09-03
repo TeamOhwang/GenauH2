@@ -45,7 +45,7 @@ export default function HydrogenTank({ level, cycles, onDecrease }: Props) {
         </motion.div>
         {/* 외곽 이미지 */}
         <img
-          src="/images/KSC.svg.png"
+          src="/images/h2h2.jpg"
           alt="Hydrogen Tank"
           className="absolute w-full h-full object-contain z-10"
         />
