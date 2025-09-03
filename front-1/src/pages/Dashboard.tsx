@@ -33,6 +33,9 @@ export default function Dashboard() {
         previousDayData, // 전일 데이터 추가
         facilities, // 설비 정보 추가
         weeklyData,
+        weeklyPlant1Data, // Plant1 주간 데이터 추가
+        weeklyPlant2Data, // Plant2 주간 데이터 추가
+        weeklyPlant3Data, // Plant3 주간 데이터 추가
         weeklyHydrogenRangeData, // 주간 수소 생산량 범위 데이터 추가
         weeklyHydrogenPredictData, // 주간 수소 생산량 예측 데이터 추가
         monthlyData,
@@ -50,7 +53,7 @@ export default function Dashboard() {
     const { hydrogenTargetRate } = useTargetSettingStore();
 
     // 차트 데이터 및 옵션 생성
-    const solaData = buildSolaData(plant1, plant2, plant3, currentHour, weeklyData, monthlyData);
+    const solaData = buildSolaData(plant1, plant2, plant3, currentHour, weeklyData, monthlyData, weeklyPlant1Data, weeklyPlant2Data, weeklyPlant3Data);
 
     // 탭별 차트 옵션 선택
     const getChartOptions = () => {

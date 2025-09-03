@@ -116,6 +116,13 @@ public class PlantGenerationQueryService {
                 .toList();
 
         log.info("최종 결과 데이터 수: {}", result.size());
+        
+        // 디버깅을 위한 상세 로그
+        if (result.size() > 0) {
+            log.info("첫 번째 결과 데이터: {}", result.get(0));
+            log.info("마지막 결과 데이터: {}", result.get(result.size() - 1));
+        }
+        
         return result;
     }
 
