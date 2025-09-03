@@ -28,26 +28,26 @@ import lombok.Setter;
 public class AuditLog {
 
     public enum ActionType {
-        USER_REGISTRATION,      // 회원가입 요청
-        USER_APPROVAL,          // 회원가입 승인
-        USER_REJECTION,         // 회원가입 거부
-        USER_STATUS_CHANGE,     // 사용자 상태 변경
-        USER_WITHDRAWAL,        // 회원탈퇴 요청
-        USER_DELETE,            // 사용자 삭제
-        FACILITY_CREATE,        // 시설 추가
-        FACILITY_UPDATE,        // 시설 수정
-        FACILITY_DELETE,        // 시설 삭제
-        PASSWORD_CHANGE,        // 비밀번호 변경
-        LOGIN,                  // 로그인
-        LOGOUT,                 // 로그아웃
-        ADMIN_ACTION            // 기타 관리자 작업
+        USER_REGISTRATION, // 회원가입 요청
+        USER_APPROVAL, // 회원가입 승인
+        USER_REJECTION, // 회원가입 거부
+        USER_STATUS_CHANGE, // 사용자 상태 변경
+        USER_WITHDRAWAL, // 회원탈퇴 요청
+        USER_DELETE, // 사용자 삭제
+        FACILITY_CREATE, // 시설 추가
+        FACILITY_UPDATE, // 시설 수정
+        FACILITY_DELETE, // 시설 삭제
+        PASSWORD_CHANGE, // 비밀번호 변경
+        LOGIN, // 로그인
+        LOGOUT, // 로그아웃
+        ADMIN_ACTION // 기타 관리자 작업
     }
 
     public enum Severity {
-        INFO,       // 일반 정보
-        WARNING,    // 경고
-        ERROR,      // 오류
-        CRITICAL    // 중요
+        INFO, // 일반 정보
+        WARNING, // 경고
+        ERROR, // 오류
+        CRITICAL // 중요
     }
 
     @Id
@@ -98,7 +98,8 @@ public class AuditLog {
     private LocalDateTime createdAt; // 생성 시간 (DB에서 자동 설정)
 
     // 생성자 헬퍼 메서드들
-    public static AuditLog createUserRegistrationLog(Long targetId, String targetName, String targetEmail, String ipAddress) {
+    public static AuditLog createUserRegistrationLog(Long targetId, String targetName, String targetEmail,
+            String ipAddress) {
         return AuditLog.builder()
                 .actionType(ActionType.USER_REGISTRATION)
                 .severity(Severity.INFO)
@@ -110,7 +111,8 @@ public class AuditLog {
                 .build();
     }
 
-    public static AuditLog createUserApprovalLog(Long actorId, String actorName, Long targetId, String targetName, String targetEmail) {
+    public static AuditLog createUserApprovalLog(Long actorId, String actorName, Long targetId, String targetName,
+            String targetEmail) {
         return AuditLog.builder()
                 .actionType(ActionType.USER_APPROVAL)
                 .severity(Severity.INFO)
@@ -123,7 +125,8 @@ public class AuditLog {
                 .build();
     }
 
-    public static AuditLog createUserRejectionLog(Long actorId, String actorName, Long targetId, String targetName, String targetEmail) {
+    public static AuditLog createUserRejectionLog(Long actorId, String actorName, Long targetId, String targetName,
+            String targetEmail) {
         return AuditLog.builder()
                 .actionType(ActionType.USER_REJECTION)
                 .severity(Severity.WARNING)
@@ -136,7 +139,8 @@ public class AuditLog {
                 .build();
     }
 
-    public static AuditLog createUserStatusChangeLog(Long actorId, String actorName, Long targetId, String targetName, String targetEmail, String oldStatus, String newStatus) {
+    public static AuditLog createUserStatusChangeLog(Long actorId, String actorName, Long targetId, String targetName,
+            String targetEmail, String oldStatus, String newStatus) {
         return AuditLog.builder()
                 .actionType(ActionType.USER_STATUS_CHANGE)
                 .severity(Severity.INFO)
@@ -145,12 +149,14 @@ public class AuditLog {
                 .targetId(targetId)
                 .targetName(targetName)
                 .targetEmail(targetEmail)
-                .message(String.format("관리자 %s가 %s (%s)의 상태를 %s에서 %s로 변경했습니다", actorName, targetName, targetEmail, oldStatus, newStatus))
+                .message(String.format("관리자 %s가 %s (%s)의 상태를 %s에서 %s로 변경했습니다", actorName, targetName, targetEmail,
+                        oldStatus, newStatus))
                 .details(String.format("{\"oldStatus\":\"%s\",\"newStatus\":\"%s\"}", oldStatus, newStatus))
                 .build();
     }
 
-    public static AuditLog createUserWithdrawalLog(Long targetId, String targetName, String targetEmail, String ipAddress) {
+    public static AuditLog createUserWithdrawalLog(Long targetId, String targetName, String targetEmail,
+            String ipAddress) {
         return AuditLog.builder()
                 .actionType(ActionType.USER_WITHDRAWAL)
                 .severity(Severity.WARNING)

@@ -100,6 +100,10 @@ export default function Dashboard() {
     console.log("🔍 Dashboard에서 weeklyHydrogenPredictData 타입:", typeof weeklyHydrogenPredictData);
     console.log("🔍 Dashboard에서 weeklyHydrogenPredictData 길이:", weeklyHydrogenPredictData?.length);
     
+    console.log("🔍 Dashboard에서 buildTimeFrameData 호출 전 weeklyHydrogenPredictData:", weeklyHydrogenPredictData);
+    console.log("🔍 Dashboard에서 buildTimeFrameData 호출 전 weeklyHydrogenPredictData 타입:", typeof weeklyHydrogenPredictData);
+    console.log("🔍 Dashboard에서 buildTimeFrameData 호출 전 weeklyHydrogenPredictData.length:", weeklyHydrogenPredictData?.length);
+    
     const timeFrameData = buildTimeFrameData(plant1, plant2, plant3, currentHour, hourlyHydrogenProduction, hydrogenTargetRate, previousDayData, facilities, weeklyHydrogenRangeData, weeklyHydrogenPredictData, monthlyHydrogenProductionData, monthlyHydrogenPredictData); // 전일 데이터, 설비 정보, 주간 수소 데이터, 주간 수소 예측 데이터, 월간 수소 데이터, 월간 수소 예측 데이터 전달
 
     const currentData = timeFrameData[activeTimeFrame];
