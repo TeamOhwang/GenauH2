@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { LineChart, Line, ResponsiveContainer } from 'recharts'
 import {
-  Activity,
   Wifi,
   WifiOff,
   Power,
@@ -15,6 +14,7 @@ import {
   Zap,
   BarChart3
 } from 'lucide-react'
+import { useDarkModeStore } from '@/stores/useDarkModeStore'
 
 interface StreamData {
   facId: number
@@ -49,6 +49,7 @@ const About = () => {
   const [isConnected, setIsConnected] = useState(false)
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
   const [streamData, setStreamData] = useState<StreamData | null>(null)
+  const { isDarkMode } = useDarkModeStore()
 
   useEffect(() => {
     // 초기 센서 데이터 설정 (실제 Flask 서버 데이터에 맞춤)
@@ -334,8 +335,21 @@ const About = () => {
     }
   }
 
+  const getStatusColorInline = (status: string) => {
+    switch (status) {
+      case 'HIGH': return { color: '#f87171', backgroundColor: 'rgba(239, 68, 68, 0.2)', borderColor: 'rgba(239, 68, 68, 0.3)' }
+      case 'LOW': return { color: '#fbbf24', backgroundColor: 'rgba(245, 158, 11, 0.2)', borderColor: 'rgba(245, 158, 11, 0.3)' }
+      case 'FAULT': return { color: '#ef4444', backgroundColor: 'rgba(220, 38, 38, 0.3)', borderColor: 'rgba(220, 38, 38, 0.5)' }
+      default: return { color: '#4ade80', backgroundColor: 'rgba(34, 197, 94, 0.2)', borderColor: 'rgba(34, 197, 94, 0.3)' }
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-6">
+    <div className={`min-h-screen p-6 transition-colors duration-300 ${
+      isDarkMode 
+        ? 'bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900' 
+        : 'bg-white'
+    }`}>
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -343,8 +357,14 @@ const About = () => {
         className="flex justify-between items-center mb-8"
       >
         <div>
-          <h1 className="text-4xl font-bold text-white mb-2">수소 전해조 모니터링</h1>
-          <div className="text-slate-300 space-y-1">
+          <h1 className={`text-4xl font-bold mb-2 transition-colors duration-300 ${
+            isDarkMode ? 'text-white' : 'text-gray-900'
+          }`}>
+            수소 전해조 모니터링
+          </h1>
+          <div className={`space-y-1 transition-colors duration-300 ${
+            isDarkMode ? 'text-slate-300' : 'text-gray-600'
+          }`}>
             <p>마지막 업데이트: {lastUpdate.toLocaleTimeString()}</p>
             {streamData && (
               <div className="flex items-center gap-4 text-sm">
@@ -396,37 +416,49 @@ const About = () => {
               exit={{ opacity: 0, scale: 0.9 }}
               transition={{ delay: index * 0.1 }}
               whileHover={{ scale: 1.02, y: -5 }}
-              className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-2xl"
+              style={{
+                backgroundColor: 'rgba(30, 41, 59, 0.8)',
+                backdropFilter: 'blur(12px)',
+                border: '1px solid rgba(71, 85, 105, 0.5)',
+                borderRadius: '16px',
+                padding: '24px',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+              }}
+              className="rounded-2xl"
             >
-              {/* Card Header */}
+              {/* Card Header - 다크모드 고정 */}
               <div className="flex justify-between items-center mb-4">
                 <div className="flex items-center gap-2">
-                  <div className="text-blue-400">{sensor.icon}</div>
-                  <span className="text-white font-semibold text-sm">{sensor.name}</span>
+                  <div style={{ color: '#60a5fa' }}>{sensor.icon}</div>
+                  <span style={{ color: '#ffffff', fontWeight: '600', fontSize: '14px' }}>{sensor.name}</span>
                 </div>
                 <motion.div
                   animate={{ rotate: sensor.isOn ? 0 : 180 }}
-                  className={`p-1 rounded-full ${sensor.isOn ? 'text-green-400' : 'text-gray-500'}`}
+                  style={{
+                    padding: '4px',
+                    borderRadius: '50%',
+                    color: sensor.isOn ? '#4ade80' : '#6b7280'
+                  }}
                 >
                   {sensor.isOn ? <Power className="w-4 h-4" /> : <PowerOff className="w-4 h-4" />}
                 </motion.div>
               </div>
 
-              {/* Value Display */}
+              {/* Value Display - 다크모드 고정 */}
               <div className="text-center mb-4">
                 <div className="flex items-center justify-center gap-2 mb-1">
-                  <div className="text-3xl font-bold text-white">
+                  <div style={{ fontSize: '30px', fontWeight: 'bold', color: '#ffffff' }}>
                     {sensor.id === 'purity' ? sensor.value.toFixed(4) : sensor.value.toFixed(2)}
                   </div>
-                  <div className="text-sm font-bold flex items-center gap-1">
+                  <div style={{ fontSize: '14px', fontWeight: 'bold' }} className="flex items-center gap-1">
                     {sensor.changeDirection === 'same' || sensor.change === 0 ? (
-                      <span className="text-gray-400">0</span>
+                      <span style={{ color: '#9ca3af' }}>0</span>
                     ) : (
                       <>
-                        <span className={sensor.changeDirection === 'up' ? 'text-red-400' : 'text-blue-400'}>
+                        <span style={{ color: sensor.changeDirection === 'up' ? '#f87171' : '#60a5fa' }}>
                           {sensor.changeDirection === 'up' ? '⬆' : '⬇'}
                         </span>
-                        <span className={sensor.changeDirection === 'up' ? 'text-red-400' : 'text-blue-400'}>
+                        <span style={{ color: sensor.changeDirection === 'up' ? '#f87171' : '#60a5fa' }}>
                           {sensor.id === 'purity' ? sensor.change.toFixed(4) :
                             sensor.id === 'current' ? sensor.change.toFixed(0) :
                               sensor.id === 'voltage' ? sensor.change.toFixed(0) :
@@ -437,9 +469,21 @@ const About = () => {
                   </div>
 
                 </div>
-                <div className="text-slate-400 text-sm mb-2">{sensor.unit}</div>
+                <div style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '8px' }}>{sensor.unit}</div>
 
-                <div className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(sensor.status)}`}>
+                <div 
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '4px 12px',
+                    borderRadius: '9999px',
+                    fontSize: '12px',
+                    fontWeight: '500',
+                    border: '1px solid',
+                    ...getStatusColorInline(sensor.status)
+                  }}
+                >
                   {getStatusIcon(sensor.status)}
                   {sensor.status === 'HIGH' ? '높음' :
                     sensor.status === 'LOW' ? '낮음' :
@@ -447,7 +491,7 @@ const About = () => {
                 </div>
               </div>
 
-              {/* Mini Chart */}
+              {/* Mini Chart - 다크모드 고정 */}
               <div className="h-16 mb-4">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={sensor.history}>
@@ -462,9 +506,9 @@ const About = () => {
                 </ResponsiveContainer>
               </div>
 
-              {/* Controls */}
-              <div className="space-y-3">
-                <div className="flex justify-between text-xs text-slate-400">
+              {/* Controls - 다크모드 고정 */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#94a3b8' }}>
                   <span>H/H</span>
                   <span>H</span>
                   <span>L</span>
@@ -474,10 +518,24 @@ const About = () => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => toggleSensor(sensor.id)}
-                  className={`w-full py-2 px-4 rounded-lg font-semibold transition-all ${sensor.isOn
-                    ? 'bg-blue-500 hover:bg-blue-600 text-white shadow-lg shadow-blue-500/25'
-                    : 'bg-gray-600 hover:bg-gray-700 text-gray-300'
-                    }`}
+                  style={{
+                    width: '100%',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    fontWeight: '600',
+                    transition: 'all 0.3s',
+                    backgroundColor: sensor.isOn ? '#3b82f6' : '#4b5563',
+                    color: sensor.isOn ? '#ffffff' : '#d1d5db',
+                    border: 'none',
+                    cursor: 'pointer',
+                    boxShadow: sensor.isOn ? '0 10px 15px -3px rgba(59, 130, 246, 0.25)' : 'none'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = sensor.isOn ? '#2563eb' : '#374151'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = sensor.isOn ? '#3b82f6' : '#4b5563'
+                  }}
                 >
                   {sensor.isOn ? 'ON' : 'OFF'}
                 </motion.button>

@@ -35,7 +35,7 @@ public class OrganizationService {
    private final FacilityService facilityService;
 
    private final WebSocketNotificationService webSocketNotificationService;
-//    private final ActivityLogService activityLogService;
+   // private final ActivityLogService activityLogService;
 
    // 사용자 로그인 (ACTIVE 상태만 로그인 가능)
    public OrganizationDTO login(String email, String password) {
@@ -656,26 +656,26 @@ public class OrganizationService {
    }
 
    /**
-     * 회원탈퇴 알림 전송
-     */
-    private void sendWithdrawalNotification(Organization organization) {
-        try {
-            Map<String, Object> notification = new HashMap<>();
-            notification.put("type", "USER_WITHDRAWAL");
-            notification.put("orgId", organization.getOrgId());
-            notification.put("orgName", organization.getOrgName());
-            notification.put("email", organization.getEmail());
-            notification.put("name", organization.getName());
-            notification.put("message", "사용자가 회원탈퇴했습니다: " + organization.getOrgName());
-            notification.put("timestamp", System.currentTimeMillis());
-            
-            // 관리자에게 알림 전송
-            messagingTemplate.convertAndSend("/topic/admin/notifications", notification);
-            
-            log.info("회원탈퇴 알림 전송 완료: {}", organization.getOrgName());
-        } catch (Exception e) {
-            log.error("회원탈퇴 알림 전송 실패", e);
-        }
-    }
-    
+    * 회원탈퇴 알림 전송
+    */
+   private void sendWithdrawalNotification(Organization organization) {
+      try {
+         Map<String, Object> notification = new HashMap<>();
+         notification.put("type", "USER_WITHDRAWAL");
+         notification.put("orgId", organization.getOrgId());
+         notification.put("orgName", organization.getOrgName());
+         notification.put("email", organization.getEmail());
+         notification.put("name", organization.getName());
+         notification.put("message", "사용자가 회원탈퇴했습니다: " + organization.getOrgName());
+         notification.put("timestamp", System.currentTimeMillis());
+
+         // 관리자에게 알림 전송
+         messagingTemplate.convertAndSend("/topic/admin/notifications", notification);
+
+         log.info("회원탈퇴 알림 전송 완료: {}", organization.getOrgName());
+      } catch (Exception e) {
+         log.error("회원탈퇴 알림 전송 실패", e);
+      }
+   }
+
 }

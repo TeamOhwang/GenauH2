@@ -30,7 +30,7 @@ export function useDashboardData() {
     const [data, setData] = useState<any[]>([]);
     const [previousDayData, setPreviousDayData] = useState<any[]>([]); // 전일 데이터 추가
     const [hourlyHydrogenProduction, setHourlyHydrogenProduction] = useState<any[]>([]);
-    const [facilities, setFacilities] = useState<any[]>([]); // 설비 정보 추가
+    const [facilities, setFacilities] = useState<any>({data: [], success: false}); // 설비 정보 추가
     const [weeklyData, setWeeklyData] = useState<any[]>([]);
     const [monthlyData, setMonthlyData] = useState<any[]>([]);
     const [weeklyHydrogenRangeData, setWeeklyHydrogenRangeData] = useState<any[]>([]); // 주간 수소 생산량 범위 데이터
@@ -68,7 +68,7 @@ export function useDashboardData() {
                 getRawGeneration(today, today),
                 getRawGeneration(yesterdayString, yesterdayString),
                 getHourlyHydrogenProduction(),
-                getFacilityListApi(), // 설비 정보 조회
+                getFacilityListApi(orgId?.toString()), // 설비 정보 조회 (orgId 전달)
             ]);
 
             if (todayResult) {
@@ -84,6 +84,15 @@ export function useDashboardData() {
 
             if (hourlyHydrogenProduction) {
                 setHourlyHydrogenProduction(hourlyHydrogenProduction);
+            }
+
+            if (facilitiesData && facilitiesData.data) {
+                setFacilities(facilitiesData);
+                console.log("✅ 설비 정보 설정 완료:", facilitiesData);
+                console.log("✅ 설비 개수:", facilitiesData.data.length);
+            } else {
+                console.log("❌ 설비 정보 없음");
+                setFacilities({data: [], success: false});
             }
 
 
@@ -111,21 +120,13 @@ export function useDashboardData() {
             }
 
             // 주간 수소 생산량 예측 데이터 조회 (같은 기간)
-            console.log("🔍 예측 데이터 조회 시작 - orgId:", orgId?.toString() || "2");
             const weeklyHydrogenPredictResult = await getWeeklyHydrogenPredictRange(orgId?.toString() || "2", startDate, endDate);
-            console.log("🔍 주간 수소 예측 데이터 조회 결과:", weeklyHydrogenPredictResult);
-            console.log("🔍 예측 데이터 타입:", typeof weeklyHydrogenPredictResult);
-            console.log("🔍 예측 데이터 길이:", weeklyHydrogenPredictResult?.length);
-            
             if (weeklyHydrogenPredictResult && Array.isArray(weeklyHydrogenPredictResult)) {
-                console.log("🔍 예측 데이터 상세 내용:");
                 weeklyHydrogenPredictResult.forEach((item, index) => {
-                    console.log(`  [${index}]`, item);
                 });
-                setWeeklyHydrogenPredictData(weeklyHydrogenPredictResult);
-                console.log("✅ 주간 수소 예측 데이터 설정 완료");
+                setWeeklyHydrogenPredictData(weeklyHydrogenPredictResult)
             } else {
-                console.log("❌ 주간 수소 예측 데이터 없음 또는 배열이 아님");
+
                 setWeeklyHydrogenPredictData([]);
             }
 
