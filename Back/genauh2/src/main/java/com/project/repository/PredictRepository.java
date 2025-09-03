@@ -1,5 +1,8 @@
 package com.project.repository;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,9 +13,6 @@ import org.springframework.stereotype.Repository;
 
 import com.project.dto.FacilityKpiDto;
 import com.project.entity.Predict;
-
-import java.time.LocalDateTime;
-import java.util.List;
 
 @Repository
 public interface PredictRepository extends JpaRepository<Predict, String> {
@@ -226,7 +226,6 @@ public interface PredictRepository extends JpaRepository<Predict, String> {
     
     
     
-    
    /**
          * 특정 날짜의 모든 실제 유휴 전력량 데이터를 타임스탬프와 함께 조회합니다.
          * * @param date 조회할 날짜 (YYYY-MM-DD 형식)
@@ -241,7 +240,4 @@ public interface PredictRepository extends JpaRepository<Predict, String> {
         			   "GROUP BY year, month, weekOfMonth " +
         			   "ORDER BY year, month, weekOfMonth", nativeQuery = true)
         List<Object[]> findWeeklyPredictedByOrgId(@Param("orgId") Long orgId);
-
-
-
 }

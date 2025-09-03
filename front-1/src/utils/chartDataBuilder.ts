@@ -853,7 +853,8 @@ export function buildWeeklyH2DataFromRange(rangeData: any[]): ChartData {
         if (date > currentDate) {
             hydrogenProductionData.push(null);
         } else {
-            hydrogenProductionData.push(Math.round(dayData.production * 10) / 10);
+            // kg을 t으로 변환 (1000으로 나누기)
+            hydrogenProductionData.push(Math.round((dayData.production / 1000) * 100) / 100);
         }
     });
     
@@ -861,7 +862,7 @@ export function buildWeeklyH2DataFromRange(rangeData: any[]): ChartData {
         labels: labels,
         datasets: [
             {
-                label: "실제 수소 생산량 (kg)",
+                label: "실제 수소 생산량 (t)",
                 data: hydrogenProductionData,
                 borderColor: "rgba(33, 150, 243, 1)",
                 backgroundColor: "rgba(33, 150, 243, 0.2)",
@@ -907,19 +908,20 @@ export function buildMonthlyH2Data(hydrogenData: any[]): ChartData {
 
     filteredData.forEach((item) => {
         labels.push(item.weekLabel)
-        productionData.push(item.totalProductionKg)
+        // kg을 t으로 변환 (1000으로 나누기)
+        productionData.push(Math.round((item.totalProductionKg / 1000) * 100) / 100)
     })
 
     return {
         labels: labels,
         datasets: [
             {
-                label: "주차별 수소 생산량 (kg)",
+                label: "주차별 수소 생산량 (t)",
                 data: productionData,
                 borderColor: "rgba(33, 150, 243, 1)",
                 backgroundColor: "rgba(33, 150, 243, 0.2)",
                 pointRadius: 4,
-                fill: false,
+                fill: true,
                 type: "line"
             },
         ],
@@ -940,10 +942,6 @@ export function buildTimeFrameData(
     monthlyHydrogenData?: any[], // 월간 수소 생산 데이터
     monthlyHydrogenPredictData?: any[] // 월간 수소 생산 예측 데이터
 ) {
-    console.log("🔍 buildTimeFrameData 호출됨 - weeklyHydrogenData:", weeklyHydrogenData);
-    console.log("🔍 buildTimeFrameData 호출됨 - weeklyHydrogenPredictData:", weeklyHydrogenPredictData);
-    console.log("🔍 buildTimeFrameData 호출됨 - monthlyHydrogenData:", monthlyHydrogenData);
-    console.log("🔍 buildTimeFrameData 호출됨 - monthlyHydrogenPredictData:", monthlyHydrogenPredictData);
 
     const dailyErrorRate = calDailyErrorRate(
         [plant1 ?? [], plant2 ?? [], plant3 ?? []],
@@ -975,9 +973,9 @@ export function buildTimeFrameData(
             const absDiff = Math.abs(diff);
             
             if (diff > 0) {
-                return `+${absDiff.toFixed(1)}%`; // 오차율 증가 (나쁨)
+                return `전일 대비 +${absDiff.toFixed(1)}%`; // 오차율 증가 (나쁨)
             } else if (diff < 0) {
-                return `-${absDiff.toFixed(1)}%`; // 오차율 감소 (좋음)
+                return `전일 대비 -${absDiff.toFixed(1)}%`; // 오차율 감소 (좋음)
             } else {
                 return "0%"; // 변화 없음
             }
@@ -1021,9 +1019,9 @@ export function buildTimeFrameData(
         targetRate ?? 1.0 // 기본값: 예측치의 100%를 목표로 설정
     );
 
-    // 설비 가동률 계산 (수소 생산 설비 기준)
+    // 설비 가동률 계산 (전력량 기준)
     const equipmentUtilization = calEquipmentUtilization(
-        hourlyHydrogenProduction ?? [],
+        [plant1 ?? [], plant2 ?? [], plant3 ?? []],
         currentHour ?? 0,
         facilities ?? []
     );
@@ -1072,9 +1070,9 @@ export function buildTimeFrameData(
         };
     };
 
-    // 설비 가동률 포맷팅 (수소 생산 설비 기준)
+    // 설비 가동률 포맷팅 (전력량 기준)
     const formatEquipmentUtilization = () => {
-        const { overallUtilization, totalProductionKg, maxCapacityKg, averageHourlyProduction } = equipmentUtilization;
+        const { overallUtilization, totalUsedPower, maxAvailablePower, averageHourlyPower } = equipmentUtilization;
         
         // 가동률에 따른 diffType 결정
         const getDiffType = () => {
@@ -1085,8 +1083,8 @@ export function buildTimeFrameData(
 
         return {
             value: `${overallUtilization}%`,
-            diff: `${totalProductionKg}/${maxCapacityKg}kg`,
-            detail: `평균 시간당: ${averageHourlyProduction}kg`,
+            diff: `${totalUsedPower.toFixed(0)}/${maxAvailablePower.toFixed(0)}kW`,
+            detail: `평균 시간당: ${averageHourlyPower.toFixed(0)}kW`,
             diffType: getDiffType()
         };
     };
@@ -1193,13 +1191,13 @@ export function buildTimeFrameData(
 
         return {
             totalProduction: {
-                value: `${totalProductionKg.toFixed(0)}kg`,
+                value: `${(totalProductionKg / 1000).toFixed(2)}t`,
                 diff: "월간 총 생산량",
                 diffType: "neutral" as const
             },
             achievementRate: {
                 value: `${achievementRate.toFixed(1)}%`,
-                diff: `목표 대비 ${monthlyTarget.toFixed(0)}kg`,
+                diff: `목표 대비 ${(monthlyTarget / 1000).toFixed(2)}t`,
                 diffType: achievementRate >= 100 ? "positive" as const : achievementRate >= 80 ? "neutral" as const : "negative" as const
             },
             monthlyGrowth: {
@@ -1225,9 +1223,9 @@ export function buildTimeFrameData(
         plant1?: any[],
         plant2?: any[],
         plant3?: any[],
-        facilities?: any[]
+        facilities?: any[],
+        targetRate: number = 1.0
     ) => {
-        console.log("🔍 calculateEfficiencyData 호출됨 - 개선된 계산 방식");
         
         // 1. 일간 효율 계산 (다중 지표)
         let dailyEfficiency = 0;
@@ -1278,6 +1276,9 @@ export function buildTimeFrameData(
         let weeklyProduction = 0;
         let weeklyConsistency = 0; // 일관성 지표
         let weeklyStability = 0; // 안정성 지표
+
+        console.log("weeklyHydrogenData", weeklyHydrogenData)
+        console.log("weeklyHydrogenPredictData", weeklyHydrogenPredictData)
         
         if (weeklyHydrogenData && weeklyHydrogenData.length > 0) {
             // 시간별 데이터를 일별로 그룹화
@@ -1313,7 +1314,7 @@ export function buildTimeFrameData(
                 weeklyStability = maxDaily > 0 ? Math.min((minDaily / maxDaily) * 100, 100) : 0;
             }
             
-            // 주간 예측 데이터에서 목표 설정
+            // 주간 예측 데이터에서 목표 설정 (목표비율 적용)
             if (weeklyHydrogenPredictData && weeklyHydrogenPredictData.length > 0) {
                 const now = new Date();
                 const currentYear = now.getFullYear();
@@ -1329,8 +1330,16 @@ export function buildTimeFrameData(
                 );
                 
                 if (currentWeekPrediction) {
-                    weeklyTarget = currentWeekPrediction.totalPredictedKg || 0;
+                    weeklyTarget = (currentWeekPrediction.totalPredictedKg || 0) * targetRate;
+                } else {
+                    // 현재 주차 예측 데이터가 없는 경우, 최대 예측값에 목표비율 적용
+                    const maxPrediction = Math.max(...weeklyHydrogenPredictData.map((item: any) => item.totalPredictedKg || 0));
+                    weeklyTarget = maxPrediction * targetRate;
                 }
+            } else {
+                // 예측 데이터가 없는 경우, 실제 데이터의 최대값에 목표비율 적용
+                const maxActualProduction = Math.max(...dailyProductions);
+                weeklyTarget = maxActualProduction * targetRate;
             }
             
             const productionEfficiency = weeklyProduction > 0 ? (weeklyProduction / weeklyTarget) * 100 : 0;
@@ -1436,14 +1445,11 @@ export function buildTimeFrameData(
     };
 
     // 주간 KPI 계산 함수들
-    const calculateWeeklyKPIs = (weeklyHydrogenData?: any[], weeklyHydrogenPredictData?: any[]) => {
-        console.log("🔍 calculateWeeklyKPIs 호출됨 - weeklyHydrogenData:", weeklyHydrogenData);
-        console.log("🔍 calculateWeeklyKPIs 호출됨 - weeklyHydrogenPredictData:", weeklyHydrogenPredictData);
+    const calculateWeeklyKPIs = (weeklyHydrogenData?: any[], weeklyHydrogenPredictData?: any[], targetRate: number = 1.0) => {
         
         if (!weeklyHydrogenData || weeklyHydrogenData.length === 0) {
-            console.log("❌ 주간 수소 데이터가 없음");
             return {
-                totalProduction: { value: "0kg", diff: "데이터 없음", diffType: "neutral" },
+                totalProduction: { value: "0t", diff: "데이터 없음", diffType: "neutral" },
                 achievementRate: { value: "0%", diff: "데이터 없음", diffType: "neutral" },
                 loadFactor: { value: "0%", diff: "데이터 없음", diffType: "neutral" },
                 dailyVariation: { value: "0%", diff: "데이터 없음", diffType: "neutral" }
@@ -1470,24 +1476,20 @@ export function buildTimeFrameData(
         if (dailyProductions.length === 0) {
             console.log("❌ 일별 생산량 데이터가 없음");
             return {
-                totalProduction: { value: "0kg", diff: "데이터 없음", diffType: "neutral" },
+                totalProduction: { value: "0t", diff: "데이터 없음", diffType: "neutral" },
                 achievementRate: { value: "0%", diff: "데이터 없음", diffType: "neutral" },
                 loadFactor: { value: "0%", diff: "데이터 없음", diffType: "neutral" },
                 dailyVariation: { value: "0%", diff: "데이터 없음", diffType: "neutral" }
             };
         }
 
-        console.log("🔍 일별 생산량:", dailyProductions);
         // 주간 총 수소 생산량 계산
         const totalProductionKg = dailyProductions.reduce((sum, daily) => sum + daily, 0);
-        console.log("📊 주간 총 수소 생산량:", totalProductionKg, "kg");
 
         // 주간 목표 달성률 계산 (이번 주 예측값 기반)
         let weeklyTarget = 300; // 기본값 (kg)
         
         if (weeklyHydrogenPredictData && weeklyHydrogenPredictData.length > 0) {
-            console.log("🔍 예측 데이터 처리 시작 - 데이터 개수:", weeklyHydrogenPredictData.length);
-            console.log("🔍 예측 데이터 상세:");
             weeklyHydrogenPredictData.forEach((item, index) => {
                 console.log(`  [${index}] year: ${item.year}, month: ${item.month}, weekOfMonth: ${item.weekOfMonth}, weekLabel: ${item.weekLabel}, totalPredictedKg: ${item.totalPredictedKg}`);
             });
@@ -1502,12 +1504,7 @@ export function buildTimeFrameData(
             const currentWeekStart = currentDay - ((now.getDay() + 6) % 7); // 월요일 기준
             const currentWeekOfMonth = Math.ceil(currentWeekStart / 7);
             
-            console.log("📅 현재 날짜 정보:", {
-                year: currentYear,
-                month: currentMonth,
-                day: currentDay,
-                weekOfMonth: currentWeekOfMonth
-            });
+            
             
             // 이번 주에 해당하는 예측 데이터 찾기
             const currentWeekPrediction = weeklyHydrogenPredictData.find((item: any) => 
@@ -1517,62 +1514,58 @@ export function buildTimeFrameData(
             );
             
             if (currentWeekPrediction) {
-                weeklyTarget = currentWeekPrediction.totalPredictedKg || 0;
-                console.log("🎯 이번 주 예측값 사용:", weeklyTarget, "kg");
-                console.log("🎯 이번 주 정보:", currentWeekPrediction.weekLabel);
+                // 예측값에 목표비율 적용
+                weeklyTarget = (currentWeekPrediction.totalPredictedKg || 0) * targetRate;
             } else {
-                console.log("🎯 이번 주 예측 데이터 없음, 기본 목표 사용:", weeklyTarget, "kg");
+                // 예측 데이터가 있지만 현재 주차 데이터가 없는 경우, 최대 예측값에 목표비율 적용
+                const maxPrediction = Math.max(...weeklyHydrogenPredictData.map((item: any) => item.totalPredictedKg || 0));
+                weeklyTarget = maxPrediction * targetRate;
             }
         } else {
-            console.log("🎯 예측 데이터 없음, 기본 목표 사용:", weeklyTarget, "kg");
-            console.log("🔍 예측 데이터 상태:", {
-                hasData: !!weeklyHydrogenPredictData,
-                isArray: Array.isArray(weeklyHydrogenPredictData),
-                length: weeklyHydrogenPredictData?.length
-            });
+            // 예측 데이터가 없는 경우, 실제 데이터의 최대값에 목표비율 적용
+            const maxActualProduction = Math.max(...dailyProductions);
+            weeklyTarget = maxActualProduction * targetRate;
         }
         
         const achievementRate = totalProductionKg > 0 ? (totalProductionKg / weeklyTarget) * 100 : 0;
-        console.log("🎯 주간 목표 달성률:", achievementRate, "%");
 
         // 설비 부하율 계산 (일일 최대 생산량 50kg 가정)
         const totalDays = dailyProductions.length;
         const maxPossibleProduction = totalDays * 50; // Daily max 50kg assumed
         const loadFactor = maxPossibleProduction > 0 ? (totalProductionKg / maxPossibleProduction) * 100 : 0;
-        console.log("⚙️ 설비 부하율:", loadFactor, "%");
 
         // 요일별 생산 편차 계산 (변동계수)
         const mean = totalProductionKg / totalDays;
         const variance = dailyProductions.reduce((sum, daily) => sum + Math.pow(daily - mean, 2), 0) / totalDays;
         const standardDeviation = Math.sqrt(variance);
         const coefficientOfVariation = mean > 0 ? (standardDeviation / mean) * 100 : 0;
-        console.log("📈 요일별 생산 편차:", coefficientOfVariation, "%");
 
         return {
             totalProduction: {
-                value: `${totalProductionKg.toFixed(1)}kg`,
-                diff: `주간 목표: ${weeklyTarget}kg`,
+                value: `${(totalProductionKg / 1000).toFixed(2)}t`,
+                diff: `주간 목표: ${(weeklyTarget / 1000).toFixed(2)}t`,
                 diffType: totalProductionKg >= weeklyTarget ? "positive" : totalProductionKg >= weeklyTarget * 0.8 ? "neutral" : "negative"
             },
             achievementRate: {
                 value: `${achievementRate.toFixed(1)}%`,
-                diff: achievementRate >= 100 ? `+${(totalProductionKg - weeklyTarget).toFixed(1)}kg` : `-${(weeklyTarget - totalProductionKg).toFixed(1)}kg`,
+                diff: achievementRate >= 100 ? `+${((totalProductionKg - weeklyTarget) / 1000).toFixed(2)}t` : `-${((weeklyTarget - totalProductionKg) / 1000).toFixed(2)}t`,
                 diffType: achievementRate >= 100 ? "positive" : achievementRate >= 80 ? "neutral" : "negative"
             },
             loadFactor: {
                 value: `${loadFactor.toFixed(1)}%`,
-                diff: `${totalProductionKg.toFixed(1)}/${maxPossibleProduction}kg`,
+                diff: `${(totalProductionKg / 1000).toFixed(2)}/${(maxPossibleProduction / 1000).toFixed(2)}t`,
                 diffType: loadFactor >= 80 ? "positive" : loadFactor >= 60 ? "neutral" : "negative"
             },
             dailyVariation: {
                 value: `${coefficientOfVariation.toFixed(1)}%`,
-                diff: `표준편차: ${standardDeviation.toFixed(1)}kg`,
+                diff: `표준편차: ${(standardDeviation / 1000).toFixed(2)}t`,
                 diffType: coefficientOfVariation <= 20 ? "positive" : coefficientOfVariation <= 40 ? "neutral" : "negative"
             }
         };
     };
 
     // 효율 지표 계산 (개선된 방식)
+   
     const efficiencyData = calculateEfficiencyData(
         hourlyHydrogenProduction,
         weeklyHydrogenData,
@@ -1582,7 +1575,8 @@ export function buildTimeFrameData(
         plant1,
         plant2,
         plant3,
-        facilities
+        facilities,
+        targetRate
     );
 
     return {
@@ -1611,7 +1605,7 @@ export function buildTimeFrameData(
                     diffType: productionStats.diffType
                 },
                 { 
-                    label: "설비 가동률", 
+                    label: "설비 가동률 (전력기준)", 
                     value: equipmentStats.value, 
                     diff: equipmentStats.diff,
                     detail: equipmentStats.detail,
@@ -1623,7 +1617,7 @@ export function buildTimeFrameData(
         },
         weekly: (() => {
             console.log("🔍 주간 KPI 계산 시작");
-            const weeklyKPIs = calculateWeeklyKPIs(weeklyHydrogenData, weeklyHydrogenPredictData);
+            const weeklyKPIs = calculateWeeklyKPIs(weeklyHydrogenData, weeklyHydrogenPredictData, targetRate);
             console.log("📊 주간 KPI 계산 결과:", weeklyKPIs);
             
             return {
@@ -1738,11 +1732,11 @@ export function calDailyErrorRate(plantDataArr: any[][], currentHour: number): n
  * @returns 달성률 정보
  */
 /**
- * 설비 가동률 계산 함수 (수소 생산 설비 기준)
- * 수소 생산 설비의 최대 용량 대비 실제 생산량으로 가동률 계산
- * @param hourlyHydrogenProduction 시간별 수소 생산량 데이터
+ * 설비 가동률 계산 함수 (전력량 기준)
+ * 설비의 최대 가용 전력 대비 실제 사용 전력량으로 가동률 계산
+ * @param plantData 발전소 데이터 배열 [plant1, plant2, plant3]
  * @param currentHour 현재 시간
- * @param facilities 설비 정보 (h2Rate 포함)
+ * @param facilities 설비 정보 (powerKw 포함)
  * @returns 가동률 정보
  */
 /**
@@ -1789,55 +1783,77 @@ export function calTotalHydrogenProduction(
 }
 
 export function calEquipmentUtilization(
-    hourlyHydrogenProduction: any[],
+    plantData: any[][], // [plant1, plant2, plant3] 배열
     currentHour: number,
     facilities: any[]
 ): {
     overallUtilization: number;
-    totalProductionKg: number;
-    maxCapacityKg: number;
-    averageHourlyProduction: number;
+    totalUsedPower: number;
+    maxAvailablePower: number;
+    averageHourlyPower: number;
 } {
-    if (!hourlyHydrogenProduction || hourlyHydrogenProduction.length === 0) {
+    
+    if (!plantData || plantData.length === 0) {
         return {
             overallUtilization: 0,
-            totalProductionKg: 0,
-            maxCapacityKg: 0,
-            averageHourlyProduction: 0
+            totalUsedPower: 0,
+            maxAvailablePower: 0,
+            averageHourlyPower: 0
         };
     }
-
-    // 현재 시간까지의 데이터만 필터링
-    const validData = hourlyHydrogenProduction.filter(item => 
-        item.hour !== null && item.hour <= currentHour
-    );
-
-    // 총 수소 생산량 계산
-    const totalProductionKg = validData.reduce((sum, item) => sum + (item.productionKg || 0), 0);
     
-    // 설비 정보에서 h2Rate를 가져와서 최대 용량 계산
-    let maxHourlyCapacity = 8; // 기본값 (kg/hour)
-    if (facilities && facilities.length > 0) {
-        // 모든 설비의 h2Rate를 합산하여 최대 용량 계산
-        const totalH2Rate = facilities.reduce((sum, facility) => sum + (facility.h2Rate || 0), 0);
-        if (totalH2Rate > 0) {
-            maxHourlyCapacity = totalH2Rate;
+    let ratedPowerKw = 0;
+    // 설비 정보에서 정격 전력 가져오기
+    if (facilities && Array.isArray(facilities) && facilities.length > 0) {
+        // 모든 설비의 powerKw를 합산
+        ratedPowerKw = facilities.reduce((sum: number, facility: any) => sum + (facility.powerKw || 0), 0);
+    } else {
+        ratedPowerKw = 500; // 기본값
+    } 
+    // 모든 발전소의 데이터를 합산
+    let totalUsedPower = 0;
+    let validHours = 0;
+    let averageHourlyPower = 0;
+    let usedPower = 0;
+
+    // console.log("plantData", plantData);
+    plantData.forEach((plant, index) => {
+        if (!plant || !Array.isArray(plant)) return;
+
+        const timeData = plant.filter(item => item.hour !== null && item.hour <= currentHour);
+        totalUsedPower += timeData.reduce((sum, item) => sum + (item.generation_Kw || 0), 0);
+        validHours += timeData.length;
+        averageHourlyPower = validHours > 0 ? totalUsedPower / validHours : 0;
+
+        // 현재 시간 데이터만 필터링
+        const validData = plant.filter(item => 
+            item && item.hour !== null && item.hour === currentHour
+        );
+        console.log("validData", validData)
+
+        // validData 배열의 각 항목에 대해 generation_Kw 값을 합산
+        validData.forEach(item => {
+            usedPower += item.generation_Kw || 0;
+        });
+
+        if (usedPower > ratedPowerKw) {
+            usedPower = ratedPowerKw;
         }
+    });
+
+
+    
+    // 가동률 계산: (실제 사용 전력량 / 설비 최대 가용 전력) × 100
+    let overallUtilization = ratedPowerKw > 0 ? (usedPower / ratedPowerKw) * 100 : 0;
+    if (overallUtilization > 100) {
+        overallUtilization = 100;
     }
-    
-    const maxCapacityKg = maxHourlyCapacity * (currentHour + 1); // 현재까지의 최대 가능 생산량
-    
-    // 평균 시간당 생산량
-    const averageHourlyProduction = validData.length > 0 ? totalProductionKg / validData.length : 0;
-    
-    // 가동률 계산: (실제 생산량 / 최대 가능 생산량) × 100
-    const overallUtilization = maxCapacityKg > 0 ? (totalProductionKg / maxCapacityKg) * 100 : 0;
 
     return {
         overallUtilization: Math.round(overallUtilization * 10) / 10,
-        totalProductionKg: Math.round(totalProductionKg * 10) / 10,
-        maxCapacityKg: Math.round(maxCapacityKg * 10) / 10,
-        averageHourlyProduction: Math.round(averageHourlyProduction * 10) / 10
+        totalUsedPower: Math.round(usedPower * 10) / 10,
+        maxAvailablePower: Math.round(ratedPowerKw * 10) / 10,
+        averageHourlyPower: Math.round(averageHourlyPower * 10) / 10
     };
 }
 
@@ -1917,7 +1933,7 @@ export const TARGET_RATE_OPTIONS = [
     { value: 1.2, label: "120% (공격적 목표)" }
 ];
 
-// 수소 생산량 라인 차트 옵션 (데일리용)
+// 수소 생산량 라인 차트 옵션 (주간용)
 export function buildH2LineChartOptions(): ChartOptions {
     return {
         responsive: true,
@@ -1927,10 +1943,10 @@ export function buildH2LineChartOptions(): ChartOptions {
                 display: true,
                 position: "left",
                 min: 0,
-                max: 100, // 수소 생산량 최대값 (kg)
+                max: 5, // 주간 수소 생산량 최대값 (t)
                 ticks: {
-                    stepSize: 10,
-                    callback: (value: number) => `${value}kg`,
+                    stepSize: 1,
+                    callback: (value: number) => `${value}t`,
                 },
                 grid: {
                     drawOnChartArea: true,
@@ -1955,8 +1971,8 @@ export function buildH2LineChartOptions(): ChartOptions {
                     label: function(context: any) {
                         const label = context.dataset.label || '';
                         const value = context.parsed.y;
-                        if (value === null || value === undefined || value < 0) return `${label}: 0.00kg`;
-                        return `${label}: ${value.toFixed(2)}kg`;
+                        if (value === null || value === undefined || value < 0) return `${label}: 0.00t`;
+                        return `${label}: ${value.toFixed(2)}t`;
                     }
                 }
             },
@@ -1983,10 +1999,10 @@ export function buildH2BarChartOptions(): ChartOptions {
                 display: true,
                 position: "left",
                 min: 0,
-                max: 1000, // 주간/월간 수소 생산량 최대값 (kg)
+                max: 30, // 주간/월간 수소 생산량 최대값 (t)
                 ticks: {
-                    stepSize: 100,
-                    callback: (value: number) => `${value}kg`,
+                    stepSize: 6,
+                    callback: (value: number) => `${value}t`,
                 },
                 grid: {
                     drawOnChartArea: true,
@@ -2011,8 +2027,8 @@ export function buildH2BarChartOptions(): ChartOptions {
                     label: function(context: any) {
                         const label = context.dataset.label || '';
                         const value = context.parsed.y;
-                        if (value === null || value === undefined || value < 0) return `${label}: 0.00kg`;
-                        return `${label}: ${value.toFixed(2)}kg`;
+                        if (value === null || value === undefined || value < 0) return `${label}: 0.00t`;
+                        return `${label}: ${value.toFixed(2)}t`;
                     }
                 }
             },
@@ -2034,9 +2050,9 @@ export function buildH2TimeChartOptions(): ChartOptions {
                 display: true,
                 position: "left",
                 min: 0,
-                max: 5, // 시간별 수소 생산량 최대값 (kg)
+                max: 400, // 시간별 수소 생산량 최대값 (kg)
                 ticks: {
-                    stepSize: 1,
+                    stepSize: 80,
                     callback: (value: number) => `${value}kg`,
                 },
                 grid: {
@@ -2190,7 +2206,7 @@ export function buildH2MonthlyChartData(h2Data: any[]): ChartData {
                 type: "bar",
                 barPercentage: 0.8,
                 categoryPercentage: 0.9,
-                borderWidth: 1
+                borderWidth: 1,
             },
         ],
     };

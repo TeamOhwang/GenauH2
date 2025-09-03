@@ -1,13 +1,14 @@
 package com.project.entity;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.AllArgsConstructor;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "production_predict") // 테이블 이름을 정확히 지정
