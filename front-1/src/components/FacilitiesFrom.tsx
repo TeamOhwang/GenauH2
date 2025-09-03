@@ -16,11 +16,11 @@ const FacilitiesFrom = ({ orgId, onSuccess }: FacilitiesProps) => {
         model: "",
         maker: "",
         type: "",
-        powerKw: null,
-        h2Rate: null,
-        specKwh: null,
-        purity: null,
-        pressure: null,
+        powerKw: 0,
+        h2Rate: 0,
+        specKwh: 0,
+        purity: 0,
+        pressure: 0,
         install: "",
     });
 
@@ -41,9 +41,12 @@ const FacilitiesFrom = ({ orgId, onSuccess }: FacilitiesProps) => {
         return dateString;
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setForm({ ...form, [name]: value });
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value, type } = e.target;
+        setForm({ 
+            ...form, 
+            [name]: type === 'number' ? Number(value) || 0 : value 
+        });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -138,10 +141,10 @@ const FacilitiesFrom = ({ orgId, onSuccess }: FacilitiesProps) => {
                             <option value="SOEC">SOEC</option>
                         </select>
                         <input
-                            type="text"
+                            type="number"
                             name="purity"
                             placeholder="수소 순도"
-                            value={form.purity || ''}
+                            value={form.purity}
                             onChange={handleChange}
                             className="w-full border rounded px-3 py-2"
                         />
@@ -149,36 +152,36 @@ const FacilitiesFrom = ({ orgId, onSuccess }: FacilitiesProps) => {
 
                     <div className="flex flex-row gap-2">
                         <input
-                            type="text"
+                            type="number"
                             name="powerKw"
                             placeholder="정격 전력(kW)"
-                            value={form.powerKw || ''}
+                            value={form.powerKw}
                             onChange={handleChange}
                             className="w-full border rounded px-3 py-2"
                         />
                         <input
-                            type="text"
+                            type="number"
                             name="h2Rate"
                             placeholder="정격 출력(kg/h)"
-                            value={form.h2Rate || ''}
+                            value={form.h2Rate}
                             onChange={handleChange}
                             className="w-full border rounded px-3 py-2"
                         />
                     </div>
                     <div className="flex flex-row gap-2">
                         <input
-                            type="text"
+                            type="number"
                             name="specKwh"
                             placeholder="기준 SEC(kWh/kg)"
-                            value={form.specKwh || ''}
+                            value={form.specKwh}
                             onChange={handleChange}
                             className="w-full border rounded px-3 py-2"
                         />
                         <input
-                            type="text"
+                            type="number"
                             name="pressure"
                             placeholder="압력"
-                            value={form.pressure || ''}
+                            value={form.pressure}
                             onChange={handleChange}
                             className="w-full border rounded px-3 py-2"
                         />

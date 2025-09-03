@@ -125,6 +125,21 @@ export function useGeneration() {
         }
     }, [])
 
+    const getMonthlyHydrogenPredict = useCallback(async (orgId: string) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await getMonthlyHydrogenPredict(orgId);
+            return data;
+        }
+        catch (e: any) {
+
+            setError(e?.message ?? "월간 수소 생산량 예측 조회 실패");
+            return null;
+        } finally {
+            setLoading(false);
+        }
+    }, [])
 
 
     return { 
@@ -136,6 +151,7 @@ export function useGeneration() {
         getWeeklyProduction, 
         getWeeklyHydrogenRange,
         getWeeklyHydrogenPredictRange,
-        getMonthlyHydrogenProduction
+        getMonthlyHydrogenProduction,
+        getMonthlyHydrogenPredict
     };
 }

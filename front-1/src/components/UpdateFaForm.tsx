@@ -1,6 +1,7 @@
 ////
 
 import { useAdmin } from '@/hooks/useAdmin';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { useState, useEffect } from 'react'
 
 type UpdateFacilityProps = { 
@@ -26,6 +27,7 @@ const UpdateFaForm = ({ facility, onSuccess, onClose }: UpdateFacilityProps) => 
     });
 
     const { updateFacilityAction, loading, error } = useAdmin();
+    const { orgId } = useAuthStore();
 
     // 기존 시설 정보로 폼 초기화
     useEffect(() => {
@@ -63,8 +65,11 @@ const UpdateFaForm = ({ facility, onSuccess, onClose }: UpdateFacilityProps) => 
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setForm({ ...form, [name]: value });
+        const { name, value, type } = e.target;
+        setForm({ 
+            ...form, 
+            [name]: type === 'number' ? Number(value) || 0 : value 
+        });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -74,7 +79,7 @@ const UpdateFaForm = ({ facility, onSuccess, onClose }: UpdateFacilityProps) => 
         console.log('수정할 데이터:', form);
         
         // 필수 필드 검증
-        const requiredFields = ['name', 'location', 'modelNo', 'cellCount', 'ratedPowerKw', 'ratedOutputKgH'];
+        const requiredFields = ['name', 'location', 'model', 'powerKw', 'h2Rate'];
         const missingFields = requiredFields.filter(field => !form[field as keyof typeof form]);
         
         if (missingFields.length > 0) {
@@ -86,7 +91,8 @@ const UpdateFaForm = ({ facility, onSuccess, onClose }: UpdateFacilityProps) => 
             // 날짜 형식 변환
             const formattedForm = {
                 ...form,
-                install: formatDateForBackend(form.install)
+                install: formatDateForBackend(form.install),
+                orgId: orgId?.toString() || ""
             };
             
             console.log('변환된 form 데이터:', formattedForm);
@@ -130,63 +136,79 @@ const UpdateFaForm = ({ facility, onSuccess, onClose }: UpdateFacilityProps) => 
                 />
                 <input
                     type="text"
-                    name="modelNo"
-                    placeholder="모델번호"
-                    value={form.modelNo}
+                    name="model"
+                    placeholder="모델"
+                    value={form.model}
                     onChange={handleChange}
                     className="w-full border rounded px-3 py-2"
                 />
                 <input
                     type="text"
-                    name="cellCount"
-                    placeholder="셀 개수"
-                    value={form.cellCount}
+                    name="maker"
+                    placeholder="제조사"
+                    value={form.maker}
                     onChange={handleChange}
                     className="w-full border rounded px-3 py-2"
                 />
                 <input
                     type="text"
-                    name="ratedPowerKw"
+                    name="type"
+                    placeholder="타입"
+                    value={form.type}
+                    onChange={handleChange}
+                    className="w-full border rounded px-3 py-2"
+                />
+                <input
+                    type="number"
+                    name="powerKw"
                     placeholder="정격 전력(kW)"
-                    value={form.ratedPowerKw}
+                    value={form.powerKw}
                     onChange={handleChange}
                     className="w-full border rounded px-3 py-2"
                 />
                 <input
-                    type="text"
-                    name="ratedOutputKgH"
-                    placeholder="정격 출력(kg/h)"
-                    value={form.ratedOutputKgH}
+                    type="number"
+                    name="h2Rate"
+                    placeholder="수소 생산률(kg/h)"
+                    value={form.h2Rate}
                     onChange={handleChange}
                     className="w-full border rounded px-3 py-2"
                 />
                 <input
-                    type="text"
-                    name="secNominalKwhPerKg"
+                    type="number"
+                    name="specKwh"
                     placeholder="기준 SEC(kWh/kg)"
-                    value={form.secNominalKwhPerKg}
+                    value={form.specKwh}
+                    onChange={handleChange}
+                    className="w-full border rounded px-3 py-2"
+                />
+                <input
+                    type="number"
+                    name="purity"
+                    placeholder="순도(%)"
+                    value={form.purity}
+                    onChange={handleChange}
+                    className="w-full border rounded px-3 py-2"
+                />
+                <input
+                    type="number"
+                    name="pressure"
+                    placeholder="압력(bar)"
+                    value={form.pressure}
                     onChange={handleChange}
                     className="w-full border rounded px-3 py-2"
                 />
                 <div>
                     <input
                         type="text"
-                        name="catalystInstallDate"
-                        placeholder="촉매 설치일 (예: 20151005 또는 2015-10-05)"
-                        value={form.catalystInstallDate}
+                        name="install"
+                        placeholder="설치일 (예: 20151005 또는 2015-10-05)"
+                        value={form.install}
                         onChange={handleChange}
                         className="w-full border rounded px-3 py-2"
                     />
                     <p className="text-xs text-gray-500 mt-1">YYYYMMDD 또는 YYYY-MM-DD 형식으로 입력하세요</p>
                 </div>
-                <input
-                    type="text"
-                    name="catalystLifeHours"
-                    placeholder="촉매 수명"
-                    value={form.catalystLifeHours}
-                    onChange={handleChange}
-                    className="w-full border rounded px-3 py-2"
-                />
                 <div className="flex gap-3 pt-4">
                     <button 
                         type="submit" 

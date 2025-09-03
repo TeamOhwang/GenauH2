@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { FacilityApi, Facility } from '@/api/facilityApi';
 import { useAuthStore } from '@/stores/useAuthStore';
 import Button from '@/components/ui/Button';
@@ -45,7 +45,7 @@ export default function FacilityManagement() {
   const loadFacilities = async () => {
     try {
       setLoading(true);
-      const data = await FacilityApi.getFacilities(orgId);
+      const data = await FacilityApi.getFacilities(orgId!);
       setFacilities(data);
     } catch (error) {
       console.error('시설 목록 조회 실패:', error);
@@ -165,9 +165,9 @@ export default function FacilityManagement() {
     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold text-black dark:text-white">시설 관리</h2>
-        <Button onClick={handleAddNew} className="bg-blue-600 hover:bg-blue-700 text-white">
+        <button onClick={handleAddNew} className="bg-blue-600 hover:bg-blue-700 text-white">
           시설 추가
-        </Button>
+        </button>
       </div>
 
       {error && (
@@ -205,18 +205,18 @@ export default function FacilityManagement() {
                   <td className="py-3 px-4 text-gray-900 dark:text-gray-100">{facility.h2Rate}</td>
                   <td className="py-3 px-4">
                     <div className="flex space-x-2">
-                      <Button
+                      <button
                         onClick={() => handleEdit(facility)}
                         className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1"
                       >
                         수정
-                      </Button>
-                      <Button
+                      </button>
+                      <button
                         onClick={() => handleDelete(facility.facId!)}
                         className="bg-red-600 hover:bg-red-700 text-white text-sm px-3 py-1"
                       >
                         삭제
-                      </Button>
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -382,19 +382,19 @@ export default function FacilityManagement() {
             </div>
 
             <div className="flex justify-end space-x-3 pt-4">
-              <Button
+              <button
                 type="button"
                 onClick={handleCloseModal}
                 className="bg-gray-500 hover:bg-gray-600 text-white"
               >
                 취소
-              </Button>
-              <Button
+              </button>
+              <button
                 type="submit"
                 className="bg-blue-600 hover:bg-blue-700 text-white"
               >
                 {editingFacility ? '수정' : '추가'}
-              </Button>
+              </button>
             </div>
           </form>
         </div>

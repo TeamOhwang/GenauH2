@@ -145,9 +145,7 @@ public class PredictService {
     				int year = ((Number) result[0]).intValue();
     				int month = ((Number) result[1]).intValue();
     				int weekOfMonth = ((Number) result[2]).intValue();
-    				// Double을 BigDecimal로 안전하게 변환
-    				BigDecimal totalPredicted = result[3] != null ? 
-    					new BigDecimal(result[3].toString()) : BigDecimal.ZERO;
+    				BigDecimal totalPredicted = (BigDecimal) result[3];
     				String weekLabel = String.format("%d월 %d주차", month, weekOfMonth);
     				
     				return WeeklyPredictedDTO.builder()
@@ -161,11 +159,3 @@ public class PredictService {
 		.collect(Collectors.toList());
 	}
 }
-    
-    
-
-
-
-
-    
-    

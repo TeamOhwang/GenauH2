@@ -13,7 +13,7 @@ export default function RegiFrom({ onSuccess }: RegiFromProps) {
         phoneNum: "", // 전화번호
     })
 
-    const { addUser, loading, error} = useAdmin();
+    const { loading, error} = useAdmin();
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFrom({ ...form, [e.target.name]: e.target.value })
@@ -21,14 +21,13 @@ export default function RegiFrom({ onSuccess }: RegiFromProps) {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const user = await addUser(form);
-        if (user) {
-            alert("회원 등록 성공");
-            onSuccess?.();
-        } else {
-            alert(error ?? "회원 등록 실패");
-        }
-
+    //     const user = await addUser(form);
+    //     if (user) {
+    //         alert("회원 등록 성공");
+    //         onSuccess?.();
+    //     } else {
+    //         alert(error ?? "회원 등록 실패");
+    //     }
     }
 
     return (
