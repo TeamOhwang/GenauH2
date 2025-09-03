@@ -48,7 +48,9 @@ export default function TopControlBar({ orgId, onDateSelect, onFacilitySelect }:
           }}
           className="text-black px-2 py-1 rounded"
         >
-          <option value="">-- 선택 --</option>
+          {/* 아무것도 선택되지 않았을 때만 보여줌 */}
+          {selected === null && <option value="">-- 선택 --</option>}
+
           {facilities.map((f) => (
             <option key={f.facId} value={f.facId}>
               {f.name}

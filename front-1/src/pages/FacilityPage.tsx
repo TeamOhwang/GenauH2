@@ -73,6 +73,7 @@ export default function FacilityDashboard() {
     );
   }
 
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -123,6 +124,7 @@ export default function FacilityDashboard() {
                 unit="kg"
               />
             </div>
+            
 
             <div className="bg-gray-100 dark:bg-slate-800 p-4 rounded-xl flex-1 min-h-[500px]">
               <FacilityLineChart
