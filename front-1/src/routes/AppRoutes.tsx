@@ -6,7 +6,6 @@ import { PATHS, roleHome, type Role } from "./paths";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { authToken } from "@/stores/authStorage";
 import RequestJoin from "@/pages/RequestJoin";
-import UserAlam from "@/pages/UserAlam";
 
 const Login = lazy(() => import("@/pages/Login"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
@@ -19,6 +18,7 @@ const About = lazy(() => import("@/pages/About"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const WebSocketTest = lazy(() => import("@/components/WebSocketTest"));
 const NotificationLog = lazy(() => import("@/pages/NotificationLog")); 
+const AuditLogPage = lazy(() => import("@/pages/AuditLogPage"));
 const TankDashboard = lazy(()=> import("@/pages/TankDashboard"));
 
 // 통합된 ChangePassword 컴포넌트 (일반 모드 + 이메일 리셋 모드 지원)
@@ -82,6 +82,7 @@ export default function AppRouter() {
             <Route path={PATHS.requestJoin} element={<RequestJoin />} />
             <Route path={PATHS.websocketTest} element={<WebSocketTest />} />
             <Route path={PATHS.notificationLog} element={<NotificationLog />} /> {/* 추가 */}
+            <Route path={PATHS.auditLogs} element={<AuditLogPage />} /> {/* 감사 로그 페이지 */}
           </Route>
 
           <Route path={PATHS.notFound} element={<NotFound />} />

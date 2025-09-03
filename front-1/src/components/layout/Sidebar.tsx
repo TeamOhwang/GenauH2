@@ -1,7 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { PATHS } from "@/routes/paths";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { Bell, ChartLine, DollarSign, LayoutDashboard, Lock, Settings, ShieldUser, TestTube, Gauge, Factory, Fuel } from "lucide-react"
+import { Bell, ChartLine, DollarSign, LayoutDashboard, Lock, Settings, ShieldUser, TestTube, Gauge, Factory, Fuel, Clipboard,Cctv  } from "lucide-react"
 import TankDashboard from "@/pages/TankDashboard";
 
 
@@ -24,8 +24,8 @@ export default function Sidebar() {
     // ADMIN 전용 메뉴 (필요시 추가)
     const adminMenu = [
         { label: "관리자 페이지", to: PATHS.admin, icon: <ShieldUser /> },
-        { label: "가입 요청", to: PATHS.requestJoin, icon: <ShieldUser /> },
-        { label: "활동 로그", to: PATHS.notificationLog, icon: <ShieldUser /> },
+        { label: "가입 요청", to: PATHS.requestJoin, icon: <Clipboard /> },
+        { label: "활동 로그", to: PATHS.notificationLog, icon: <Cctv /> },
     ];
 
     const menu = role === "SUPERVISOR" ? [ ...adminMenu] : [ ...userMenu];

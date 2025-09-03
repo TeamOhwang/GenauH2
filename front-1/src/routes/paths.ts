@@ -19,6 +19,7 @@ export const PATHS = {
     // userAlam: "/userAlam",
     websocketTest: "/websocket-test", // WebSocket 테스트 페이지
     notificationLog: "/notification-log", // 알림 로그 페이지
+    auditLogs: "/audit-logs", // 감사 로그 페이지
     forbidden: "/403",
     notFound: "*",
 } as const;

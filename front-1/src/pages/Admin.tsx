@@ -12,7 +12,7 @@ import { useEffect, useState } from "react";
 import * as React from "react";
 import { Link } from "react-router-dom";
 import { PATHS } from "@/routes/paths";
-import { Bell } from "lucide-react";
+import { Bell, FileText } from "lucide-react";
 
 // 사용자 타입 정의 - INVITED 상태 제거
 interface User {
@@ -214,13 +214,13 @@ export default function Admin() {
         </div>
         
         {/* 알림 로그 링크 추가 */}
-        <Link 
+        {/* <Link 
           to={PATHS.notificationLog}
           className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md transition-colors flex items-center gap-2"
         >
           <Bell className="w-4 h-4" />
           알림 로그
-        </Link>
+        </Link> */}
       </div>
 
       {/* <button onClick={() => setIsOpen(true)} className="bg-blue-500 dark:bg-blue-700 text-white px-3 py-2 rounded-md w-24 h-10 mx-3">회원 추가</button>
