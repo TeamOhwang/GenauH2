@@ -67,21 +67,20 @@ public class OrganizationController {
          if (user != null) {
             // JWT 토큰 생성 (orgId 사용)
             String token = tokenProvider.create(user.getOrgId().toString());
-             System.out.println("✅ ✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅v생성된 토큰: " + token); // 토큰 생성 확인
-             
-                         // 로그인 감사 로그 기록
-             try {
-                AuditLog loginLog = AuditLog.createLoginLog(
-                   user.getOrgId(), 
-                   user.getName(), 
-                   user.getEmail(), 
-                   getClientIpAddress()
-                );
-                auditLogService.saveAuditLog(loginLog);
-             } catch (Exception logException) {
-                System.err.println("로그인 감사 로그 기록 실패: " + logException.getMessage());
-             }
-             
+            System.out.println("✅ ✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅v생성된 토큰: " + token); // 토큰 생성 확인
+
+            // 로그인 감사 로그 기록
+            try {
+               AuditLog loginLog = AuditLog.createLoginLog(
+                     user.getOrgId(),
+                     user.getName(),
+                     user.getEmail(),
+                     getClientIpAddress());
+               auditLogService.saveAuditLog(loginLog);
+            } catch (Exception logException) {
+               System.err.println("로그인 감사 로그 기록 실패: " + logException.getMessage());
+            }
+
             response.put("success", true);
             response.put("token", token);
             response.put("user", user);
@@ -108,66 +107,65 @@ public class OrganizationController {
    // 일반 회원가입 (관리자 권한 불필요, INVITED 상태로 생성)
    @PostMapping("/register")
    public ResponseEntity<Map<String, Object>> register(@RequestBody RegistrationRequestDTO request) {
-       Map<String, Object> response = new HashMap<>();
+      Map<String, Object> response = new HashMap<>();
 
-       try {
-           // 필수 필드 검증 (phoneNum 추가)
-           if (request.getOrgName() == null || request.getOwnerName() == null || 
+      try {
+         // 필수 필드 검증 (phoneNum 추가)
+         if (request.getOrgName() == null || request.getOwnerName() == null ||
                request.getEmail() == null || request.getRawPassword() == null ||
                request.getPhoneNum() == null) {
-               response.put("success", false);
-               response.put("message", "필수 입력값이 누락되었습니다. (조직명, 소유자명, 이메일, 비밀번호, 전화번호)");
-               return ResponseEntity.badRequest().body(response);
-           }
+            response.put("success", false);
+            response.put("message", "필수 입력값이 누락되었습니다. (조직명, 소유자명, 이메일, 비밀번호, 전화번호)");
+            return ResponseEntity.badRequest().body(response);
+         }
 
-           // 전화번호 공백 검증
-           if (request.getPhoneNum().trim().isEmpty()) {
-               response.put("success", false);
-               response.put("message", "전화번호를 입력해주세요.");
-               return ResponseEntity.badRequest().body(response);
-           }
+         // 전화번호 공백 검증
+         if (request.getPhoneNum().trim().isEmpty()) {
+            response.put("success", false);
+            response.put("message", "전화번호를 입력해주세요.");
+            return ResponseEntity.badRequest().body(response);
+         }
 
-           // facilities 정보 로깅 (디버깅용)
-           System.out.println("받은 facilities 정보: " + request.getFacilities());
+         // facilities 정보 로깅 (디버깅용)
+         System.out.println("받은 facilities 정보: " + request.getFacilities());
 
-           // INVITED 상태로 회원 생성 (facilities 정보도 함께 전달)
-           OrganizationDTO created = organizationService.createPendingUser(
-               request.getOrgName(), 
-               request.getOwnerName(), 
-               request.getBizRegNo(), 
-               request.getEmail(), 
+         // INVITED 상태로 회원 생성 (facilities 정보도 함께 전달)
+         OrganizationDTO created = organizationService.createPendingUser(
+               request.getOrgName(),
+               request.getOwnerName(),
+               request.getBizRegNo(),
+               request.getEmail(),
                request.getRawPassword(),
                request.getPhoneNum(),
-               request.getFacilities()  // facilities 정보 추가
-           );
+               request.getFacilities() // facilities 정보 추가
+         );
 
-                       // 회원가입 감사 로그 기록
-            try {
-                AuditLog registrationLog = AuditLog.createUserRegistrationLog(
-                   created.getOrgId(), 
-                   created.getName(), 
-                   created.getEmail(), 
-                   getClientIpAddress()
-                );
-                auditLogService.saveAuditLog(registrationLog);
-            } catch (Exception logException) {
-                System.err.println("회원가입 감사 로그 기록 실패: " + logException.getMessage());
-            }
+         // 회원가입 감사 로그 기록
+         try {
+            AuditLog registrationLog = AuditLog.createUserRegistrationLog(
+                  created.getOrgId(),
+                  created.getName(),
+                  created.getEmail(),
+                  getClientIpAddress());
+            auditLogService.saveAuditLog(registrationLog);
+         } catch (Exception logException) {
+            System.err.println("회원가입 감사 로그 기록 실패: " + logException.getMessage());
+         }
 
-           response.put("success", true);
-           response.put("data", created);
-           response.put("message", "회원가입이 완료되었습니다. 관리자 승인을 기다려주세요.");
-           return ResponseEntity.ok(response);
+         response.put("success", true);
+         response.put("data", created);
+         response.put("message", "회원가입이 완료되었습니다. 관리자 승인을 기다려주세요.");
+         return ResponseEntity.ok(response);
 
-       } catch (RuntimeException e) {
-           response.put("success", false);
-           response.put("message", e.getMessage());
-           return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-       } catch (Exception e) {
-           response.put("success", false);
-           response.put("message", "회원가입 처리 중 오류가 발생했습니다.");
-           return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-       }
+      } catch (RuntimeException e) {
+         response.put("success", false);
+         response.put("message", e.getMessage());
+         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+      } catch (Exception e) {
+         response.put("success", false);
+         response.put("message", "회원가입 처리 중 오류가 발생했습니다.");
+         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+      }
    }
 
    // 관리자용 회원가입 승인 요청 목록 조회
@@ -217,19 +215,18 @@ public class OrganizationController {
             // ACTIVE 상태로 변경
             OrganizationDTO updatedUser = organizationService.updateUserStatus(orgId, Organization.Status.ACTIVE);
             if (updatedUser != null) {
-                               // 승인 감사 로그 기록
-                try {
-                   AuditLog approvalLog = AuditLog.createUserApprovalLog(
-                      currentUser.getOrgId(), 
-                      currentUser.getName(), 
-                      updatedUser.getOrgId(), 
-                      updatedUser.getName(), 
-                      updatedUser.getEmail()
-                   );
-                   auditLogService.saveAuditLog(approvalLog);
-                } catch (Exception logException) {
-                   System.err.println("승인 감사 로그 기록 실패: " + logException.getMessage());
-                }
+               // 승인 감사 로그 기록
+               try {
+                  AuditLog approvalLog = AuditLog.createUserApprovalLog(
+                        currentUser.getOrgId(),
+                        currentUser.getName(),
+                        updatedUser.getOrgId(),
+                        updatedUser.getName(),
+                        updatedUser.getEmail());
+                  auditLogService.saveAuditLog(approvalLog);
+               } catch (Exception logException) {
+                  System.err.println("승인 감사 로그 기록 실패: " + logException.getMessage());
+               }
 
                response.put("success", true);
                response.put("data", updatedUser);
@@ -241,19 +238,18 @@ public class OrganizationController {
             OrganizationDTO updatedUser = organizationService.updateUserStatus(orgId,
                   Organization.Status.SUSPENDED);
             if (updatedUser != null) {
-                               // 거부 감사 로그 기록
-                try {
-                   AuditLog rejectionLog = AuditLog.createUserRejectionLog(
-                      currentUser.getOrgId(), 
-                      currentUser.getName(), 
-                      updatedUser.getOrgId(), 
-                      updatedUser.getName(), 
-                      updatedUser.getEmail()
-                   );
-                   auditLogService.saveAuditLog(rejectionLog);
-                } catch (Exception logException) {
-                   System.err.println("거부 감사 로그 기록 실패: " + logException.getMessage());
-                }
+               // 거부 감사 로그 기록
+               try {
+                  AuditLog rejectionLog = AuditLog.createUserRejectionLog(
+                        currentUser.getOrgId(),
+                        currentUser.getName(),
+                        updatedUser.getOrgId(),
+                        updatedUser.getName(),
+                        updatedUser.getEmail());
+                  auditLogService.saveAuditLog(rejectionLog);
+               } catch (Exception logException) {
+                  System.err.println("거부 감사 로그 기록 실패: " + logException.getMessage());
+               }
 
                response.put("success", true);
                response.put("data", updatedUser);
@@ -425,20 +421,20 @@ public class OrganizationController {
          // String을 Enum으로 변환
          Organization.Status status;
          switch (statusStr.toUpperCase()) {
-         case "ACTIVE":
-         case "활성":
-            status = Organization.Status.ACTIVE;
-            break;
-         case "SUSPENDED":
-         case "정지":
-            status = Organization.Status.SUSPENDED;
-            break;
-         case "INVITED":
-         case "초대됨":
-            status = Organization.Status.INVITED;
-            break;
-         default:
-            status = Organization.Status.ACTIVE;
+            case "ACTIVE":
+            case "활성":
+               status = Organization.Status.ACTIVE;
+               break;
+            case "SUSPENDED":
+            case "정지":
+               status = Organization.Status.SUSPENDED;
+               break;
+            case "INVITED":
+            case "초대됨":
+               status = Organization.Status.INVITED;
+               break;
+            default:
+               status = Organization.Status.ACTIVE;
          }
 
          // 기존 사용자 정보 조회 (상태 변경 전)
@@ -448,21 +444,20 @@ public class OrganizationController {
          OrganizationDTO updatedUser = organizationService.updateUserStatus(orgId, status);
 
          if (updatedUser != null) {
-                         // 상태 변경 감사 로그 기록
-             try {
-                AuditLog statusChangeLog = AuditLog.createUserStatusChangeLog(
-                   currentUser.getOrgId(), 
-                   currentUser.getName(), 
-                   updatedUser.getOrgId(), 
-                   updatedUser.getName(), 
-                   updatedUser.getEmail(), 
-                   oldStatus, 
-                   updatedUser.getStatus().toString()
-                );
-                auditLogService.saveAuditLog(statusChangeLog);
-             } catch (Exception logException) {
-                System.err.println("상태 변경 감사 로그 기록 실패: " + logException.getMessage());
-             }
+            // 상태 변경 감사 로그 기록
+            try {
+               AuditLog statusChangeLog = AuditLog.createUserStatusChangeLog(
+                     currentUser.getOrgId(),
+                     currentUser.getName(),
+                     updatedUser.getOrgId(),
+                     updatedUser.getName(),
+                     updatedUser.getEmail(),
+                     oldStatus,
+                     updatedUser.getStatus().toString());
+               auditLogService.saveAuditLog(statusChangeLog);
+            } catch (Exception logException) {
+               System.err.println("상태 변경 감사 로그 기록 실패: " + logException.getMessage());
+            }
 
             response.put("success", true);
             response.put("data", updatedUser);
@@ -520,75 +515,74 @@ public class OrganizationController {
          return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
       }
    }
-   
+
    @PostMapping("/withdrawal")
    public ResponseEntity<Map<String, Object>> withdrawUser(
-           @RequestBody Map<String, String> request,
-           @RequestHeader(value = "Authorization", required = false) String token) {
+         @RequestBody Map<String, String> request,
+         @RequestHeader(value = "Authorization", required = false) String token) {
 
-       Map<String, Object> response = new HashMap<>();
+      Map<String, Object> response = new HashMap<>();
 
-       try {
-           // JWT 토큰에서 사용자 ID 추출 (기존 헬퍼 메서드 활용)
-           Long currentUserId = getAuthenticatedUserId();
+      try {
+         // JWT 토큰에서 사용자 ID 추출 (기존 헬퍼 메서드 활용)
+         Long currentUserId = getAuthenticatedUserId();
 
-           String currentPassword = request.get("currentPassword");
-           String confirmWithdrawal = request.get("confirmWithdrawal");
+         String currentPassword = request.get("currentPassword");
+         String confirmWithdrawal = request.get("confirmWithdrawal");
 
-           // 입력값 검증
-           if (currentPassword == null || currentPassword.trim().isEmpty()) {
-               response.put("success", false);
-               response.put("message", "현재 비밀번호를 입력해주세요.");
-               return ResponseEntity.badRequest().body(response);
-           }
+         // 입력값 검증
+         if (currentPassword == null || currentPassword.trim().isEmpty()) {
+            response.put("success", false);
+            response.put("message", "현재 비밀번호를 입력해주세요.");
+            return ResponseEntity.badRequest().body(response);
+         }
 
-           if (confirmWithdrawal == null || !confirmWithdrawal.equals("CONFIRM")) {
-               response.put("success", false);
-               response.put("message", "회원탈퇴 확인이 필요합니다.");
-               return ResponseEntity.badRequest().body(response);
-           }
+         if (confirmWithdrawal == null || !confirmWithdrawal.equals("CONFIRM")) {
+            response.put("success", false);
+            response.put("message", "회원탈퇴 확인이 필요합니다.");
+            return ResponseEntity.badRequest().body(response);
+         }
 
-           // 회원탈퇴 처리 (토큰에서 추출한 사용자 ID 사용)
-           boolean withdrawalResult = organizationService.withdrawUser(currentUserId, currentPassword);
+         // 회원탈퇴 처리 (토큰에서 추출한 사용자 ID 사용)
+         boolean withdrawalResult = organizationService.withdrawUser(currentUserId, currentPassword);
 
-           if (withdrawalResult) {
-                               // 회원탈퇴 감사 로그 기록
-                try {
-                   OrganizationDTO user = organizationService.getUserById(currentUserId);
-                   if (user != null) {
-                      AuditLog withdrawalLog = AuditLog.createUserWithdrawalLog(
-                         user.getOrgId(), 
-                         user.getName(), 
-                         user.getEmail(), 
-                         getClientIpAddress()
-                      );
-                      auditLogService.saveAuditLog(withdrawalLog);
-                   }
-                } catch (Exception logException) {
-                   System.err.println("회원탈퇴 감사 로그 기록 실패: " + logException.getMessage());
-                }
+         if (withdrawalResult) {
+            // 회원탈퇴 감사 로그 기록
+            try {
+               OrganizationDTO user = organizationService.getUserById(currentUserId);
+               if (user != null) {
+                  AuditLog withdrawalLog = AuditLog.createUserWithdrawalLog(
+                        user.getOrgId(),
+                        user.getName(),
+                        user.getEmail(),
+                        getClientIpAddress());
+                  auditLogService.saveAuditLog(withdrawalLog);
+               }
+            } catch (Exception logException) {
+               System.err.println("회원탈퇴 감사 로그 기록 실패: " + logException.getMessage());
+            }
 
-               response.put("success", true);
-               response.put("message", "회원탈퇴가 완료되었습니다. 그동안 이용해주셔서 감사합니다.");
-               return ResponseEntity.ok(response);
-           } else {
-               response.put("success", false);
-               response.put("message", "현재 비밀번호가 올바르지 않습니다.");
-               return ResponseEntity.badRequest().body(response);
-           }
+            response.put("success", true);
+            response.put("message", "회원탈퇴가 완료되었습니다. 그동안 이용해주셔서 감사합니다.");
+            return ResponseEntity.ok(response);
+         } else {
+            response.put("success", false);
+            response.put("message", "현재 비밀번호가 올바르지 않습니다.");
+            return ResponseEntity.badRequest().body(response);
+         }
 
-       } catch (SecurityException e) {
-           response.put("success", false);
-           response.put("message", "인증이 필요합니다.");
-           return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-       } catch (Exception e) {
-           System.err.println("회원탈퇴 처리 중 오류 발생: " + e.getMessage());
-           e.printStackTrace();
-           
-           response.put("success", false);
-           response.put("message", "회원탈퇴 처리 중 오류가 발생했습니다: " + e.getMessage());
-           return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-       }
+      } catch (SecurityException e) {
+         response.put("success", false);
+         response.put("message", "인증이 필요합니다.");
+         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+      } catch (Exception e) {
+         System.err.println("회원탈퇴 처리 중 오류 발생: " + e.getMessage());
+         e.printStackTrace();
+
+         response.put("success", false);
+         response.put("message", "회원탈퇴 처리 중 오류가 발생했습니다: " + e.getMessage());
+         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+      }
    }
 
    // 현재 비밀번호 확인 API
@@ -807,176 +801,176 @@ public class OrganizationController {
    // 1. JWT 토큰 기반 비밀번호 리셋 요청 (로그인된 사용자용)
    @PostMapping("/request-password-reset")
    public ResponseEntity<Map<String, Object>> requestPasswordReset(
-           @RequestHeader(value = "Authorization", required = false) String token) {
-       Map<String, Object> response = new HashMap<>();
-       
-       try {
-           // JWT 토큰에서 사용자 ID 추출
-           if (token == null || !token.startsWith("Bearer ")) {
-               response.put("success", false);
-               response.put("message", "인증 토큰이 필요합니다.");
-               return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-           }
+         @RequestHeader(value = "Authorization", required = false) String token) {
+      Map<String, Object> response = new HashMap<>();
 
-           String actualToken = token.substring(7);
-           String userId = tokenProvider.validateAndGetUserId(actualToken);
+      try {
+         // JWT 토큰에서 사용자 ID 추출
+         if (token == null || !token.startsWith("Bearer ")) {
+            response.put("success", false);
+            response.put("message", "인증 토큰이 필요합니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+         }
 
-           if (userId == null) {
-               response.put("success", false);
-               response.put("message", "유효하지 않은 토큰입니다.");
-               return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-           }
+         String actualToken = token.substring(7);
+         String userId = tokenProvider.validateAndGetUserId(actualToken);
 
-           // 사용자 정보 조회
-           OrganizationDTO user = organizationService.getUserById(Long.parseLong(userId));
-           if (user == null) {
-               response.put("success", false);
-               response.put("message", "사용자 정보를 찾을 수 없습니다.");
-               return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-           }
+         if (userId == null) {
+            response.put("success", false);
+            response.put("message", "유효하지 않은 토큰입니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+         }
 
-           // 활성 사용자만 비밀번호 리셋 가능
-           if (user.getStatus() != Organization.Status.ACTIVE) {
-               response.put("success", false);
-               response.put("message", "활성 상태의 계정만 비밀번호 재설정이 가능합니다.");
-               return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-           }
+         // 사용자 정보 조회
+         OrganizationDTO user = organizationService.getUserById(Long.parseLong(userId));
+         if (user == null) {
+            response.put("success", false);
+            response.put("message", "사용자 정보를 찾을 수 없습니다.");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+         }
 
-           // 등록된 이메일로 리셋 링크 발송
-           boolean result = passwordResetService.requestPasswordReset(user.getEmail());
-           
-           if (result) {
-               response.put("success", true);
-               response.put("message", "비밀번호 재설정 링크가 등록된 이메일로 전송되었습니다.");
-               return ResponseEntity.ok(response);
-           } else {
-               response.put("success", false);
-               response.put("message", "비밀번호 재설정 요청 처리 중 오류가 발생했습니다.");
-               return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-           }
-           
-       } catch (Exception e) {
-           System.err.println("비밀번호 리셋 요청 오류: " + e.getMessage());
-           e.printStackTrace();
-           
-           response.put("success", false);
-           response.put("message", "비밀번호 재설정 요청 처리 중 오류가 발생했습니다.");
-           return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-       }
+         // 활성 사용자만 비밀번호 리셋 가능
+         if (user.getStatus() != Organization.Status.ACTIVE) {
+            response.put("success", false);
+            response.put("message", "활성 상태의 계정만 비밀번호 재설정이 가능합니다.");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+         }
+
+         // 등록된 이메일로 리셋 링크 발송
+         boolean result = passwordResetService.requestPasswordReset(user.getEmail());
+
+         if (result) {
+            response.put("success", true);
+            response.put("message", "비밀번호 재설정 링크가 등록된 이메일로 전송되었습니다.");
+            return ResponseEntity.ok(response);
+         } else {
+            response.put("success", false);
+            response.put("message", "비밀번호 재설정 요청 처리 중 오류가 발생했습니다.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+         }
+
+      } catch (Exception e) {
+         System.err.println("비밀번호 리셋 요청 오류: " + e.getMessage());
+         e.printStackTrace();
+
+         response.put("success", false);
+         response.put("message", "비밀번호 재설정 요청 처리 중 오류가 발생했습니다.");
+         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+      }
    }
 
    // 2. 비밀번호 리셋 토큰 검증 (공개 API - JWT 토큰 불필요)
    @GetMapping("/validate-reset-token/{token}")
    public ResponseEntity<Map<String, Object>> validateResetToken(@PathVariable String token) {
-       Map<String, Object> response = new HashMap<>();
-       
-       try {
-           boolean isValid = passwordResetService.validateResetToken(token);
-           
-           if (isValid) {
-               response.put("success", true);
-               response.put("message", "유효한 토큰입니다.");
-           } else {
-               response.put("success", false);
-               response.put("message", "유효하지 않거나 만료된 토큰입니다.");
-           }
-           
-           return ResponseEntity.ok(response);
-           
-       } catch (Exception e) {
-           System.err.println("토큰 검증 오류: " + e.getMessage());
-           e.printStackTrace();
-           
-           response.put("success", false);
-           response.put("message", "토큰 검증 중 오류가 발생했습니다.");
-           return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-       }
+      Map<String, Object> response = new HashMap<>();
+
+      try {
+         boolean isValid = passwordResetService.validateResetToken(token);
+
+         if (isValid) {
+            response.put("success", true);
+            response.put("message", "유효한 토큰입니다.");
+         } else {
+            response.put("success", false);
+            response.put("message", "유효하지 않거나 만료된 토큰입니다.");
+         }
+
+         return ResponseEntity.ok(response);
+
+      } catch (Exception e) {
+         System.err.println("토큰 검증 오류: " + e.getMessage());
+         e.printStackTrace();
+
+         response.put("success", false);
+         response.put("message", "토큰 검증 중 오류가 발생했습니다.");
+         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+      }
    }
 
    // 3. 비밀번호 리셋 실행 (공개 API - JWT 토큰 불필요)
    @PostMapping("/reset-password")
    public ResponseEntity<Map<String, Object>> resetPassword(@RequestBody Map<String, String> request) {
-       Map<String, Object> response = new HashMap<>();
-       
-       try {
-           String token = request.get("token");
-           String newPassword = request.get("newPassword");
-           String confirmPassword = request.get("confirmPassword");
-           
-           // 입력값 검증
-           if (token == null || token.trim().isEmpty()) {
-               response.put("success", false);
-               response.put("message", "유효하지 않은 토큰입니다.");
-               return ResponseEntity.badRequest().body(response);
-           }
-           
-           if (newPassword == null || newPassword.trim().isEmpty()) {
-               response.put("success", false);
-               response.put("message", "새 비밀번호를 입력해주세요.");
-               return ResponseEntity.badRequest().body(response);
-           }
-           
-           if (!newPassword.equals(confirmPassword)) {
-               response.put("success", false);
-               response.put("message", "새 비밀번호와 비밀번호 확인이 일치하지 않습니다.");
-               return ResponseEntity.badRequest().body(response);
-           }
-           
-           // 비밀번호 유효성 검사
-           if (newPassword.length() < 6) {
-               response.put("success", false);
-               response.put("message", "새 비밀번호는 최소 6자 이상이어야 합니다.");
-               return ResponseEntity.badRequest().body(response);
-           }
-           
-           boolean result = passwordResetService.resetPassword(token, newPassword);
-           
-           if (result) {
-               response.put("success", true);
-               response.put("message", "비밀번호가 성공적으로 변경되었습니다. 새로운 비밀번호로 로그인해주세요.");
-               return ResponseEntity.ok(response);
-           } else {
-               response.put("success", false);
-               response.put("message", "유효하지 않거나 만료된 토큰입니다.");
-               return ResponseEntity.badRequest().body(response);
-           }
-           
-       } catch (Exception e) {
-           System.err.println("비밀번호 리셋 실행 오류: " + e.getMessage());
-           e.printStackTrace();
-           
-           response.put("success", false);
-           response.put("message", "비밀번호 변경 중 오류가 발생했습니다.");
-           return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-       }
+      Map<String, Object> response = new HashMap<>();
+
+      try {
+         String token = request.get("token");
+         String newPassword = request.get("newPassword");
+         String confirmPassword = request.get("confirmPassword");
+
+         // 입력값 검증
+         if (token == null || token.trim().isEmpty()) {
+            response.put("success", false);
+            response.put("message", "유효하지 않은 토큰입니다.");
+            return ResponseEntity.badRequest().body(response);
+         }
+
+         if (newPassword == null || newPassword.trim().isEmpty()) {
+            response.put("success", false);
+            response.put("message", "새 비밀번호를 입력해주세요.");
+            return ResponseEntity.badRequest().body(response);
+         }
+
+         if (!newPassword.equals(confirmPassword)) {
+            response.put("success", false);
+            response.put("message", "새 비밀번호와 비밀번호 확인이 일치하지 않습니다.");
+            return ResponseEntity.badRequest().body(response);
+         }
+
+         // 비밀번호 유효성 검사
+         if (newPassword.length() < 6) {
+            response.put("success", false);
+            response.put("message", "새 비밀번호는 최소 6자 이상이어야 합니다.");
+            return ResponseEntity.badRequest().body(response);
+         }
+
+         boolean result = passwordResetService.resetPassword(token, newPassword);
+
+         if (result) {
+            response.put("success", true);
+            response.put("message", "비밀번호가 성공적으로 변경되었습니다. 새로운 비밀번호로 로그인해주세요.");
+            return ResponseEntity.ok(response);
+         } else {
+            response.put("success", false);
+            response.put("message", "유효하지 않거나 만료된 토큰입니다.");
+            return ResponseEntity.badRequest().body(response);
+         }
+
+      } catch (Exception e) {
+         System.err.println("비밀번호 리셋 실행 오류: " + e.getMessage());
+         e.printStackTrace();
+
+         response.put("success", false);
+         response.put("message", "비밀번호 변경 중 오류가 발생했습니다.");
+         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+      }
    }
 
    // 4. 만료된 토큰 정리 (관리자용)
    @PostMapping("/admin/cleanup-expired-tokens")
    public ResponseEntity<Map<String, Object>> cleanupExpiredTokens(
-           @RequestHeader(value = "Authorization", required = false) String token) {
-       Map<String, Object> response = new HashMap<>();
-       
-       try {
-           // 관리자 권한 확인
-           OrganizationDTO currentUser = validateAdminToken(token, response);
-           if (currentUser == null) {
-               return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-           }
-           
-           passwordResetService.cleanupExpiredTokens();
-           
-           response.put("success", true);
-           response.put("message", "만료된 토큰이 정리되었습니다.");
-           return ResponseEntity.ok(response);
-           
-       } catch (Exception e) {
-           response.put("success", false);
-           response.put("message", "토큰 정리 중 오류가 발생했습니다.");
-           return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-       }
+         @RequestHeader(value = "Authorization", required = false) String token) {
+      Map<String, Object> response = new HashMap<>();
+
+      try {
+         // 관리자 권한 확인
+         OrganizationDTO currentUser = validateAdminToken(token, response);
+         if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+         }
+
+         passwordResetService.cleanupExpiredTokens();
+
+         response.put("success", true);
+         response.put("message", "만료된 토큰이 정리되었습니다.");
+         return ResponseEntity.ok(response);
+
+      } catch (Exception e) {
+         response.put("success", false);
+         response.put("message", "토큰 정리 중 오류가 발생했습니다.");
+         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+      }
    }
-   
+
    // 관리자 토큰 검증 헬퍼 메서드
    private OrganizationDTO validateAdminToken(String token, Map<String, Object> response) {
       try {
@@ -1087,7 +1081,7 @@ public class OrganizationController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
          }
 
-                   boolean deleteResult = userCleanupService.manualDeleteUser(orgId, currentUser.getName());
+         boolean deleteResult = userCleanupService.manualDeleteUser(orgId, currentUser.getName());
 
          if (deleteResult) {
             response.put("success", true);

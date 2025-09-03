@@ -20,30 +20,28 @@ export default function Dashboard() {
     selected,
     start,
     end,
-    page,
+    page
   );
 
-  // 설비별 이미지 매핑
   const facilityImages: Record<number, string> = {
     1: "/images/ffimg.jpg",
-    // 필요 시 2,3,... 추가 가능
   };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
+      transition={{ duration: 0.6 }}
       className="flex h-screen"
     >
-      <main className="flex-1 bg-slate-100 dark:bg-gray-900 text-gray-900 dark:text-white p-6 grid grid-cols-3 gap-6 h-full">
-        {/* 메인 영역 (왼쪽: 이미지 + 차트) */}
-        <section className="col-span-2 flex flex-col h-full gap-4">
+      <main className="flex-1 bg-slate-100 dark:bg-gray-900 p-6 grid grid-cols-3 gap-6">
+        {/* 왼쪽: 이미지 + 일별 차트 */}
+        <section className="col-span-2 flex flex-col gap-4">
           <TopControlBar
             orgId={orgId}
-            onDateSelect={(startDate, endDate) => {
-              setStart(startDate);
-              setEnd(endDate);
+            onDateSelect={(s, e) => {
+              setStart(s);
+              setEnd(e);
               setPage(0);
             }}
             onFacilitySelect={(facId) => {
@@ -61,21 +59,17 @@ export default function Dashboard() {
               <DailyChart total={total} />
             </>
           ) : (
-            <p className="text-gray-600 dark:text-gray-400">
-              설비를 선택해주세요
-            </p>
+            <p className="text-gray-600 dark:text-gray-400">설비를 선택해주세요</p>
           )}
         </section>
 
-        {/* 사이드 영역 (오른쪽: 시간별 테이블) */}
-        <section className="col-span-1 h-full">
+        {/* 오른쪽: 시간별 테이블 */}
+        <section className="col-span-1">
           <HourlyTable
             data={hourly}
             page={page}
             totalPages={totalPages}
             onPageChange={setPage}
-            start={start}
-            end={end}
             selectedDate={daily[page]?.date}
           />
         </section>

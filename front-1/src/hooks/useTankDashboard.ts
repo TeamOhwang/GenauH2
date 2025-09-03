@@ -1,58 +1,44 @@
 import { useEffect, useState, useCallback } from "react";
 import { TankApi, TankKpi, PageResponse } from "@/api/tankApi";
+import { useCycleStore } from "@/stores/useCycleStore";
 
-export type MonthlyProduction = {
-  month: string;   // YYYY-MM
-  production: number; // 월별 누적 생산량 (소수점 첫째 자리 반올림)
-};
+export type DailyProduction = { date: string; production: number };
+export type MonthlyProduction = { month: string; production: number };
 
-// 📌 월 리스트 생성
-const generateMonthRange = (start: Date, end: Date) => {
-  const months: string[] = [];
-  const d = new Date(start);
-  d.setDate(1);
-  while (d <= end) {
-    months.push(d.toISOString().slice(0, 7));
-    d.setMonth(d.getMonth() + 1);
-  }
-  return months;
-};
+const CYCLE_UNIT = 10000;
 
-// 📌 전체 페이지 데이터 가져오기 (페이지네이션 전부 합침)
 async function fetchAllPages(orgId: number, size: number) {
   let page = 0;
   let all: TankKpi[] = [];
   let totalPages = 1;
 
   while (page < totalPages) {
-    const res: PageResponse<TankKpi> = await TankApi.listByOrg({
-      orgId,
-      page,
-      size,
-    });
+    const res: PageResponse<TankKpi> = await TankApi.listByOrg({ orgId, page, size });
     all = [...all, ...res.content];
     totalPages = res.totalPages;
     page++;
   }
-
   return all;
 }
 
-export function useTankDashboard(orgId: number | null, size: number = 500) {
+export function useTankDashboard(orgId: number | null, size: number = 1000) {
+  const { soldCycles } = useCycleStore();
   const [data, setData] = useState<TankKpi[]>([]);
   const [monthlyData, setMonthlyData] = useState<MonthlyProduction[]>([]);
-  const [totalProduction, setTotalProduction] = useState(0);
+  const [todayProduction, setTodayProduction] = useState(0);
+  const [cycles, setCycles] = useState(0);
+  const [level, setLevel] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     if (!orgId) return;
-
     setLoading(true);
+
     try {
       const allData = await fetchAllPages(orgId, size);
 
-      //  설비별 누적 집계
+      // 설비 ID 중복 합산
       const aggregated = Object.values(
         allData.reduce((acc, cur) => {
           const key = cur.facId;
@@ -65,57 +51,60 @@ export function useTankDashboard(orgId: number | null, size: number = 500) {
         }, {} as Record<number, TankKpi>)
       );
 
-      // 월별 집계 (UTC → KST 보정)
-      const monthlyMap = allData.reduce((acc, cur) => {
+      //  일별 집계
+      const dailyMap = allData.reduce((acc, cur) => {
         if (!cur.ts) return acc;
         const kst = new Date(new Date(cur.ts).getTime() + 9 * 60 * 60 * 1000);
-        const month = kst.toISOString().slice(0, 7);
-        if (!acc[month]) acc[month] = 0;
-        acc[month] += cur.productionKg ?? 0;
+        const day = kst.toISOString().slice(0, 10);
+        if (!acc[day]) acc[day] = 0;
+        acc[day] += cur.productionKg ?? 0;
         return acc;
       }, {} as Record<string, number>);
 
-      // 최초 생산월 ~ 현재까지 월 범위
-      let firstMonth: Date | null = null;
-      allData.forEach((cur) => {
-        if (cur.ts) {
-          const d = new Date(cur.ts);
-          if (!firstMonth || d < firstMonth) {
-            firstMonth = d;
-          }
-        }
-      });
-
-      const end = new Date();
-      const start = firstMonth ? new Date(firstMonth) : new Date();
-      start.setDate(1);
-
-      const monthRange = generateMonthRange(start, end);
-      const monthly = monthRange.map((m) => ({
-        month: m,
-        production: Number((monthlyMap[m] ?? 0).toFixed(1)), 
+      const daily = Object.keys(dailyMap).sort().map((d) => ({
+        date: d,
+        production: Number(dailyMap[d].toFixed(1)),
       }));
 
-   
-      const total = allData.reduce(
-        (sum, cur) => sum + (cur.productionKg ?? 0),
-        0
-      );
+      //  월별 집계
+      const monthlyMap = daily.reduce((acc, cur) => {
+        const month = cur.date.slice(0, 7);
+        if (!acc[month]) acc[month] = 0;
+        acc[month] += cur.production;
+        return acc;
+      }, {} as Record<string, number>);
+
+      const monthly = Object.keys(monthlyMap).sort().map((m) => ({
+        month: m,
+        production: Number(monthlyMap[m].toFixed(1)),
+      }));
+
+      //  오늘까지 누적
+      const today = new Date().toISOString().slice(0, 10);
+      const todayTotal = daily
+        .filter((d) => d.date <= today)
+        .reduce((sum, d) => sum + d.production, 0);
+
+      //  사이클/레벨 계산 (판매 반영)
+      const rawCycles = Math.floor(todayTotal / CYCLE_UNIT);
+      const rawLevel = todayTotal % CYCLE_UNIT;
 
       setData(aggregated);
       setMonthlyData(monthly);
-      setTotalProduction(Number(total.toFixed(1)));
+      setTodayProduction(todayTotal);
+      setCycles(rawCycles - soldCycles);
+      setLevel(rawLevel);
       setError(null);
     } catch (e: any) {
       setError(e.message ?? "수소 생산 데이터를 불러오는데 실패했습니다.");
     } finally {
       setLoading(false);
     }
-  }, [orgId, size]);
+  }, [orgId, size, soldCycles]);
 
   useEffect(() => {
     if (orgId) fetchData();
   }, [fetchData, orgId]);
 
-  return { data, totalProduction, monthlyData, loading, error, refetch: fetchData };
+  return { data, monthlyData, todayProduction, cycles, level, loading, error };
 }

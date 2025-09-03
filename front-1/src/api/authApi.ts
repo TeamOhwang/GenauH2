@@ -60,28 +60,32 @@ async register(body: RegisterReq): Promise<any> {
     await apiClient.post(AUTH_ENDPOINTS.logout, {});
   },
 
-  async loginAndSyncRole(payload: LoginReq): Promise<Role | null> {
-    const token = await this.login(payload);
-    authToken.set(token);
-    // console.log("토큰 저장 후 localStorage 확인:", token);  // 로컬 스토리지에서 확인
+async loginAndSyncRole(payload: LoginReq): Promise<Role | null> {
+  const token = await this.login(payload);
+  authToken.set(token);
 
-    const prof = await this.profile();
-    const { setEmail, setOrgId, setRole, setOrgName } = useAuthStore.getState(); 
-    setOrgId(prof.orgId ?? null);
-    setOrgName(prof.orgName ?? null);
-    setRole(prof.role ?? null);
-    return prof.role ?? null;
-  },
+  const prof = await this.profile();
+  const { setEmail, setOrgId, setRole, setOrgName } = useAuthStore.getState();
 
-  async syncRole(): Promise<Role | null> {
-    const prof = await this.profile();
-    const { setEmail, setOrgId, setRole, setOrgName } = useAuthStore.getState(); 
-    setEmail(prof.email ?? null);
-    setOrgId(prof.orgId ?? null);
-    setOrgName(prof.orgName ?? null); 
-    setRole(prof.role ?? null);
-    return prof.role ?? null;
-  },
+  setEmail(prof.email ?? null);    
+  setOrgId(prof.orgId ?? null);
+  setOrgName(prof.orgName ?? null);
+  setRole(prof.role ?? null);
+
+  return prof.role ?? null;
+},
+
+async syncRole(): Promise<Role | null> {
+  const prof = await this.profile();
+  const { setEmail, setOrgId, setRole, setOrgName } = useAuthStore.getState();
+
+  setEmail(prof.email ?? null);
+  setOrgId(prof.orgId ?? null);
+  setOrgName(prof.orgName ?? null);
+  setRole(prof.role ?? null);
+
+  return prof.role ?? null;
+},
 
   async logoutAll() {
     try {

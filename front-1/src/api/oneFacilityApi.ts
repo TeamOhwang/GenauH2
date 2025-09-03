@@ -1,21 +1,18 @@
 import apiClient, { AUTH_ENDPOINTS } from "@/api/apiClient";
 import * as qs from "qs";
 
-// FacilityKpi 타입 정의
 export type FacilityKpi = {
   orgId: number;
   facId: number;
   facilityName: string;
-  ts: string;
+  ts: string; // ISO 그대로
   predictedMaxKg: number;
   productionKg: number;
 };
 
-// 기본 날짜 설정 함수
-const defaultStart = () => new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // 7일 전
-const defaultEnd = () => new Date(); // 현재
+const defaultStart = () => new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+const defaultEnd = () => new Date();
 
-// 날짜를 ISO 형식으로 변환하는 함수
 const toDateTime = (date: Date) => {
   const pad = (n: number) => String(n).padStart(2, "0");
   return (
@@ -33,7 +30,6 @@ const toDateTime = (date: Date) => {
   );
 };
 
-// API 호출 함수
 export const oneFacilityApi = {
   async listByFacility(params: {
     orgId: number;
@@ -53,7 +49,7 @@ export const oneFacilityApi = {
     const cleanParams: Record<string, any> = {
       start: toDateTime(startDate),
       end: toDateTime(endDate),
-      facId: params.facIds, // 👉 그대로 배열 전달
+      facId: params.facIds,
       page: params.page ?? 0,
       size: params.size ?? 1000,
     };
@@ -62,23 +58,17 @@ export const oneFacilityApi = {
       AUTH_ENDPOINTS.oneFacilityKpis(params.orgId),
       {
         params: cleanParams,
-        paramsSerializer: (p) =>
-          qs.stringify(p, { arrayFormat: "repeat" }), 
+        paramsSerializer: (p) => qs.stringify(p, { arrayFormat: "repeat" }),
       }
     );
 
-    // 안전하게 매핑
     return (res.data ?? []).map((item: any) => ({
       orgId: Number(item.orgId ?? 0),
       facId: Number(item.facId ?? 0),
       facilityName: String(item.facilityName ?? ""),
-      ts: item.ts ? new Date(String(item.ts)).toISOString() : "",
-      predictedMaxKg: isNaN(Number(item.predictedMaxKg))
-        ? 0
-        : Number(item.predictedMaxKg),
-      productionKg: isNaN(Number(item.productionKg))
-        ? 0
-        : Number(item.productionKg),
+      ts: String(item.ts ?? ""),
+      predictedMaxKg: Number(item.predictedMaxKg ?? 0),
+      productionKg: Number(item.productionKg ?? 0),
     }));
   },
 };
