@@ -102,8 +102,6 @@ export default function Header() {
             >
               <Bell className={`w-5 h-5 ${isConnected ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}`} />
               {/* WebSocket 연결 상태 표시 */}
-              <div className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-gray-400'}`} 
-                   title={isConnected ? 'WebSocket 연결됨' : 'WebSocket 연결 안됨'} />
               {/* 새로운 알림이 있을 때 빨간 점 표시 */}
               {notifications.length > 0 && (
                 <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full animate-pulse" 

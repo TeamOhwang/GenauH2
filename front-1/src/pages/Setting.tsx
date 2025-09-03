@@ -1,4 +1,4 @@
-import { getNotificationSettingsApi, requestPasswordResetApi, updateNotificationSettingsApi } from "@/api/userApi";
+import { getNotificationSettingsApi, requestPasswordResetApi, updateNotificationSettingsApi, withdrawalApi } from "@/api/userApi";
 import Button from "@/components/ui/Button";
 import { useEffect, useState } from "react";
 import { useTargetSettingStore } from "@/stores/useTargetSettingStore";
@@ -6,6 +6,7 @@ import { TARGET_RATE_OPTIONS } from "@/utils/chartDataBuilder";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useNavigate } from "react-router-dom";
+import FacilityManagement from "@/components/FacilityManagement";
 
 export default function Setting() {
 
@@ -16,6 +17,12 @@ export default function Setting() {
 
     // 비밀번호 변경 메일 발송 여부
     const [isPasswordReset, setIsPasswordReset] = useState(false);
+
+    // 회원 탈퇴 관련 상태
+    const [isWithdrawalModalOpen, setIsWithdrawalModalOpen] = useState(false);
+    const [withdrawalPassword, setWithdrawalPassword] = useState("");
+    const [withdrawalConfirm, setWithdrawalConfirm] = useState("");
+    const [isWithdrawing, setIsWithdrawing] = useState(false);
 
     // 알림 설정 번호
     const [notificationSms, setNotificationSms] = useState("");
@@ -123,9 +130,48 @@ export default function Setting() {
         });
     }
 
-    const handleWithdrawal = (orgId: string) => {
+    const handleWithdrawal = () => {
         console.log("회원 탈퇴 클릭");
-        updateUserStatusAction(orgId, "SUSPENDED");
+        setIsWithdrawalModalOpen(true);
+    }
+
+    const handleWithdrawalSubmit = async () => {
+        if (!withdrawalPassword.trim()) {
+            alert("현재 비밀번호를 입력해주세요.");
+            return;
+        }
+
+        if (withdrawalConfirm !== "탈퇴") {
+            alert("확인란에 '탈퇴'를 정확히 입력해주세요.");
+            return;
+        }
+
+        try {
+            setIsWithdrawing(true);
+            const result = await withdrawalApi(withdrawalPassword);
+            
+            if (result.success) {
+                alert("회원 탈퇴가 완료되었습니다. 그동안 이용해주셔서 감사합니다.");
+                logout();
+                navigate('/login');
+            } else {
+                alert(result.message || "회원 탈퇴 중 오류가 발생했습니다.");
+            }
+        } catch (error: any) {
+            console.error("회원 탈퇴 실패:", error);
+            alert(error.response?.data?.message || "회원 탈퇴 중 오류가 발생했습니다.");
+        } finally {
+            setIsWithdrawing(false);
+            setIsWithdrawalModalOpen(false);
+            setWithdrawalPassword("");
+            setWithdrawalConfirm("");
+        }
+    }
+
+    const handleWithdrawalCancel = () => {
+        setIsWithdrawalModalOpen(false);
+        setWithdrawalPassword("");
+        setWithdrawalConfirm("");
     }
 
     useEffect(() => {
@@ -283,14 +329,72 @@ export default function Setting() {
                 </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
-                <p className="text-xl font-bold text-black dark:text-white">시설 추가 / 수정 요청</p>
-            </div>
+            {/* 시설 관리 섹션 */}
+            <FacilityManagement />
             <div>
                 <button 
                 className="text-red-500 text-md dark:bg-red-500 dark:text-white font-medium border border-red-500 dark:border-red-500 rounded-md px-2 py-1 mt-3"
                 onClick={handleWithdrawal}>회원 탈퇴</button>
             </div>
+
+            {/* 회원 탈퇴 모달 */}
+            {isWithdrawalModalOpen && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+                        <h3 className="text-lg font-bold text-red-600 dark:text-red-400 mb-4">회원 탈퇴</h3>
+                        
+                        <div className="mb-4">
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                회원 탈퇴 시 모든 데이터가 삭제되며, 복구할 수 없습니다.<br/>
+                                탈퇴 후 6개월이 지나면 계정이 완전히 삭제됩니다.
+                            </p>
+                            
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    현재 비밀번호
+                                </label>
+                                <input
+                                    type="password"
+                                    value={withdrawalPassword}
+                                    onChange={(e) => setWithdrawalPassword(e.target.value)}
+                                    className="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                                    placeholder="현재 비밀번호를 입력하세요"
+                                />
+                            </div>
+                            
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    확인: 아래에 "탈퇴"를 입력하세요
+                                </label>
+                                <input
+                                    type="text"
+                                    value={withdrawalConfirm}
+                                    onChange={(e) => setWithdrawalConfirm(e.target.value)}
+                                    className="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                                    placeholder="탈퇴"
+                                />
+                            </div>
+                        </div>
+                        
+                        <div className="flex justify-end space-x-3">
+                            <button
+                                onClick={handleWithdrawalCancel}
+                                disabled={isWithdrawing}
+                                className="px-4 py-2 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
+                            >
+                                취소
+                            </button>
+                            <button
+                                onClick={handleWithdrawalSubmit}
+                                disabled={isWithdrawing}
+                                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isWithdrawing ? "처리 중..." : "탈퇴하기"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

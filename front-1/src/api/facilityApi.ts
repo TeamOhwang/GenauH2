@@ -10,6 +10,24 @@ export type FacilityKpi = {
   productionKg: number;
 };
 
+/** 시설 엔티티 타입 (백엔드 Facility 매핑) */
+export type Facility = {
+  facId?: number;
+  orgId: number;
+  name: string;
+  type: 'PEM' | 'ALK' | 'SOEC';
+  maker?: string;
+  model?: string;
+  powerKw: number;
+  h2Rate: number;
+  specKwh: number;
+  purity?: number;
+  pressure?: number;
+  location?: string;
+  install?: string;
+  created?: string;
+};
+
 /** Spring Data Page 구조 매핑 */
 export type PageResponse<T> = {
   content: T[];
@@ -102,5 +120,35 @@ export const FacilityApi = {
       size: raw.size ?? cleanParams.size,
       number: raw.number ?? cleanParams.page,
     };
+  },
+
+  /** 시설 목록 조회 */
+  async getFacilities(orgId?: number): Promise<Facility[]> {
+    const params = orgId ? { orgId } : {};
+    const res = await apiClient.get<{ success: boolean; data: Facility[] }>('/plant/list', { params });
+    return res.data.data || [];
+  },
+
+  /** 시설 상세 조회 */
+  async getFacility(facilityId: number): Promise<Facility> {
+    const res = await apiClient.get<{ success: boolean; data: Facility }>(`/plant/detail?facilityId=${facilityId}`);
+    return res.data.data;
+  },
+
+  /** 시설 추가 */
+  async createFacility(facility: Omit<Facility, 'facId' | 'created'>): Promise<Facility> {
+    const res = await apiClient.post<{ success: boolean; data: Facility }>('/plant/insert', facility);
+    return res.data.data;
+  },
+
+  /** 시설 수정 */
+  async updateFacility(facility: Facility): Promise<Facility> {
+    const res = await apiClient.post<{ success: boolean; data: Facility }>('/plant/update', facility);
+    return res.data.data;
+  },
+
+  /** 시설 삭제 */
+  async deleteFacility(facilityId: number): Promise<void> {
+    await apiClient.post<{ success: boolean; message: string }>('/plant/delete', { facilityId });
   },
 };

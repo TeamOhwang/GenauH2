@@ -4,6 +4,7 @@ export const USER_ENDPOINTS = {
     requestPasswordRest: "/user/request-password-reset",
     getNotificationSettings: "/user/notification-settings",
     updateNotificationSettings: "/user/notification-settings",
+    withdrawal: "/user/withdrawal",
 }
 
 // 비밀번호 리셋 요청
@@ -22,4 +23,13 @@ export async function getNotificationSettingsApi() {
 export async function updateNotificationSettingsApi(settings: any) {
     const res = await apiClient.patch(USER_ENDPOINTS.updateNotificationSettings, settings);
     return (res as any)?.data?.data ?? (res as any)?.data ?? null;
+}
+
+// 회원 탈퇴
+export async function withdrawalApi(currentPassword: string) {
+    const res = await apiClient.post(USER_ENDPOINTS.withdrawal, {
+        currentPassword,
+        confirmWithdrawal: "CONFIRM"
+    });
+    return res.data;
 }

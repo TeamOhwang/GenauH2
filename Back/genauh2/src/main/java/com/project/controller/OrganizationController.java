@@ -25,10 +25,13 @@ import com.project.dto.LoginRequestDTO;
 import com.project.dto.NotificationSettingsDTO;
 import com.project.dto.OrganizationDTO;
 import com.project.dto.RegistrationRequestDTO;
+import com.project.entity.AuditLog;
 import com.project.entity.Organization;
 import com.project.security.TokenProvider;
+import com.project.service.AuditLogService;
 import com.project.service.OrganizationService;
 import com.project.service.PasswordResetService;
+import com.project.service.UserCleanupService;
 
 @RestController
 @RequestMapping("/user")
@@ -43,6 +46,12 @@ public class OrganizationController {
 
    @Autowired
    private PasswordResetService passwordResetService;
+
+   @Autowired
+   private AuditLogService auditLogService;
+
+   @Autowired
+   private UserCleanupService userCleanupService;
 
    // 로그인
    @PostMapping("/login")
@@ -60,6 +69,18 @@ public class OrganizationController {
             String token = tokenProvider.create(user.getOrgId().toString());
              System.out.println("✅ ✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅v생성된 토큰: " + token); // 토큰 생성 확인
              
+                         // 로그인 감사 로그 기록
+             try {
+                AuditLog loginLog = AuditLog.createLoginLog(
+                   user.getOrgId(), 
+                   user.getName(), 
+                   user.getEmail(), 
+                   getClientIpAddress()
+                );
+                auditLogService.saveAuditLog(loginLog);
+             } catch (Exception logException) {
+                System.err.println("로그인 감사 로그 기록 실패: " + logException.getMessage());
+             }
              
             response.put("success", true);
             response.put("token", token);
@@ -119,6 +140,19 @@ public class OrganizationController {
                request.getPhoneNum(),
                request.getFacilities()  // facilities 정보 추가
            );
+
+                       // 회원가입 감사 로그 기록
+            try {
+                AuditLog registrationLog = AuditLog.createUserRegistrationLog(
+                   created.getOrgId(), 
+                   created.getName(), 
+                   created.getEmail(), 
+                   getClientIpAddress()
+                );
+                auditLogService.saveAuditLog(registrationLog);
+            } catch (Exception logException) {
+                System.err.println("회원가입 감사 로그 기록 실패: " + logException.getMessage());
+            }
 
            response.put("success", true);
            response.put("data", created);
@@ -183,6 +217,20 @@ public class OrganizationController {
             // ACTIVE 상태로 변경
             OrganizationDTO updatedUser = organizationService.updateUserStatus(orgId, Organization.Status.ACTIVE);
             if (updatedUser != null) {
+                               // 승인 감사 로그 기록
+                try {
+                   AuditLog approvalLog = AuditLog.createUserApprovalLog(
+                      currentUser.getOrgId(), 
+                      currentUser.getName(), 
+                      updatedUser.getOrgId(), 
+                      updatedUser.getName(), 
+                      updatedUser.getEmail()
+                   );
+                   auditLogService.saveAuditLog(approvalLog);
+                } catch (Exception logException) {
+                   System.err.println("승인 감사 로그 기록 실패: " + logException.getMessage());
+                }
+
                response.put("success", true);
                response.put("data", updatedUser);
                response.put("message", "회원가입이 승인되었습니다.");
@@ -193,6 +241,20 @@ public class OrganizationController {
             OrganizationDTO updatedUser = organizationService.updateUserStatus(orgId,
                   Organization.Status.SUSPENDED);
             if (updatedUser != null) {
+                               // 거부 감사 로그 기록
+                try {
+                   AuditLog rejectionLog = AuditLog.createUserRejectionLog(
+                      currentUser.getOrgId(), 
+                      currentUser.getName(), 
+                      updatedUser.getOrgId(), 
+                      updatedUser.getName(), 
+                      updatedUser.getEmail()
+                   );
+                   auditLogService.saveAuditLog(rejectionLog);
+                } catch (Exception logException) {
+                   System.err.println("거부 감사 로그 기록 실패: " + logException.getMessage());
+                }
+
                response.put("success", true);
                response.put("data", updatedUser);
                response.put("message", "회원가입이 거부되었습니다.");
@@ -379,9 +441,29 @@ public class OrganizationController {
             status = Organization.Status.ACTIVE;
          }
 
+         // 기존 사용자 정보 조회 (상태 변경 전)
+         OrganizationDTO existingUser = organizationService.getUserById(orgId);
+         String oldStatus = existingUser != null ? existingUser.getStatus().toString() : "UNKNOWN";
+
          OrganizationDTO updatedUser = organizationService.updateUserStatus(orgId, status);
 
          if (updatedUser != null) {
+                         // 상태 변경 감사 로그 기록
+             try {
+                AuditLog statusChangeLog = AuditLog.createUserStatusChangeLog(
+                   currentUser.getOrgId(), 
+                   currentUser.getName(), 
+                   updatedUser.getOrgId(), 
+                   updatedUser.getName(), 
+                   updatedUser.getEmail(), 
+                   oldStatus, 
+                   updatedUser.getStatus().toString()
+                );
+                auditLogService.saveAuditLog(statusChangeLog);
+             } catch (Exception logException) {
+                System.err.println("상태 변경 감사 로그 기록 실패: " + logException.getMessage());
+             }
+
             response.put("success", true);
             response.put("data", updatedUser);
             response.put("message", "사용자 상태가 업데이트되었습니다.");
@@ -470,6 +552,22 @@ public class OrganizationController {
            boolean withdrawalResult = organizationService.withdrawUser(currentUserId, currentPassword);
 
            if (withdrawalResult) {
+                               // 회원탈퇴 감사 로그 기록
+                try {
+                   OrganizationDTO user = organizationService.getUserById(currentUserId);
+                   if (user != null) {
+                      AuditLog withdrawalLog = AuditLog.createUserWithdrawalLog(
+                         user.getOrgId(), 
+                         user.getName(), 
+                         user.getEmail(), 
+                         getClientIpAddress()
+                      );
+                      auditLogService.saveAuditLog(withdrawalLog);
+                   }
+                } catch (Exception logException) {
+                   System.err.println("회원탈퇴 감사 로그 기록 실패: " + logException.getMessage());
+                }
+
                response.put("success", true);
                response.put("message", "회원탈퇴가 완료되었습니다. 그동안 이용해주셔서 감사합니다.");
                return ResponseEntity.ok(response);
@@ -932,5 +1030,79 @@ public class OrganizationController {
       // Principal에서 사용자 ID(문자열)를 가져와 Long으로 변환
       String userIdStr = (String) authentication.getPrincipal();
       return Long.parseLong(userIdStr);
+   }
+
+   // 클라이언트 IP 주소를 가져오는 헬퍼 메서드
+   private String getClientIpAddress() {
+      try {
+         // HttpServletRequest를 통해 IP 주소 가져오기
+         // 실제 구현에서는 RequestContextHolder를 사용하거나 다른 방법을 사용할 수 있습니다.
+         return "127.0.0.1"; // 임시로 localhost IP 반환
+      } catch (Exception e) {
+         return "unknown";
+      }
+   }
+
+   // 6개월 이상 탈퇴 요청한 사용자 목록 조회 (관리자용)
+   @GetMapping("/admin/expired-withdrawal-users")
+   public ResponseEntity<Map<String, Object>> getExpiredWithdrawalUsers(
+         @RequestHeader(value = "Authorization", required = false) String token) {
+
+      Map<String, Object> response = new HashMap<>();
+
+      try {
+         // 관리자 권한 확인
+         OrganizationDTO currentUser = validateAdminToken(token, response);
+         if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+         }
+
+         List<Organization> expiredUsers = userCleanupService.getExpiredWithdrawalUsers();
+
+         response.put("success", true);
+         response.put("data", expiredUsers);
+         response.put("count", expiredUsers.size());
+         response.put("message", "6개월 이상 탈퇴 요청한 사용자 목록을 조회했습니다.");
+
+         return ResponseEntity.ok(response);
+
+      } catch (Exception e) {
+         response.put("success", false);
+         response.put("message", "만료된 탈퇴 사용자 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
+         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+      }
+   }
+
+   // 특정 사용자 수동 삭제 (관리자용)
+   @DeleteMapping("/admin/delete-user/{orgId}")
+   public ResponseEntity<Map<String, Object>> manualDeleteUser(@PathVariable Long orgId,
+         @RequestHeader(value = "Authorization", required = false) String token) {
+
+      Map<String, Object> response = new HashMap<>();
+
+      try {
+         // 관리자 권한 확인
+         OrganizationDTO currentUser = validateAdminToken(token, response);
+         if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+         }
+
+                   boolean deleteResult = userCleanupService.manualDeleteUser(orgId, currentUser.getName());
+
+         if (deleteResult) {
+            response.put("success", true);
+            response.put("message", "사용자가 성공적으로 삭제되었습니다.");
+            return ResponseEntity.ok(response);
+         } else {
+            response.put("success", false);
+            response.put("message", "사용자 삭제에 실패했습니다.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+         }
+
+      } catch (Exception e) {
+         response.put("success", false);
+         response.put("message", "사용자 삭제 중 오류가 발생했습니다: " + e.getMessage());
+         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+      }
    }
 }

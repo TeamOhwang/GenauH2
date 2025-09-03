@@ -1,5 +1,6 @@
 package com.project.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,4 +47,7 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
     
     // 상태별 사용자 수 카운트
     long countByStatus(Organization.Status status);
+    
+    // 6개월 이상 전에 탈퇴 요청한 SUSPENDED 상태 사용자들 조회
+    List<Organization> findByStatusAndWithdrawalRequestedAtBefore(Organization.Status status, LocalDateTime date);
 }

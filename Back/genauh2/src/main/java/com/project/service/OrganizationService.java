@@ -626,6 +626,7 @@ public class OrganizationService {
             // 상태를 SUSPENDED로 변경 (소프트 삭제)
             Organization.Status oldStatus = organization.getStatus();
             organization.setStatus(Organization.Status.SUSPENDED);
+            organization.setWithdrawalRequestedAt(LocalDateTime.now()); // 탈퇴 요청 날짜 기록
             organization.setUpdatedAt(LocalDateTime.now());
 
             organizationRepository.save(organization);
