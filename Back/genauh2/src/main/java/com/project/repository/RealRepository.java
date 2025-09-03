@@ -18,22 +18,27 @@ import java.util.List;
 @Repository
 public interface RealRepository extends JpaRepository<Real, Long> {
 
-        @Modifying
-        @Query(value = "INSERT INTO production_real (facid, orgid, plant_id, ts, idlepowerkw, productionkg, powerconsumedkwh, utilizationrate) "
-                        +
-                        "SELECT f.facid, f.orgid, pg.plant_id, " +
-                        "CONCAT(pg.date, ' ', LPAD(pg.hour, 2, '0'), ':00:00') as ts, " +
-                        "GREATEST(0, ROUND(pg.generation_kw - (pg.capacity_kw * 0.3), 3)) as idlepowerkw, " +
-                        "ROUND(((f.power_kw * (CASE WHEN GREATEST(0, ROUND(pg.generation_kw - (pg.capacity_kw * 0.7), 3)) = 0 THEN (((49 + (RAND() * 2)) / f.power_kw) * 100) ELSE (((50 + GREATEST(0, ROUND(pg.generation_kw - (pg.capacity_kw * 0.7), 3))) / f.power_kw) * 100) END / 100)) / f.spec_kwh), 3) as productionkg, "
-                        +
-                        "ROUND((f.power_kw * (CASE WHEN GREATEST(0, ROUND(pg.generation_kw - (pg.capacity_kw * 0.7), 3)) = 0 THEN (((49 + (RAND() * 2)) / f.power_kw) * 100) ELSE (((50 + GREATEST(0, ROUND(pg.generation_kw - (pg.capacity_kw * 0.7), 3))) / f.power_kw) * 100) END / 100)), 2) as powerconsumedkwh, "
-                        +
-                        "ROUND(CASE WHEN GREATEST(0, ROUND(pg.generation_kw - (pg.capacity_kw * 0.7), 3)) = 0 THEN (((49 + (RAND() * 2)) / f.power_kw) * 100) ELSE (((50 + GREATEST(0, ROUND(pg.generation_kw - (pg.capacity_kw * 0.7), 3))) / f.power_kw) * 100) END, 4) as utilizationrate "
-                        +
-                        "FROM facilities f " +
-                        "INNER JOIN plant_generation pg ON f.facid = pg.facid " +
-                        "WHERE f.spec_kwh > 0 AND f.power_kw > 0 AND pg.capacity_kw > 0 AND pg.hour >= 0 AND pg.hour <= 23", nativeQuery = true)
-        int insertProductionRealForAll();
+	@Modifying
+	@Query(value = "INSERT INTO production_real (facid, orgid, plant_id, ts, idlepowerkw, productionkg, powerconsumedkwh, utilizationrate) "
+	                +
+	                "SELECT f.facid, f.orgid, pg.plant_id, " +
+	                "CONCAT(pg.date, ' ', LPAD(pg.hour, 2, '0'), ':00:00') as ts, " +
+	                "GREATEST(0, ROUND(pg.generation_kw - (pg.capacity_kw * 0.3), 3)) as idlepowerkw, " +
+	                "CASE WHEN GREATEST(0, ROUND(pg.generation_kw - (pg.capacity_kw * 0.3), 3)) = 0 THEN " +
+	                "  ROUND(((f.power_kw * (CASE WHEN GREATEST(0, ROUND(pg.generation_kw - (pg.capacity_kw * 0.7), 3)) = 0 THEN (((49 + (RAND() * 2)) / f.power_kw) * 100) ELSE (((50 + GREATEST(0, ROUND(pg.generation_kw - (pg.capacity_kw * 0.7), 3))) / f.power_kw) * 100) END / 100)) / f.spec_kwh) * 10, 3) "
+	                +
+	                "ELSE " +
+	                "  ROUND((GREATEST(0, ROUND(pg.generation_kw - (pg.capacity_kw * 0.3), 3)) + 50) / 5, 3) "
+	                +
+	                "END as productionkg, " +
+	                "ROUND((f.power_kw * (CASE WHEN GREATEST(0, ROUND(pg.generation_kw - (pg.capacity_kw * 0.7), 3)) = 0 THEN (((49 + (RAND() * 2)) / f.power_kw) * 100) ELSE (((50 + GREATEST(0, ROUND(pg.generation_kw - (pg.capacity_kw * 0.7), 3))) / f.power_kw) * 100) END / 100)), 2) as powerconsumedkwh, "
+	                +
+	                "ROUND(CASE WHEN GREATEST(0, ROUND(pg.generation_kw - (pg.capacity_kw * 0.7), 3)) = 0 THEN (((49 + (RAND() * 2)) / f.power_kw) * 100) ELSE (((50 + GREATEST(0, ROUND(pg.generation_kw - (pg.capacity_kw * 0.7), 3))) / f.power_kw) * 100) END, 4) as utilizationrate "
+	                +
+	                "FROM facilities f " +
+	                "INNER JOIN plant_generation pg ON f.facid = pg.facid " +
+	                "WHERE f.spec_kwh > 0 AND f.power_kw > 0 AND pg.capacity_kw > 0 AND pg.hour >= 0 AND pg.hour <= 23", nativeQuery = true)
+	int insertProductionRealForAll();
 
         @Modifying
         @Query(value = "INSERT INTO production_real (facid, orgid, plant_id, ts, idlepowerkw, productionkg, powerconsumedkwh, utilizationrate) "
@@ -41,7 +46,7 @@ public interface RealRepository extends JpaRepository<Real, Long> {
                         "SELECT f.facid, f.orgid, pg.plant_id, " +
                         "CONCAT(pg.date, ' ', LPAD(pg.hour, 2, '0'), ':00:00') as ts, " +
                         "GREATEST(0, ROUND(pg.generation_kw - (pg.capacity_kw * 0.7), 3)) as idlepowerkw, " +
-                        "ROUND(((f.power_kw * ((50 + GREATEST(0, ROUND(pg.generation_kw - (pg.capacity_kw * 0.7), 3))) / f.spec_kw)) / f.spec_kwh), 3) as productionkg, "
+                        "ROUND(((f.power_kw * ((50 + GREATEST(0, ROUND(pg.generation_kw - (pg.capacity_kw * 0.7), 3))) / f.spec_kw)) / f.spec_kwh) * 10, 3) as productionkg, "
                         +
                         "ROUND((f.power_kw * ((50 + GREATEST(0, ROUND(pg.generation_kw - (pg.capacity_kw * 0.7), 3))) / f.spec_kw)), 2) as powerconsumedkwh, "
                         +
@@ -58,7 +63,7 @@ public interface RealRepository extends JpaRepository<Real, Long> {
                         "SELECT f.facid, f.orgid, pg.plant_id, " +
                         "CONCAT(pg.date, ' ', LPAD(pg.hour, 2, '0'), ':00:00') as ts, " +
                         "GREATEST(0, ROUND(pg.generation_kw - (pg.capacity_kw * 0.7), 3)) as idlepowerkw, " +
-                        "ROUND(((f.power_kw * ((50 + GREATEST(0, ROUND(pg.generation_kw - (pg.capacity_kw * 0.7), 3))) / f.spec_kw)) / f.spec_kwh), 3) as productionkg, "
+                        "ROUND(((f.power_kw * ((50 + GREATEST(0, ROUND(pg.generation_kw - (pg.capacity_kw * 0.7), 3))) / f.spec_kw)) / f.spec_kwh) * 10, 3) as productionkg, "
                         +
                         "ROUND((f.power_kw * ((50 + GREATEST(0, ROUND(pg.generation_kw - (pg.capacity_kw * 0.7), 3))) / f.spec_kw)), 2) as powerconsumedkwh, "
                         +
@@ -75,7 +80,7 @@ public interface RealRepository extends JpaRepository<Real, Long> {
                         "SELECT f.facid, f.orgid, pg.plant_id, " +
                         "CONCAT(pg.date, ' ', LPAD(pg.hour, 2, '0'), ':00:00') as ts, " +
                         "GREATEST(0, ROUND(pg.generation_kw - (pg.capacity_kw * 0.7), 3)) as idlepowerkw, " +
-                        "ROUND(((f.power_kw * ((50 + GREATEST(0, ROUND(pg.generation_kw - (pg.capacity_kw * 0.7), 3))) / f.spec_kw)) / f.spec_kwh), 3) as productionkg, "
+                        "ROUND(((f.power_kw * ((50 + GREATEST(0, ROUND(pg.generation_kw - (pg.capacity_kw * 0.7), 3))) / f.spec_kw)) / f.spec_kwh) * 10, 3) as productionkg, "
                         +
                         "ROUND((f.power_kw * ((50 + GREATEST(0, ROUND(pg.generation_kw - (pg.capacity_kw * 0.7), 3))) / f.spec_kw)), 2) as powerconsumedkwh, "
                         +
@@ -122,7 +127,7 @@ public interface RealRepository extends JpaRepository<Real, Long> {
          * @param endDate   종료 일시
          * @return 총 수소 생산량 합계
          */
-        @Query("SELECT SUM(r.productionKg) FROM ProductionRealEntity r WHERE r.plantId = :plantId AND r.ts BETWEEN :startDate AND :endDate")
+        @Query("SELECT SUM(r.productionKg) FROM Real r WHERE r.plantId = :plantId AND r.ts BETWEEN :startDate AND :endDate")
         BigDecimal sumProductionKgByPlantIdAndTsBetween(
                         @Param("plantId") String plantId,
                         @Param("startDate") LocalDateTime startDate,
@@ -153,13 +158,13 @@ public interface RealRepository extends JpaRepository<Real, Long> {
         @Query(value = "SELECT ts, idlepowerkw FROM production_real WHERE DATE(ts) = :date ORDER BY ts ASC", nativeQuery = true)
         List<Object[]> findIdlePowerByDate(@Param("date") String date);
 
-        @Query("SELECT FUNCTION('HOUR', r.ts) as hour, SUM(r.productionKg) as totalProductionKg FROM ProductionRealEntity r WHERE r.orgid = :orgId AND r.ts >= :start AND r.ts < :end GROUP BY hour ORDER BY hour ASC")
+        @Query("SELECT FUNCTION('HOUR', r.ts) as hour, SUM(r.productionKg) as totalProductionKg FROM Real r WHERE r.orgid = :orgId AND r.ts >= :start AND r.ts < :end GROUP BY hour ORDER BY hour ASC")
         List<Object[]> findHourlyProductionByOrgId(@Param("orgId") Long orgId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
-        @Query("SELECT SUM(r.productionKg) FROM ProductionRealEntity r WHERE r.orgid = :orgId AND r.ts >= :start AND r.ts < :end")
+        @Query("SELECT SUM(r.productionKg) FROM Real r WHERE r.orgid = :orgId AND r.ts >= :start AND r.ts < :end")
         BigDecimal findTotalProductionByOrgIdForLastSixMonths(@Param("orgId") Long orgId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
-        @Query("SELECT SUM(r.productionKg) FROM ProductionRealEntity r WHERE r.orgid = :orgId")
+        @Query("SELECT SUM(r.productionKg) FROM Real r WHERE r.orgid = :orgId")
         BigDecimal findTotalProductionByOrgId(@Param("orgId") Long orgId);
 
         @Query(value = "SELECT YEAR(r.ts) as year, MONTH(r.ts) as month, (DAYOFMONTH(r.ts) - 1) DIV 7 + 1 as weekOfMonth, SUM(r.productionkg) as totalProduction " +
