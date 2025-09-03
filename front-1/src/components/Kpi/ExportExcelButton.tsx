@@ -25,7 +25,7 @@ export default function ExportExcelButton({
       onClick={handleExport}
       className="px-3 py-1 rounded bg-green-600 text-white"
     >
-      엑셀 다운로드
+      ⬇ Excel
     </button>
   );
 }

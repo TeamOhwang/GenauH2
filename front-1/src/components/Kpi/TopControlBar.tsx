@@ -7,30 +7,31 @@ type Props = {
 export default function TopControlBar({ onDateSelect }: Props) {
   const [selected, setSelected] = useState<number | null>(null);
   const [customDate, setCustomDate] = useState("");
-  const [currentMonth, setCurrentMonth] = useState(new Date()); //  현재 월 상태 관리
+  const [currentMonth, setCurrentMonth] = useState(new Date());
 
-  // 이번 달의 실제 일 수 계산
+  // 오늘 날짜 (YYYY-MM-DD)
+  const today = new Date().toISOString().slice(0, 10);
+
+  // 이번 달의 일 수
   const daysInMonth = new Date(
     currentMonth.getFullYear(),
     currentMonth.getMonth() + 1,
     0
   ).getDate();
 
-  // 1일부터 마지막 일까지 버튼 생성
+  // 이번 달의 날짜 배열
   const days = Array.from({ length: daysInMonth }, (_, i) => {
     const d = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), i + 1);
-    return d.toISOString().slice(0, 10); // YYYY-MM-DD
+    return d.toISOString().slice(0, 10);
   });
 
-  // 날짜 선택 처리
+  // 날짜 선택
   const handleDateSelect = (date: string, idx?: number) => {
     setCustomDate(date);
 
     if (idx !== undefined) {
-      // 버튼 클릭 시
       setSelected(idx);
     } else {
-      //  input 직접 선택 시 → currentMonth 갱신 & 해당 날짜 버튼 활성화
       const picked = new Date(date);
       setCurrentMonth(new Date(picked.getFullYear(), picked.getMonth(), 1));
 
@@ -43,26 +44,36 @@ export default function TopControlBar({ onDateSelect }: Props) {
 
   return (
     <div className="flex flex-col gap-3 bg-white dark:bg-slate-800 p-3 rounded-lg shadow">
-      {/* 날짜 버튼 (이번 달 1일부터 말일까지, 좌우 스크롤) */}
+      {/* 날짜 버튼 */}
       <div className="flex overflow-x-auto gap-2">
-        {days.map((day, idx) => (
-          <button
-            key={day}
-            onClick={() => handleDateSelect(day, idx)}
-            className={`px-3 py-1 rounded whitespace-nowrap ${
-              selected === idx ? "bg-blue-600 text-white" : "bg-white dark:bg-slate-700"
-            }`}
-          >
-            {day.slice(5)} {/* MM-DD */}
-          </button>
-        ))}
+        {days.map((day, idx) => {
+          const disabled = day > today; // 오늘 이후 날짜면 비활성화
+          return (
+            <button
+              key={day}
+              onClick={() => !disabled && handleDateSelect(day, idx)}
+              disabled={disabled}
+              className={`px-3 py-1 rounded whitespace-nowrap transition-colors
+                ${
+                  selected === idx
+                    ? "bg-blue-600 text-white"
+                    : disabled
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-white dark:bg-slate-700"
+                }`}
+            >
+              {day.slice(5)} {/* MM-DD */}
+            </button>
+          );
+        })}
       </div>
 
-      {/* 날짜 input 직접 선택 */}
+      {/* 날짜 input */}
       <div className="flex gap-2 items-center">
         <input
           type="date"
           value={customDate}
+          max={today} // 오늘까지만 선택 가능
           onChange={(e) => handleDateSelect(e.target.value)}
           className="text-black px-2 py-1 rounded"
         />

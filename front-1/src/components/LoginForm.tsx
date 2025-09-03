@@ -1,4 +1,3 @@
-// src/components/LoginForm.tsx
 import { useState, FormEvent } from "react";
 import type { LoginValues } from "@/hooks/useLogin";
 import Button from "./ui/Button";
@@ -16,7 +15,17 @@ export default function LoginForm({ loading = false, error, onSubmit }: Props) {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !password.trim()) return;
-    await onSubmit({ email, password });
+
+    try {
+      const ok = await onSubmit({ email, password });
+      if (!ok) {
+        console.log(" 로그인 실패");
+      } else {
+        console.log(" 로그인 성공, 애니메이션 시작");
+      }
+    } catch (err) {
+      console.error("로그인 중 오류 발생:", err);
+    }
   };
 
   return (

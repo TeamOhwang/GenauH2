@@ -36,10 +36,14 @@ export default function FacilityTable({ data = [], start, end }: Props) {
 
   return (
     <div className="text-sm h-full flex flex-col bg-white dark:bg-slate-800 p-4 rounded-lg shadow">
-      <div className="flex justify-between items-center mb-3">
-        <h3 className="font-bold text-lg">선택된 날짜 데이터</h3>
-        <ExportExcelButton data={data} start={start} end={end} />
+        <div className="flex justify-between items-center mb-3">
+        {/* 왼쪽 그룹: 제목 + 엑셀 버튼 */}
+        <div className="flex items-center gap-5">
+          <h3 className="font-bold text-lg">시간별 생산량</h3>
+          <ExportExcelButton data={data} start={start} end={end} />
+        </div>
       </div>
+
 
       <div className="flex-1 overflow-y-auto rounded-lg border border-slate-700">
         <table className="w-full border-collapse text-sm">

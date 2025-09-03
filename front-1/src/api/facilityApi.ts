@@ -5,7 +5,7 @@ export type FacilityKpi = {
   orgId: number;
   facId: number;
   facilityName: string;
-  ts: string;
+  ts: string;              // KST 기준 ISO 문자열
   predictedMaxKg: number;
   productionKg: number;
 };
@@ -15,7 +15,7 @@ export type Facility = {
   facId?: number;
   orgId: number;
   name: string;
-  type: 'PEM' | 'ALK' | 'SOEC';
+  type: "PEM" | "ALK" | "SOEC";
   maker?: string;
   model?: string;
   powerKw: number;
@@ -37,7 +37,7 @@ export type PageResponse<T> = {
   number: number; // 현재 페이지 번호
 };
 
-/** 날짜 → ISO(yyyy-MM-dd'T'HH:mm:ss) */
+/** 날짜 → yyyy-MM-dd'T'HH:mm:ss */
 const toDateTime = (date: Date) => {
   const pad = (n: number) => String(n).padStart(2, "0");
   return (
@@ -60,14 +60,13 @@ const defaultStart = () => new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // 7�
 const defaultEnd = () => new Date(); // 현재
 
 export const FacilityApi = {
-  /**  org 단위 전체 조회 */
+  /** org 단위 KPI 조회 */
   async listByOrg(params: {
     orgId: number | null;
     start?: string;
     end?: string;
     page?: number;
     size?: number;
-
   }): Promise<PageResponse<FacilityKpi>> {
     if (!params.orgId) {
       return {
@@ -103,18 +102,24 @@ export const FacilityApi = {
     };
 
     return {
-      content: (raw.content ?? []).map((item: any) => ({
-        orgId: Number(item.orgId ?? 0),
-        facId: Number(item.facId ?? 0),
-        facilityName: String(item.facilityName ?? ""),
-        ts: item.ts ? new Date(String(item.ts)).toISOString() : "",
-        predictedMaxKg: isNaN(Number(item.predictedMaxKg))
-          ? 0
-          : Number(item.predictedMaxKg),
-        productionKg: isNaN(Number(item.productionKg))
-          ? 0
-          : Number(item.productionKg),
-      })),
+      content: (raw.content ?? []).map((item: any) => {
+        //  UTC → KST 변환
+        let ts = "";
+        if (item.ts) {
+          const utc = new Date(String(item.ts));
+          const kst = new Date(utc.getTime() + 9 * 60 * 60 * 1000);
+          ts = kst.toISOString().slice(0, 19); // yyyy-MM-ddTHH:mm:ss
+        }
+
+        return {
+          orgId: Number(item.orgId ?? 0),
+          facId: Number(item.facId ?? 0),
+          facilityName: String(item.facilityName ?? ""),
+          ts,
+          predictedMaxKg: Number(item.predictedMaxKg ?? 0),
+          productionKg: Number(item.productionKg ?? 0),
+        };
+      }),
       totalPages: raw.totalPages ?? 0,
       totalElements: raw.totalElements ?? 0,
       size: raw.size ?? cleanParams.size,

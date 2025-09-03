@@ -1,3 +1,4 @@
+// src/pages/FacilityDashboard.tsx
 import { useMemo, useState } from "react";
 import { useFacilitiesByOrg } from "@/hooks/useFacilitiesByOrg";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -46,10 +47,12 @@ export default function FacilityDashboard() {
         return localDate === selectedDay && dDate.getHours() === h;
       });
 
-      const productionSum =
-        hourData.reduce((sum, d) => sum + (d.productionKg ?? 0), 0) * 10.1;
+      const productionSum = hourData.reduce(
+        (sum, d) => sum + (d.productionKg ?? 0),
+        0
+      );
       const predictedSum =
-        hourData.reduce((sum, d) => sum + (d.predictedMaxKg ?? 0), 0) / 2;
+        hourData.reduce((sum, d) => sum + (d.predictedMaxKg ?? 0), 0) / 3;
 
       return {
         ts: `${selectedDay}T${String(h).padStart(2, "0")}:00:00`,
@@ -61,9 +64,6 @@ export default function FacilityDashboard() {
       };
     });
   }, [data, selectedDay, orgId]);
-
-  const totalProduction = mappedData.reduce((sum, d) => sum + d.productionKg, 0);
-  const totalPredicted = mappedData.reduce((sum, d) => sum + d.predictedMaxKg, 0);
 
   if (!orgId) {
     return (
@@ -87,6 +87,8 @@ export default function FacilityDashboard() {
             setStart(s);
             setEnd(e);
             setSelectedDay(day);
+            setHoverProd(null);
+            setHoverPred(null);
           }}
         />
 
@@ -111,13 +113,13 @@ export default function FacilityDashboard() {
           <>
             <div className="grid grid-cols-2 gap-4">
               <KpiCard
-                title={`${selectedDay} 최대 예측량`}
-                value={hoverPred !== null ? hoverPred : totalPredicted}
+                title={`${selectedDay} 시간별 예측량`}
+                value={hoverPred ?? 0} // hover 없으면 0
                 unit="kg"
               />
               <KpiCard
-                title={`${selectedDay} 실제 생산량`}
-                value={hoverProd !== null ? hoverProd : totalProduction}
+                title={`${selectedDay} 시간별 생산량`}
+                value={hoverProd ?? 0} // hover 없으면 0
                 unit="kg"
               />
             </div>
@@ -125,10 +127,15 @@ export default function FacilityDashboard() {
             <div className="bg-gray-100 dark:bg-slate-800 p-4 rounded-xl flex-1 min-h-[500px]">
               <FacilityLineChart
                 data={mappedData}
-                selectedDay={selectedDay}
                 onHover={(prod, pred) => {
-                  setHoverProd(prod);
-                  setHoverPred(pred);
+                  // 마우스 차트 밖으로 나가면 0으로 리셋
+                  if (prod === 0 && pred === 0) {
+                    setHoverProd(0);
+                    setHoverPred(0);
+                  } else {
+                    setHoverProd(prod);
+                    setHoverPred(pred);
+                  }
                 }}
               />
             </div>

@@ -22,7 +22,7 @@ export function useFacilitiesByOrg(
   /** 데이터 패치 함수 */
   const fetchFacilities = useCallback(async () => {
     if (orgId === null || orgId === undefined) {
-      console.warn("⏭ orgId 없음 → 요청 건너뜀");
+      console.warn("orgId 없음 → 요청 건너뜀");
       setData([]);
       setTotalPages(0);
       setTotalElements(0);
@@ -31,7 +31,7 @@ export function useFacilitiesByOrg(
 
     setLoading(true);
     try {
-      console.log("🔥 프론트에서 호출하는 orgId:", orgId);
+      console.log(" 프론트에서 호출하는 orgId:", orgId);
 
       // start/end 기본값 보장
       const startDate = start ?? defaultStart();
