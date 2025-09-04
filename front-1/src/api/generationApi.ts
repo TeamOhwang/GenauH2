@@ -94,6 +94,7 @@ export async function getWeeklyHydrogenPredictRangeApi(orgId: string) {
 export async function getHydrogenPredictApi(orgId: string, start: string, end: string) {
     try {
         const res = await apiClient.get(`${GENERATION_ENDPOINTS.getHydrogenPredict(orgId)}`, { params: { start, end } });
+        console.log("🔍 API 응답 데이터:", res.data);
         return res.data ?? [];
     } catch (error) {
         throw error;

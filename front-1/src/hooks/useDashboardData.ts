@@ -259,8 +259,8 @@ export function useDashboardData() {
                 const firstDayOfMonth = new Date(currentYear, currentMonth - 1, 1);
                 const lastDayOfMonth = new Date(currentYear, currentMonth, 0);
                 
-                const startDateOfMonth = firstDayOfMonth.toISOString().split('T')[0];
-                const endDateOfMonth = lastDayOfMonth.toISOString().split('T')[0];
+                const startDateOfMonth = firstDayOfMonth.toISOString().split('T')[0] + "T00:00:00";
+                const endDateOfMonth = lastDayOfMonth.toISOString().split('T')[0] + "T23:59:59";
                 
                 console.log("🔍 월간 예측 데이터 조회 기간:", startDateOfMonth, "~", endDateOfMonth);
                 

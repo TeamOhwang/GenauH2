@@ -146,16 +146,16 @@ export default function NotificationLog() {
     <div className="h-full p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">알림 로그</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">활동 로그</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">시스템 활동 내역을 확인할 수 있습니다</p>
         </div>
-        <Button
+        {/* <Button
           onClick={() => setShowFilters(!showFilters)}
           style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
         >
           <Filter className="w-4 h-4" />
           필터
-        </Button>
+        </Button> */}
       </div>
 
       {error && (

@@ -1927,10 +1927,13 @@ export function buildTimeFrameData(
 }
 
 export function calDailyErrorRate(plantDataArr: any[][], currentHour: number): number {
+    console.log("🔍 일간 오차율 계산 시작 - currentHour:", currentHour);
 
     const allData = plantDataArr.flat(); // 3대 설비 데이터 합치기
+    console.log("🔍 전체 데이터 개수:", allData.length);
 
     const validData = allData.filter(item => item.hour !== null && item.hour <= currentHour);
+    console.log("🔍 유효 데이터 개수:", validData.length);
 
     const grouped: { [hour: number]: { actual: number, forecast: number } } = {};
 
@@ -1940,21 +1943,40 @@ export function calDailyErrorRate(plantDataArr: any[][], currentHour: number): n
             grouped[hour] = { actual: 0, forecast: 0 };
         }
 
-        grouped[hour].actual += Math.max(0, Number(item.generation_Kw) - 300);
-        grouped[hour].forecast += Math.max(0, Number(item.forecast_Kwh) - 300);
+        // 단위 통일: kWh로 통일 (generation_Kw를 kWh로 변환)
+        // generation_Kw는 시간당 발전량이므로 1시간 곱해서 kWh로 변환
+        const actualKwh = (Number(item.generation_Kw) - 300 || 0) * 1; // 1시간당 발전량
+        const forecastKwh = Number(item.forecast_Kwh) - 300 || 0; // 이미 kWh 단위
+        
+        grouped[hour].actual += actualKwh;
+        grouped[hour].forecast += forecastKwh;
     })
 
     let totalActual = 0;
+    let totalForecast = 0;
     let totalError = 0;
 
-    Object.values(grouped).forEach(({ actual, forecast }) => {
+    Object.entries(grouped).forEach(([hour, { actual, forecast }]) => {
         totalActual += actual;
+        totalForecast += forecast;
         totalError += Math.abs(actual - forecast);
+        console.log(`  시간 ${hour}: 실제=${actual.toFixed(2)}kWh, 예측=${forecast.toFixed(2)}kWh, 오차=${Math.abs(actual - forecast).toFixed(2)}`);
     })
 
-    if (totalActual === 0) return 0;
+    console.log("🔍 총 실제값:", totalActual.toFixed(2), "kWh");
+    console.log("🔍 총 예측값:", totalForecast.toFixed(2), "kWh");
+    console.log("🔍 총 오차:", totalError.toFixed(2));
 
-    return (totalError / totalActual) * 100;
+    if (totalActual === 0) {
+        console.log("🔍 실제값이 0이므로 오차율 0 반환");
+        return 0;
+    }
+
+    // 오차율 계산: (총 오차 / 총 실제값) × 100
+    const errorRate = (totalError / totalActual) * 100;
+    console.log("🔍 계산된 오차율:", errorRate.toFixed(2), "%");
+
+    return errorRate;
 }
 
 /**

@@ -165,7 +165,7 @@ export default function FacilityManagement() {
     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold text-black dark:text-white">시설 관리</h2>
-        <button onClick={handleAddNew} className="bg-blue-600 hover:bg-blue-700 text-white">
+        <button onClick={handleAddNew} className="bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 hover:bg-blue-700 text-black dark:text-white">
           시설 추가
         </button>
       </div>
