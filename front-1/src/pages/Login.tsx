@@ -5,6 +5,8 @@ import SignupModal from "@/components/SignupModal";
 import { motion, AnimatePresence } from "framer-motion";
 import type { LoginValues } from "@/hooks/useLogin";
 import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { roleHome } from "@/routes/paths";
 
 export default function LoginPage() {
   const { submit, loading, error } = useLogin();
@@ -18,7 +20,11 @@ export default function LoginPage() {
     if (ok) {
       setPlayExit(true);
       setTimeout(() => {
-        navigate("/dashboard");
+        // 사용자 역할에 따라 적절한 페이지로 리다이렉트
+        const role = useAuthStore.getState().role;
+        const homePath = role ? roleHome(role) : "/dashboard";
+        console.log(`로그인 성공 - 역할 ${role}에 따라 ${homePath}로 리다이렉트`);
+        navigate(homePath);
       }, 1000); // 애니메이션 후 라우팅
     }
     return ok;

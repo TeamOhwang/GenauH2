@@ -3,6 +3,8 @@ import { useEffect } from "react";
 import { useAuthStore } from "@/stores/useAuthStore";
 import AppRoutes from "@/routes/AppRoutes";
 import { useWebSocket } from "@/hooks/useWebSocket";
+import { useNavigate } from "react-router-dom";
+import { PATHS } from "@/routes/paths";
 
 const Splash = () => <div>로딩중...</div>;
 
@@ -14,6 +16,25 @@ export default function App() {
 
   //  WebSocket 훅은 무조건 호출
   const { connect, disconnect } = useWebSocket();
+
+  // 전역 에러 처리
+  useEffect(() => {
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      console.error('처리되지 않은 Promise 거부:', event.reason);
+      
+      // 403 에러로 인한 리다이렉트 처리
+      if (event.reason?._redirect === "/403") {
+        event.preventDefault();
+        window.location.href = PATHS.forbidden;
+      }
+    };
+
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    
+    return () => {
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+    };
+  }, []);
 
   useEffect(() => {
     if (!isInit) {

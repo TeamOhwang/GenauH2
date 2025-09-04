@@ -31,49 +31,50 @@ export default function HourlyTable({
     <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow h-full flex flex-col">
       {/* 헤더 */}
       <div className="flex justify-between items-center mb-2">
-        <h3 className="font-semibold text-gray-900 dark:text-white">시간별 생산량</h3>
+        <h3 className="font-semibold text-gray-900 dark:text-white">
+          시간별 생산량
+        </h3>
 
-          {/*  엑셀 다운로드 버튼 */}
-          <button
-            onClick={handleExport}
-            className="px-3 py-1 rounded bg-green-600 text-white 
-                       hover:bg-green-700 transition-transform transform hover:scale-110"
-          >
-            ⬇ Excel
-          </button>
+        {/* 엑셀 다운로드 버튼 */}
+        <button
+          onClick={handleExport}
+          className="px-3 py-1 rounded bg-green-600 text-white 
+                     hover:bg-green-700 transition-transform transform hover:scale-110"
+        >
+          ⬇ Excel
+        </button>
+      </div>
 
-        <div className="flex items-center gap-3">
-          {selectedDate && (
-            <span className="text-sm text-blue-600 dark:text-blue-400 font-medium">
-              {selectedDate}
-            </span>
-          )}
+      {/* 페이지 이동 + 날짜 표시 */}
+      <div className="flex items-center justify-center gap-4 mb-3">
+        <button
+          onClick={() => onPageChange(Math.max(0, page - 1))}
+          disabled={page === 0}
+          className="px-3 py-1 rounded bg-blue-500 text-white 
+                     disabled:bg-gray-400 disabled:cursor-not-allowed
+                     transition-transform transform hover:scale-110 
+                     hover:bg-blue-600"
+        >
+          이전
+        </button>
 
-        </div>
+        {/*  선택된 날짜 가운데 표시 */}
+        {selectedDate && (
+          <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
+            {selectedDate}
+          </span>
+        )}
 
-        {/* 페이지 이동 버튼 */}
-        <div className="flex gap-2">
-          <button
-            onClick={() => onPageChange(Math.max(0, page - 1))}
-            disabled={page === 0}
-            className="px-3 py-1 rounded bg-blue-500 text-white 
-                       disabled:bg-gray-400 disabled:cursor-not-allowed
-                       transition-transform transform hover:scale-110 
-                       hover:bg-blue-600"
-          >
-            이전
-          </button>
-          <button
-            onClick={() => onPageChange(Math.min(totalPages - 1, page + 1))}
-            disabled={page === totalPages - 1}
-            className="px-3 py-1 rounded bg-blue-500 text-white 
-                       disabled:bg-gray-400 disabled:cursor-not-allowed
-                       transition-transform transform hover:scale-110 
-                       hover:bg-blue-600"
-          >
-            다음
-          </button>
-        </div>
+        <button
+          onClick={() => onPageChange(Math.min(totalPages - 1, page + 1))}
+          disabled={page === totalPages - 1}
+          className="px-3 py-1 rounded bg-blue-500 text-white 
+                     disabled:bg-gray-400 disabled:cursor-not-allowed
+                     transition-transform transform hover:scale-110 
+                     hover:bg-blue-600"
+        >
+          다음
+        </button>
       </div>
 
       {/* 테이블 */}

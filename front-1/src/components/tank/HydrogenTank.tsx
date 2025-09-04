@@ -5,13 +5,13 @@ import { clsx } from "clsx";
 const CYCLE_UNIT = 1000;
 
 type Props = {
-  level: number;          // 현재 수위 (0 ~ CYCLE_UNIT)
-  cycles: number;         // 누적 사이클 (판매 차감 반영)
-  onDecrease: () => void; // -1 버튼 핸들러
+  level: number;
+  cycles: number;
+  onDecrease: () => void;
 };
 
 export default function HydrogenTank({ level, cycles, onDecrease }: Props) {
-  const percent = Math.min((level / CYCLE_UNIT) * 150, 100); 
+  const percent = Math.min((level / CYCLE_UNIT) * 180, 100);
   const isWarning = percent < 20;
 
   const handleClick = () => {
@@ -20,13 +20,6 @@ export default function HydrogenTank({ level, cycles, onDecrease }: Props) {
     }
   };
 
-  // 파도 path (Morphing 대상)
-  const wavePaths = [
-    "M0 40 Q 40 20, 80 40 T 160 40 T 240 40 V300 H0 Z",
-    "M0 42 Q 40 25, 80 42 T 160 42 T 240 42 V300 H0 Z",
-    "M0 38 Q 40 18, 80 38 T 160 38 T 240 38 V300 H0 Z",
-  ];
-
   return (
     <motion.div
       initial={{ scale: 0.95, opacity: 0 }}
@@ -34,63 +27,57 @@ export default function HydrogenTank({ level, cycles, onDecrease }: Props) {
       transition={{ duration: 0.6 }}
       className="flex-[1.3] flex flex-col items-start gap-6"
     >
-      {/* 수소탱크 본체 */}
-      <div className="relative w-[400px] h-[600px]">
-        {/* 채워지는 영역 */}
+      {/* 수소탱크 영역 */}
+      <div className="relative w-[512px] h-[256px]">
+        {/* 파도 (밑에서 위로 올라옴) */}
         <motion.div
-          className={clsx(
-            "absolute bottom-0 left-0 w-full overflow-hidden",
-            isWarning ? "bg-red-400/40" : "bg-cyan-400/40"
-          )}
+          className="absolute bottom-0 left-0 w-full overflow-hidden"
           initial={{ height: "0%" }}
           animate={{ height: `${percent}%` }}
           transition={{ duration: 1.2, ease: "easeOut" }}
-          style={{ zIndex: 1 }}
         >
-          {/* === Wave Morphing + 상하/좌우 이동 === */}
-         <svg
-            viewBox="0 0 240 300"
+          <svg
+            viewBox="0 0 240 100"
             preserveAspectRatio="none"
-            className="absolute inset-0 w-full h-full overflow-hidden"
+            className="absolute bottom-0 w-full h-full"
           >
-            {/* Wave 1: 위아래 출렁 */}
+            {/* Wave 1 */}
             <motion.path
-              d="M0 40 Q30 20, 60 40 T120 40 T180 40 T240 40 V300 H0 Z"
+              d="M0 40 Q30 20, 60 40 T120 40 T180 40 T240 40 V100 H0 Z"
               fill={isWarning ? "#f87171" : "#22d3ee"}
               opacity={0.6}
-              animate={{ y: [-12, 0, -12] }}
+              animate={{ y: [-10, 0, -10] }}
               transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
             />
-
-            {/* Wave 2: 좌우 흘러감 */}
+            {/* Wave 2 */}
             <motion.path
-              d="M0 42 Q30 25, 60 42 T120 42 T180 42 T240 42 V300 H0 Z"
+              d="M0 42 Q30 25, 60 42 T120 42 T180 42 T240 42 V100 H0 Z"
               fill={isWarning ? "#ef4444" : "#06b6d4"}
               opacity={0.4}
               animate={{ x: [0, -60] }}
               transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
             />
-
-            {/* Wave 3: 반대방향 + 약한 출렁 */}
+            {/* Wave 3 */}
             <motion.path
-              d="M0 38 Q30 18, 60 38 T120 38 T180 38 T240 38 V300 H0 Z"
+              d="M0 38 Q30 18, 60 38 T120 38 T180 38 T240 38 V100 H0 Z"
               fill={isWarning ? "#dc2626" : "#0891b2"}
               opacity={0.3}
               animate={{ x: [0, 60], y: [-6, 0, -6] }}
               transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
             />
           </svg>
-
-          {/* 보조 wave.svg 배경 */}
-          <div className="absolute inset-0 bg-[url('/wave.svg')] bg-repeat-x animate-wave opacity-10" />
-          <div className="absolute inset-0 bg-[url('/wave.svg')] bg-repeat-x animate-wave-delayed opacity-10" />
         </motion.div>
 
-        {/* 외곽 이미지 */}
+        {/* 트럭 아이콘: 라이트/다크 모드 이미지 교체 */}
         <img
-          src="/images/h2h2.png"
-          alt="Hydrogen Tank"
-          className="absolute w-full h-full object-contain z-10"
+          src="/images/h1.png"
+          alt="Hydrogen Tank Light"
+          className="absolute top-0 left-0 w-full h-full z-20 block dark:hidden"
+        />
+        <img
+          src="/images/h2.png"
+          alt="Hydrogen Tank Dark"
+          className="absolute top-0 left-0 w-full h-full z-20 hidden dark:block"
         />
       </div>
 

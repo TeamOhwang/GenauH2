@@ -35,10 +35,16 @@ export default function TopControlBar({ orgId, onDateSelect, onFacilitySelect }:
   }, [orgId, selected]);
 
   return (
-    <div className="flex gap-4 bg-slate-800 p-3 rounded-lg items-center">
+    <div
+      className="
+        flex gap-4 items-center p-3 rounded-lg shadow-md
+        bg-white text-black
+        dark:bg-slate-800 dark:text-white
+      "
+    >
       {/* 설비 선택 */}
-      <div className="flex flex-col text-white">
-        <label>설비 선택</label>
+      <div className="flex flex-col">
+        <label className="mb-1 text-sm font-medium">설비 선택</label>
         <select
           value={selected ?? ""}
           onChange={(e) => {
@@ -46,11 +52,13 @@ export default function TopControlBar({ orgId, onDateSelect, onFacilitySelect }:
             setSelected(facId);
             if (facId) onFacilitySelect(facId);
           }}
-          className="text-black px-2 py-1 rounded"
+          className="
+            px-2 py-1 rounded border
+            text-black bg-white
+            dark:bg-slate-700 dark:text-white dark:border-slate-600
+          "
         >
-          {/* 아무것도 선택되지 않았을 때만 보여줌 */}
           {selected === null && <option value="">-- 선택 --</option>}
-
           {facilities.map((f) => (
             <option key={f.facId} value={f.facId}>
               {f.name}
@@ -60,12 +68,16 @@ export default function TopControlBar({ orgId, onDateSelect, onFacilitySelect }:
       </div>
 
       {/* 시작일 */}
-      <div className="flex flex-col text-white">
-        <label>시작일</label>
+      <div className="flex flex-col">
+        <label className="mb-1 text-sm font-medium">시작일</label>
         <input
           type="date"
-          max={today} // 오늘까지만 선택 가능
-          className="text-black px-2 py-1 rounded"
+          max={today}
+          className="
+            px-2 py-1 rounded border
+            text-black bg-white
+            dark:bg-slate-700 dark:text-white dark:border-slate-600
+          "
           onChange={(e) => {
             const start = e.target.value;
             const endInput = document.getElementById("endDate") as HTMLInputElement;
@@ -75,13 +87,17 @@ export default function TopControlBar({ orgId, onDateSelect, onFacilitySelect }:
       </div>
 
       {/* 종료일 */}
-      <div className="flex flex-col text-white">
-        <label>종료일</label>
+      <div className="flex flex-col">
+        <label className="mb-1 text-sm font-medium">종료일</label>
         <input
           id="endDate"
           type="date"
-          max={today} // 오늘까지만 선택 가능
-          className="text-black px-2 py-1 rounded"
+          max={today}
+          className="
+            px-2 py-1 rounded border
+            text-black bg-white
+            dark:bg-slate-700 dark:text-white dark:border-slate-600
+          "
           onChange={(e) => {
             const end = e.target.value;
             const startInput = document.querySelector<HTMLInputElement>(

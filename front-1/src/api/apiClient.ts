@@ -147,7 +147,21 @@ apiClient.interceptors.response.use(
         authToken.clear();
       }
     }
-    if (st === 403) return Promise.reject({ ...error, _redirect: "/403" });
+    
+    // 403 에러 처리 - 인증 관련 API는 리다이렉트하지 않음
+    if (st === 403) {
+      const isAuthAPI = original.url?.includes(AUTH_ENDPOINTS.profile) || 
+                       original.url?.includes(AUTH_ENDPOINTS.login) ||
+                       original.url?.includes(AUTH_ENDPOINTS.logout);
+      
+      if (!isAuthAPI) {
+        console.warn('403 에러 발생 - 페이지 리다이렉트:', original.url);
+        return Promise.reject({ ...error, _redirect: "/403" });
+      } else {
+        console.warn('인증 API에서 403 에러 발생 - 리다이렉트하지 않음:', original.url);
+      }
+    }
+    
     return Promise.reject(error);
   }
 );
