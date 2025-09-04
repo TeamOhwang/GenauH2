@@ -16,6 +16,7 @@ const Setting = lazy(() => import("@/pages/Setting"));
 const Admin = lazy(() => import("@/pages/Admin"));
 const About = lazy(() => import("@/pages/About"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
+const Forbidden = lazy(() => import("@/pages/Forbidden"));
 const WebSocketTest = lazy(() => import("@/components/WebSocketTest"));
 const NotificationLog = lazy(() => import("@/pages/NotificationLog")); 
 const AuditLogPage = lazy(() => import("@/pages/AuditLogPage"));
@@ -28,10 +29,16 @@ function RoleHomeRedirect() {
   const role = useAuthStore((s) => s.role) as Role | null;
   const token = authToken.get();
   
+  console.log('RoleHomeRedirect 실행:', { role, hasToken: !!token });
+  
   if (!token || !role) {
     return <Navigate to={PATHS.login} replace />;
   }
-  return <Navigate to={roleHome(role)} replace />;
+  
+  const homePath = roleHome(role);
+  console.log(`역할 ${role}에 따른 홈 페이지로 리다이렉트:`, homePath);
+  
+  return <Navigate to={homePath} replace />;
 }
 export default function AppRouter() {
   return (
@@ -66,6 +73,7 @@ export default function AppRouter() {
             <Route path={PATHS.home} element={<RoleHomeRedirect />} />
           </Route>
 
+          {/* 일반 사용자 전용 페이지 */}
           <Route element={<ProtectedRoute require="USER"><Outlet /></ProtectedRoute>}>
             <Route path={PATHS.dashboard} element={<Dashboard />} />
             <Route path={PATHS.price} element={<Price />} />
@@ -77,6 +85,7 @@ export default function AppRouter() {
             <Route path={PATHS.test} element={<About />} />
           </Route>
 
+          {/* 관리자 전용 페이지 */}
           <Route element={<ProtectedRoute require="SUPERVISOR"><Outlet /></ProtectedRoute>}>
             <Route path={PATHS.admin} element={<Admin />} />
             <Route path={PATHS.requestJoin} element={<RequestJoin />} />
@@ -85,6 +94,7 @@ export default function AppRouter() {
             <Route path={PATHS.auditLogs} element={<AuditLogPage />} /> {/* 감사 로그 페이지 */}
           </Route>
 
+          <Route path={PATHS.forbidden} element={<Forbidden />} />
           <Route path={PATHS.notFound} element={<NotFound />} />
         </Route>
       </Routes>

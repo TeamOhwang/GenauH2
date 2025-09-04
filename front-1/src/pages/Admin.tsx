@@ -80,7 +80,32 @@ export default function Admin() {
   });
 
   useEffect(() => {
-    getUsers().then(setUsers);
+    const loadUsers = async () => {
+      try {
+        console.log('관리자 페이지 - 사용자 목록 로딩 시작');
+        const users = await getUsers();
+        console.log('관리자 페이지 - 사용자 목록 로딩 성공:', users.length);
+        setUsers(users);
+      } catch (error) {
+        console.error('사용자 목록 로딩 실패:', error);
+        
+        // 403 에러인 경우 권한 없음을 의미하므로 별도 처리하지 않음
+        if (error?.response?.status === 403) {
+          console.warn('관리자 권한이 없어 사용자 목록을 불러올 수 없습니다.');
+        } else if (error?._redirect === "/403") {
+          console.warn('403 리다이렉트 에러 발생');
+        } else {
+          console.error('사용자 목록을 불러올 수 없습니다:', error?.message);
+        }
+      }
+    };
+    
+    // 약간의 지연을 두어 권한 검사가 완료된 후 API 호출
+    const timeoutId = setTimeout(() => {
+      loadUsers();
+    }, 100);
+    
+    return () => clearTimeout(timeoutId);
   }, [getUsers])
 
   // if (loading) return <div className="h-full p-6"><p className="text-center text-lg">로딩 중...</p></div>;
