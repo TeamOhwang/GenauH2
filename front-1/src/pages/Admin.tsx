@@ -224,10 +224,10 @@ export default function Admin() {
   };
 
   return (
-    <div className="h-full p-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="h-full p-3 sm:p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-4">
         <div>
-          <p className="text-2xl font-bold">관리자 페이지</p>
+          <p className="text-xl sm:text-2xl font-bold">관리자 페이지</p>
           
           {/* WebSocket 테스트 링크 */}
           {/* <Link 
@@ -316,38 +316,38 @@ export default function Admin() {
       </Modal>
 
       {/* 요약 통계 - INVITED 상태의 회원들은 제외됨 */}
-      <div className="flex gap-6 mb-6">
-        <Card className="flex-1 text-center dark:bg-gray-800">
-          <CardContent>
-            <p className="text-green-600 dark:text-green-500 text-2xl font-bold">{users.filter(u => u.status === "ACTIVE").length}</p>
-            <p>활성화된 계정</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4 sm:mb-6">
+        <Card className="text-center dark:bg-gray-800">
+          <CardContent className="p-4">
+            <p className="text-green-600 dark:text-green-500 text-xl sm:text-2xl font-bold">{users.filter(u => u.status === "ACTIVE").length}</p>
+            <p className="text-sm sm:text-base">활성화된 계정</p>
           </CardContent>
         </Card>
-        <Card className="flex-1 text-center dark:bg-gray-800">
-          <CardContent>
-            <p className="text-red-600 dark:text-red-500 text-2xl font-bold">{users.filter(u => u.status === "SUSPENDED").length}</p>
-            <p>비활성화된 계정</p>
+        <Card className="text-center dark:bg-gray-800">
+          <CardContent className="p-4">
+            <p className="text-red-600 dark:text-red-500 text-xl sm:text-2xl font-bold">{users.filter(u => u.status === "SUSPENDED").length}</p>
+            <p className="text-sm sm:text-base">비활성화된 계정</p>
           </CardContent>
         </Card>
-        <Card className="flex-1 text-center dark:bg-gray-800">
-          <CardContent>
-            <p className="text-gray-800 dark:text-gray-200 text-2xl font-bold">{users.length}</p>
-            <p>전체 계정</p>
+        <Card className="text-center dark:bg-gray-800 sm:col-span-2 lg:col-span-1">
+          <CardContent className="p-4">
+            <p className="text-gray-800 dark:text-gray-200 text-xl sm:text-2xl font-bold">{users.length}</p>
+            <p className="text-sm sm:text-base">전체 계정</p>
           </CardContent>
         </Card>
       </div>
 
       <div className="flex flex-col h-2/3 w-full bg-white dark:bg-gray-800 rounded-2xl shadow overflow-y-scroll scrollbar-hide">
         {/* 검색  + 필터 - INVITED 상태의 회원들은 제외됨 */}
-        <div className="flex mb-4 sticky top-0 bg-white dark:bg-gray-800 z-10 pb-4 mb-4 border-b dark:border-gray-700 pt-3 px-3">
+        <div className="flex flex-col sm:flex-row gap-3 mb-4 sticky top-0 bg-white dark:bg-gray-800 z-10 pb-4 mb-4 border-b dark:border-gray-700 pt-3 px-3">
           <Input
             placeholder="소속, 이메일, 이름, 사업자번호로 검색..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-1/3 rounded-3xl bg-gray-200 dark:bg-gray-700"
+            className="w-full sm:w-1/2 lg:w-1/3 rounded-3xl bg-gray-100 dark:bg-gray-700"
           />
           <Select onValueChange={(val) => setStatusFilter(val as any)} defaultValue="ALL">
-            <SelectTrigger className="w-[120px] rounded-3xl mx-3 dark:bg-gray-700">
+            <SelectTrigger className="w-full sm:w-[140px] rounded-3xl dark:bg-gray-700">
               <SelectValue placeholder="계정 상태" />
             </SelectTrigger>
             <SelectContent>
@@ -364,19 +364,22 @@ export default function Admin() {
             {search.trim() ? `"${search}"에 대한 검색 결과가 없습니다.` : "사용자가 없습니다."}
           </div>
         ) : (
-          <table className="m-5">
-            <thead>
-              <tr className="border-b border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-300" >
-                <th className="text-center py-2">소속</th>
-                <th className="text-center py-2">이메일(ID)</th>
-                <th className="text-center py-2">이름</th>
-                <th className="text-center py-2">사업자 등록번호</th>
-                <th className="text-center py-2">최근 로그인</th>
-                <th className="text-center py-2">계정 상태</th>
-                <th className="text-center py-2">작업</th>
-              </tr>
-            </thead>
-            <tbody>
+          <>
+            {/* 데스크톱 테이블 */}
+            <div className="hidden lg:block">
+              <table className="m-5 w-full">
+                <thead>
+                  <tr className="border-b border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-300" >
+                    <th className="text-center py-2">소속</th>
+                    <th className="text-center py-2">이메일(ID)</th>
+                    <th className="text-center py-2">이름</th>
+                    <th className="text-center py-2">사업자 등록번호</th>
+                    <th className="text-center py-2">최근 로그인</th>
+                    <th className="text-center py-2">계정 상태</th>
+                    <th className="text-center py-2">작업</th>
+                  </tr>
+                </thead>
+                <tbody>
               {filteredUsers.map((u) => (
                 <React.Fragment key={u.orgId}>
                   <tr className="text-gray-800 dark:text-gray-300">
@@ -388,14 +391,11 @@ export default function Admin() {
                     <td className="text-center">
                         <button
                           onClick={() => handleStatusChange(u.orgId, u.status, u.orgName || u.email)}
-                          style={{
-                            color: u.status === "ACTIVE" ? "rgb(16, 185, 53)" : "rgb(236, 45, 45)",
-                            border: u.status === "ACTIVE" ? "1px solid rgb(16, 185, 53)" : "1px solid rgb(214, 15, 15)",
-                            fontWeight: "bold",
-                            width: "100px",
-                            textAlign: "center"
-                          }}
-                          className="bg-white dark:bg-gray-700 rounded-md px-3 py-1"
+                          className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 transform hover:scale-105 shadow-sm ${
+                            u.status === "ACTIVE" 
+                              ? "bg-green-100 text-green-700 border border-green-200 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800 dark:hover:bg-green-900/50" 
+                              : "bg-red-100 text-red-700 border border-red-200 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/50"
+                          }`}
                         >
                           {u.status === "ACTIVE" ? "활성화" : "비활성화"}
                         </button>
@@ -527,7 +527,123 @@ export default function Admin() {
                 </React.Fragment>
               ))}
             </tbody>
-          </table>
+              </table>
+            </div>
+
+            {/* 모바일 카드 레이아웃 */}
+            <div className="lg:hidden p-3 space-y-4">
+              {filteredUsers.map((u) => (
+                <div key={u.orgId} className="bg-white dark:bg-gray-700 rounded-lg shadow-md p-4 border border-gray-200 dark:border-gray-600">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-semibold text-gray-900 dark:text-gray-100">{u.orgName}</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{u.name}</p>
+                      </div>
+                      <button
+                        onClick={() => handleStatusChange(u.orgId, u.status, u.orgName || u.email)}
+                        className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
+                          u.status === "ACTIVE" 
+                            ? "bg-green-100 text-green-700 border border-green-200 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800" 
+                            : "bg-red-100 text-red-700 border border-red-200 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800"
+                        }`}
+                      >
+                        {u.status === "ACTIVE" ? "활성화" : "비활성화"}
+                      </button>
+                    </div>
+                    
+                    <div className="space-y-2 text-sm">
+                      <div>
+                        <span className="text-gray-500 dark:text-gray-400">이메일:</span>
+                        <span className="ml-2 text-gray-900 dark:text-gray-100">{u.email}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500 dark:text-gray-400">사업자번호:</span>
+                        <span className="ml-2 text-gray-900 dark:text-gray-100">{u.bizRegNo}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500 dark:text-gray-400">최근 로그인:</span>
+                        <span className="ml-2 text-gray-900 dark:text-gray-100">
+                          {u.updatedAt ? u.updatedAt.split("T")[0] : 'N/A'}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-2 pt-2">
+                      <button 
+                        onClick={() => handleFacilityOpen(u.orgId, u.orgId)} 
+                        className="flex-1 bg-blue-500 dark:bg-blue-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-600 dark:hover:bg-blue-500 transition-colors"
+                      >
+                        시설 관리
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* 시설 정보 (모바일) */}
+                  {openFacilityUserId === u.orgId && (
+                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+                      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                        <div className="flex justify-between items-center mb-3">
+                          <h4 className="font-semibold text-gray-900 dark:text-gray-100">시설 정보</h4>
+                          <button 
+                            onClick={() => setFacilityOpen(true)} 
+                            className="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 text-white text-xs rounded-md transition-colors"
+                          >
+                            시설 추가
+                          </button>
+                        </div>
+                        
+                        {facilityLoading[u.orgId] ? (
+                          <div className="text-center py-4">
+                            <p className="text-gray-500">시설 정보를 불러오는 중...</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            {facilities && facilities.length > 0 ? (
+                              facilities.map((facility: Facility, index: number) => (
+                                <div key={facility.facId || index} className="bg-white dark:bg-gray-700 rounded-md p-3 border border-gray-200 dark:border-gray-600">
+                                  <div className="space-y-2">
+                                    <h5 className="font-medium text-gray-900 dark:text-gray-100">{facility.name || 'N/A'}</h5>
+                                    <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-400">
+                                      <div>위치: {facility.location || 'N/A'}</div>
+                                      <div>제조사: {facility.maker || 'N/A'}</div>
+                                      <div>모델: {facility.model || 'N/A'}</div>
+                                      <div>타입: {facility.type || 'N/A'}</div>
+                                    </div>
+                                    <div className="flex gap-2 pt-2">
+                                      <button
+                                        onClick={() => {
+                                          setSelectedFacility(facility);
+                                          setEditFacilityOpen(true);
+                                        }}
+                                        className="px-2 py-1 bg-blue-500 hover:bg-blue-600 text-white text-xs rounded transition-colors"
+                                      >
+                                        편집
+                                      </button>
+                                      <button
+                                        onClick={() => handleDeleteFacility(facility, u.orgId)}
+                                        className="px-2 py-1 bg-red-500 hover:bg-red-600 text-white text-xs rounded transition-colors"
+                                      >
+                                        삭제
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                                <p>등록된 시설이 없습니다.</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>

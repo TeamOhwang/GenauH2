@@ -61,15 +61,15 @@ export default function PricePage() {
   }, [filtered, page, size]);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 p-5 bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors">
+    <div className="grid grid-cols-1 xl:grid-cols-5 gap-3 sm:gap-5 p-3 sm:p-5 bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors">
       {/* 좌측 지도 */}
-      <div className="col-span-1 lg:col-span-3 border border-gray-200 dark:border-gray-700 rounded p-2 relative bg-white dark:bg-gray-800 transition-colors">
+      <div className="col-span-1 xl:col-span-3 border border-gray-200 dark:border-gray-700 rounded p-2 relative bg-white dark:bg-gray-800 transition-colors">
         {averages.loading && <div className="p-3 text-gray-500 dark:text-gray-400">지도를 불러오는 중…</div>}
         {averages.error && <div className="p-3 text-red-600 dark:text-red-400">{averages.error}</div>}
 
         {averages.data?.length > 0 && (
           <div className="mx-auto w-full">
-            <div className="aspect-[1/1] sm:aspect-[4/3]">
+            <div className="aspect-[1/1] sm:aspect-[4/3] lg:aspect-[3/2]">
               <KoreaMap
                 summary={averages.data}
                 selectedRegion={selectedRegion}
@@ -80,13 +80,13 @@ export default function PricePage() {
           </div>
         )}
 
-        <div className="absolute bottom-2 left-2 text-xs text-gray-500 dark:text-gray-400">
+        <div className="absolute bottom-2 left-2 text-xs text-gray-500 dark:text-gray-400 hidden sm:block">
           지도 클릭 → 우측 패널이 해당 지역으로 바뀝니다
         </div>
       </div>
 
       {/* 우측 패널 */}
-      <div className="col-span-1 lg:col-span-2 flex flex-col gap-3">
+      <div className="col-span-1 xl:col-span-2 flex flex-col gap-3">
         {/* 검색 + 페이지 크기 */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <SearchInput

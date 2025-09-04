@@ -106,12 +106,12 @@ export default function Dashboard() {
 
     return (
         <div className="h-full overflow-auto scrollbar-hide">
-            <div className="m-6">
-                {/* 헤더 - 모든 요소를 일렬로 정렬 */}
-                <div className="flex items-center justify-between mb-6">
+            <div className="m-3 sm:m-6">
+                {/* 헤더 - 반응형 레이아웃 */}
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-4 sm:mb-6 gap-4">
                     {/* 왼쪽: 제목과 타임프레임 탭 */}
-                    <div className="flex items-center space-x-6">
-                        <h1 className="text-2xl font-bold text-gray-800 dark:text-white">대시보드</h1>
+                    <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-6">
+                        <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white">대시보드</h1>
                         <TimeFrameTabs
                             activeTimeFrame={activeTimeFrame}
                             onTimeFrameChange={setActiveTimeFrame}

@@ -72,36 +72,40 @@ export default function DashboardCharts({
     const currentH2ChartType = getH2ChartType();
 
     return (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             {/* 태양광 발전량 차트 */}
-            <div className="m-0 bg-white dark:bg-gray-800 rounded-2xl shadow p-4 mb-6">
-                <div className="flex items-center justify-between mb-3">
-                    <p className="text-xl font-bold text-gray-800 dark:text-white">{chart1Title}</p>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow p-3 sm:p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-3">
+                    <p className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white">{chart1Title}</p>
                     <select
                         value={selectedPlant}
                         onChange={(e) => onPlantChange(e.target.value as Plant)}
-                        className="px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                     >
                         <option value="plant1">발전소 1 (1.2MW)</option>
                         <option value="plant2">발전소 2 (800kW)</option>
                         <option value="plant3">발전소 3 (500kW)</option>
                     </select>
                 </div>
-                <ChartComponent 
-                    data={solaData[activeTimeFrame][selectedPlant] as any} 
-                    options={currentChartOptions[selectedPlant]} 
-                    chartType={currentChartType}
-                />
+                <div className="h-64 sm:h-80">
+                    <ChartComponent 
+                        data={solaData[activeTimeFrame][selectedPlant] as any} 
+                        options={currentChartOptions[selectedPlant]} 
+                        chartType={currentChartType}
+                    />
+                </div>
             </div>
 
             {/* 수소 생산량 차트 */}
-            <div className="m-0 bg-white dark:bg-gray-800 rounded-2xl shadow p-4 mb-6">
-                <p className="text-xl font-bold text-gray-800 dark:text-white mb-3">{chart2Title}</p>
-                <ChartComponent 
-                    data={h2Data} 
-                    options={h2ChartOptions} 
-                    chartType={currentH2ChartType}
-                />
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow p-3 sm:p-4">
+                <p className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white mb-3">{chart2Title}</p>
+                <div className="h-64 sm:h-80">
+                    <ChartComponent 
+                        data={h2Data} 
+                        options={h2ChartOptions} 
+                        chartType={currentH2ChartType}
+                    />
+                </div>
             </div>
         </div>
     );

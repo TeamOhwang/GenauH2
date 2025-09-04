@@ -45,7 +45,7 @@ export default function TankDashboard() {
   return (
     <motion.div
       // 라이트: 흰 배경 + 검정 글자 / 다크: 현재 그라데이션
-      className="p-10 min-h-screen 
+      className="p-4 sm:p-6 lg:p-10 min-h-screen 
                  bg-white text-black 
                  dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 dark:text-white"
       initial="hidden"
@@ -54,7 +54,7 @@ export default function TankDashboard() {
     >
       {/* 타이틀 */}
       <motion.h1
-        className="text-5xl lg:text-6xl font-extrabold mb-12 text-center
+        className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-extrabold mb-6 sm:mb-8 lg:mb-12 text-center
                    bg-gradient-to-r from-cyan-500 to-blue-600 
                    bg-clip-text text-transparent drop-shadow-lg"
         variants={itemVariants}
@@ -64,11 +64,11 @@ export default function TankDashboard() {
 
       {/* 메인 그리드 */}
       <motion.div
-        className="grid grid-cols-1 lg:grid-cols-2 gap-10"
+        className="grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8 lg:gap-10"
         variants={containerVariants}
       >
         {/* 왼쪽 영역 */}
-        <motion.div className="flex flex-col gap-6" variants={containerVariants}>
+        <motion.div className="flex flex-col gap-4 sm:gap-6" variants={containerVariants}>
           <motion.div variants={itemVariants}>
             <HydrogenTank
               level={level}

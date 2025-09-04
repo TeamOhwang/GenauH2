@@ -33,26 +33,28 @@ export default function LoginPage() {
   return (
     <div className="flex h-screen w-screen overflow-hidden">
       {/* 왼쪽 로그인 패널 */}
-      <div className="flex w-full md:w-1/2 flex-col items-center justify-center p-8 bg-white relative z-10">
-        <h2 className="text-2xl font-bold mb-6">로그인</h2>
+      <div className="flex w-full lg:w-1/2 flex-col items-center justify-center p-4 sm:p-6 lg:p-8 bg-white relative z-10">
+        <div className="w-full max-w-md">
+          <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-center">로그인</h2>
 
-        {/* 로그인 폼 */}
-        <LoginForm loading={loading} error={error} onSubmit={handleLogin} />
+          {/* 로그인 폼 */}
+          <LoginForm loading={loading} error={error} onSubmit={handleLogin} />
 
-        {/* 회원가입 버튼 */}
-        <button
-          onClick={() => setSignupOpen(true)}
-          className="mt-6 text-blue-600 underline"
-        >
-          회원가입
-        </button>
+          {/* 회원가입 버튼 */}
+          <button
+            onClick={() => setSignupOpen(true)}
+            className="mt-4 sm:mt-6 text-blue-600 underline text-sm sm:text-base w-full text-center"
+          >
+            회원가입
+          </button>
+        </div>
       </div>
 
       {/* 오른쪽 이미지 패널 */}
       <AnimatePresence mode="wait">
         {!playExit && (
           <motion.div
-            className="hidden md:block md:w-1/2 h-full"
+            className="hidden lg:block lg:w-1/2 h-full"
             initial={{ x: 0 }}
             animate={{ x: 0 }}
             exit={{ x: "-100%" }}

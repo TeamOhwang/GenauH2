@@ -4,7 +4,8 @@ import { PATHS, roleHome, type Role } from "@/routes/paths";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { authToken } from "@/stores/authStorage";
 import { useDarkModeStore } from "@/stores/useDarkModeStore";
-import { LogOut, LoaderCircle, Bell } from "lucide-react";
+import { useSidebarStore } from "@/stores/useSidebarStore";
+import { LogOut, LoaderCircle, Bell, Menu } from "lucide-react";
 import DarkModeToggle from "@/components/ui/DarkModeToggle";
 import { useWebSocket } from "@/hooks/useWebSocket";
 
@@ -13,6 +14,7 @@ export default function Header() {
   const logout = useAuthStore((s) => s.logout);
   const email = useAuthStore((s) => s.email);
   const { isDarkMode } = useDarkModeStore();
+  const { isMobile, toggleSidebar } = useSidebarStore();
   const navigate = useNavigate();
   const { notifications, clearNotifications, isConnected } = useWebSocket();
   const [showNotifications, setShowNotifications] = useState(false);
@@ -78,14 +80,35 @@ export default function Header() {
 
   return (
     <header className="flex flex-row justify-between items-center bg-white dark:bg-gray-800 p-3 transition-colors">
-      {/*  역할별 홈 또는 로그인으로 이동 */}
-      <NavLink
-        to={to}
-        className="ml-6 text-2xl font-bold text-blue-600 dark:text-blue-400 hover:opacity-80"
-        aria-label="메인으로 이동"
-      >
-        GenauH2
-      </NavLink>
+      {/* 왼쪽: 햄버거 메뉴 + 로고 */}
+      <div className="flex items-center gap-3">
+        {/* 햄버거 메뉴 버튼 - 모바일에서만 표시 */}
+        {isMobile && (
+          <button
+            onClick={toggleSidebar}
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            aria-label="메뉴 열기"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+        )}
+        
+        {/* 로고 */}
+        <NavLink
+          to={to}
+          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+          aria-label="메인으로 이동"
+        >
+          {/* <img 
+            src="/logo.png" 
+            alt="GenauH2 로고" 
+            className="w-8 h-8 sm:w-10 sm:h-10"
+          /> */}
+          <span className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400">
+            GenauH2
+          </span>
+        </NavLink>
+      </div>
 
       {/* 우측: 이메일 + 알림 + 다크모드 토글 + 로그아웃 */}
       <div className="ml-auto mr-4 flex items-center gap-3">
