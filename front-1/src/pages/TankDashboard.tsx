@@ -6,25 +6,22 @@ import HydrogenTank from "@/components/tank/HydrogenTank";
 import TankStats, { Facility, FacilityStatus } from "@/components/tank/TankStats";
 import MonthlyProductionChart from "@/components/tank/MonthlyProductionChart";
 import { motion, Variants } from "framer-motion";
+import { Factory, AlertCircle } from "lucide-react";
 
 const getStatus = (kg: number): FacilityStatus => (kg > 0 ? "가동" : "비가동");
 
-// 🔹 variants 정의
+// 🔹 애니메이션 Variants
 const containerVariants: Variants = {
   hidden: {},
-  visible: {
-    transition: {
-      staggerChildren: 0.2, // 자식이 순차적으로 등장
-    },
-  },
+  visible: { transition: { staggerChildren: 0.2 } },
 };
-
 const itemVariants: Variants = {
-  hidden: { opacity: 0, scale: 0.9 },
+  hidden: { opacity: 0, y: 20, scale: 0.95 },
   visible: {
     opacity: 1,
+    y: 0,
     scale: 1,
-    transition: { type: "spring", stiffness: 100, damping: 15 },
+    transition: { type: "spring", stiffness: 120, damping: 15 },
   },
 };
 
@@ -34,8 +31,8 @@ export default function TankDashboard() {
   const { data, monthlyData, cycles, level, loading, error } =
     useTankDashboard(orgId);
 
-  if (loading) return <div>⏳ 로딩중...</div>;
-  if (error) return <div>❌ {error}</div>;
+  if (loading) return <div className="text-white">⏳ 로딩중...</div>;
+  if (error) return <div className="text-red-400">❌ {error}</div>;
 
   const facilities: Facility[] = data.map((f) => ({
     id: f.facId,
@@ -47,21 +44,24 @@ export default function TankDashboard() {
 
   return (
     <motion.div
-      className="p-10 min-h-screen bg-white dark:bg-slate-900 text-black dark:text-white"
+      className="p-10 min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
     >
-      {/* 제목 */}
+      {/* 타이틀 */}
       <motion.h1
-        className="text-5xl font-extrabold mb-10 bg-gradient-to-r from-cyan-500 to-blue-600 bg-clip-text text-transparent"
+        className="text-6xl font-extrabold mb-12 text-center bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent drop-shadow-lg"
         variants={itemVariants}
       >
-        GenauH2
+        GenauH₂ Dashboard
       </motion.h1>
 
       {/* 메인 그리드 */}
-      <motion.div className="grid grid-cols-2 gap-10" variants={containerVariants}>
+      <motion.div
+        className="grid grid-cols-1 lg:grid-cols-2 gap-10"
+        variants={containerVariants}
+      >
         {/* 왼쪽 영역 */}
         <motion.div className="flex flex-col gap-6" variants={containerVariants}>
           <motion.div variants={itemVariants}>

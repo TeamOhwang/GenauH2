@@ -5,7 +5,7 @@ import { useCycleStore } from "@/stores/useCycleStore";
 export type DailyProduction = { date: string; production: number };
 export type MonthlyProduction = { month: string; production: number };
 
-const CYCLE_UNIT = 10000;
+const CYCLE_UNIT = 1000;
 
 async function fetchAllPages(orgId: number, size: number) {
   let page = 0;
