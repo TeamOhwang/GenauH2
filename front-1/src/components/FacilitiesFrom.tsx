@@ -141,7 +141,7 @@ const FacilitiesFrom = ({ orgId, onSuccess }: FacilitiesProps) => {
                             <option value="SOEC">SOEC</option>
                         </select>
                         <input
-                            type="number"
+                            type="text"
                             name="purity"
                             placeholder="수소 순도"
                             value={form.purity}
@@ -152,7 +152,7 @@ const FacilitiesFrom = ({ orgId, onSuccess }: FacilitiesProps) => {
 
                     <div className="flex flex-row gap-2">
                         <input
-                            type="number"
+                            type="text"
                             name="powerKw"
                             placeholder="정격 전력(kW)"
                             value={form.powerKw}
@@ -160,7 +160,7 @@ const FacilitiesFrom = ({ orgId, onSuccess }: FacilitiesProps) => {
                             className="w-full border rounded px-3 py-2"
                         />
                         <input
-                            type="number"
+                            type="text"
                             name="h2Rate"
                             placeholder="정격 출력(kg/h)"
                             value={form.h2Rate}
@@ -170,7 +170,7 @@ const FacilitiesFrom = ({ orgId, onSuccess }: FacilitiesProps) => {
                     </div>
                     <div className="flex flex-row gap-2">
                         <input
-                            type="number"
+                            type="text"
                             name="specKwh"
                             placeholder="기준 SEC(kWh/kg)"
                             value={form.specKwh}
@@ -178,7 +178,7 @@ const FacilitiesFrom = ({ orgId, onSuccess }: FacilitiesProps) => {
                             className="w-full border rounded px-3 py-2"
                         />
                         <input
-                            type="number"
+                            type="text"
                             name="pressure"
                             placeholder="압력"
                             value={form.pressure}
@@ -187,7 +187,7 @@ const FacilitiesFrom = ({ orgId, onSuccess }: FacilitiesProps) => {
                         />
                     </div>
                     <input
-                        type="text"
+                        type="date"
                         name="install"
                         placeholder="촉매 설치일 (예: 20151005 또는 2015-10-05)"
                         value={form.install}

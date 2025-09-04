@@ -90,12 +90,12 @@ export default function Admin() {
         console.error('사용자 목록 로딩 실패:', error);
         
         // 403 에러인 경우 권한 없음을 의미하므로 별도 처리하지 않음
-        if (error?.response?.status === 403) {
+        if ((error as any)?.response?.status === 403) {
           console.warn('관리자 권한이 없어 사용자 목록을 불러올 수 없습니다.');
-        } else if (error?._redirect === "/403") {
+        } else if ((error as any)?._redirect === "/403") {
           console.warn('403 리다이렉트 에러 발생');
         } else {
-          console.error('사용자 목록을 불러올 수 없습니다:', error?.message);
+          console.error('사용자 목록을 불러올 수 없습니다:', (error as Error)?.message || '알 수 없는 오류');
         }
       }
     };
@@ -453,6 +453,7 @@ export default function Admin() {
                                   console.error('시설 목록 새로고침 실패:', error);
                                 }
                               }}
+                              orgId={u.orgId}
                               onClose={() => setEditFacilityOpen(false)}
                             />
                           </Modal>

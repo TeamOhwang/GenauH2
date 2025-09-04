@@ -1,16 +1,16 @@
 ////
 
 import { useAdmin } from '@/hooks/useAdmin';
-import { useAuthStore } from '@/stores/useAuthStore';
 import { useState, useEffect } from 'react'
 
 type UpdateFacilityProps = { 
     facility: any; // 기존 시설 정보
     onSuccess?: () => void;
     onClose?: () => void;
+    orgId: string;
 };
 
-const UpdateFaForm = ({ facility, onSuccess, onClose }: UpdateFacilityProps) => {
+const UpdateFaForm = ({ facility, onSuccess, onClose, orgId }: UpdateFacilityProps) => {
     const [form, setForm] = useState({
         facId: "", // 조직 ID를 문자열로 변환
         name: "", // 시설 이름
@@ -27,7 +27,6 @@ const UpdateFaForm = ({ facility, onSuccess, onClose }: UpdateFacilityProps) => 
     });
 
     const { updateFacilityAction, loading, error } = useAdmin();
-    const { orgId } = useAuthStore();
 
     // 기존 시설 정보로 폼 초기화
     useEffect(() => {
@@ -117,7 +116,7 @@ const UpdateFaForm = ({ facility, onSuccess, onClose }: UpdateFacilityProps) => 
     return (
         <div className="p-6">
             <h3 className="text-lg font-semibold mb-4">시설 정보 수정</h3>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4 dark:text-gray-800">
                 <input
                     type="text"
                     name="name"
@@ -159,7 +158,7 @@ const UpdateFaForm = ({ facility, onSuccess, onClose }: UpdateFacilityProps) => 
                     className="w-full border rounded px-3 py-2"
                 />
                 <input
-                    type="number"
+                    type="text"
                     name="powerKw"
                     placeholder="정격 전력(kW)"
                     value={form.powerKw}
@@ -167,7 +166,7 @@ const UpdateFaForm = ({ facility, onSuccess, onClose }: UpdateFacilityProps) => 
                     className="w-full border rounded px-3 py-2"
                 />
                 <input
-                    type="number"
+                    type="text"
                     name="h2Rate"
                     placeholder="수소 생산률(kg/h)"
                     value={form.h2Rate}
@@ -175,7 +174,7 @@ const UpdateFaForm = ({ facility, onSuccess, onClose }: UpdateFacilityProps) => 
                     className="w-full border rounded px-3 py-2"
                 />
                 <input
-                    type="number"
+                    type="text"
                     name="specKwh"
                     placeholder="기준 SEC(kWh/kg)"
                     value={form.specKwh}
@@ -183,7 +182,7 @@ const UpdateFaForm = ({ facility, onSuccess, onClose }: UpdateFacilityProps) => 
                     className="w-full border rounded px-3 py-2"
                 />
                 <input
-                    type="number"
+                    type="text"
                     name="purity"
                     placeholder="순도(%)"
                     value={form.purity}
@@ -191,7 +190,7 @@ const UpdateFaForm = ({ facility, onSuccess, onClose }: UpdateFacilityProps) => 
                     className="w-full border rounded px-3 py-2"
                 />
                 <input
-                    type="number"
+                    type="text"
                     name="pressure"
                     placeholder="압력(bar)"
                     value={form.pressure}
@@ -200,7 +199,7 @@ const UpdateFaForm = ({ facility, onSuccess, onClose }: UpdateFacilityProps) => 
                 />
                 <div>
                     <input
-                        type="text"
+                        type="date"
                         name="install"
                         placeholder="설치일 (예: 20151005 또는 2015-10-05)"
                         value={form.install}
