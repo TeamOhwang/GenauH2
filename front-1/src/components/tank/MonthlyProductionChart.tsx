@@ -1,4 +1,11 @@
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 type Props = { data: { month: string; production: number }[] };
 
@@ -10,13 +17,19 @@ export default function MonthlyProductionChart({ data }: Props) {
   for (let i = 5000; i <= maxTick; i += 5000) ticks.push(i);
 
   return (
-    <div className="w-full h-56 bg-slate-800 p-4 rounded-lg shadow">
-      <h3 className="text-white font-bold mb-2">월별 누적 생산량</h3>
+    <div
+      className="
+        w-full h-56 p-4 rounded-lg shadow
+        bg-white text-black
+        dark:bg-slate-800 dark:text-white
+      "
+    >
+      <h3 className="font-bold mb-2">월별 누적 생산량</h3>
       <ResponsiveContainer width="100%" height="90%">
         <BarChart data={data} barCategoryGap="15%" barSize={25}>
-          <XAxis dataKey="month" stroke="#ccc" />
+          <XAxis dataKey="month" stroke="currentColor" />
           <YAxis
-            stroke="#ccc"
+            stroke="currentColor"
             domain={[0, maxTick]}
             ticks={ticks}
             tickFormatter={(value) => `${value / 1000}t`}
@@ -25,7 +38,13 @@ export default function MonthlyProductionChart({ data }: Props) {
             cursor={false}
             content={({ active, payload, label }) =>
               active && payload && payload.length ? (
-                <div className="bg-slate-900 text-white p-2 rounded shadow text-sm">
+                <div
+                  className="
+                    p-2 rounded shadow text-sm
+                    bg-white text-black
+                    dark:bg-slate-900 dark:text-white
+                  "
+                >
                   <p>{label} 📅</p>
                   <p>총 생산량: {(payload[0].value / 1000).toFixed(1)} t</p>
                   <p>({payload[0].value.toLocaleString()} kg)</p>

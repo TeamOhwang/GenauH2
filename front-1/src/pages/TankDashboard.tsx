@@ -1,4 +1,3 @@
-// src/pages/TankDashboard.tsx
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useTankDashboard } from "@/hooks/useTankDashboard";
 import { useCycleStore } from "@/stores/useCycleStore";
@@ -6,11 +5,11 @@ import HydrogenTank from "@/components/tank/HydrogenTank";
 import TankStats, { Facility, FacilityStatus } from "@/components/tank/TankStats";
 import MonthlyProductionChart from "@/components/tank/MonthlyProductionChart";
 import { motion, Variants } from "framer-motion";
-import { Factory, AlertCircle } from "lucide-react";
 
+// 가동/비가동 상태 계산
 const getStatus = (kg: number): FacilityStatus => (kg > 0 ? "가동" : "비가동");
 
-// 🔹 애니메이션 Variants
+// 애니메이션 Variants
 const containerVariants: Variants = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.2 } },
@@ -31,9 +30,10 @@ export default function TankDashboard() {
   const { data, monthlyData, cycles, level, loading, error } =
     useTankDashboard(orgId);
 
-  if (loading) return <div className="text-white">⏳ 로딩중...</div>;
-  if (error) return <div className="text-red-400">❌ {error}</div>;
+  if (loading) return <div className="text-black dark:text-white">⏳ 로딩중...</div>;
+  if (error) return <div className="text-red-600 dark:text-red-400">❌ {error}</div>;
 
+  // 🔹 설비 리스트 데이터 변환
   const facilities: Facility[] = data.map((f) => ({
     id: f.facId,
     name: f.facilityName,
@@ -44,14 +44,19 @@ export default function TankDashboard() {
 
   return (
     <motion.div
-      className="p-10 min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white"
+      // 라이트: 흰 배경 + 검정 글자 / 다크: 현재 그라데이션
+      className="p-10 min-h-screen 
+                 bg-white text-black 
+                 dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 dark:text-white"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
     >
       {/* 타이틀 */}
       <motion.h1
-        className="text-6xl font-extrabold mb-12 text-center bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent drop-shadow-lg"
+        className="text-5xl lg:text-6xl font-extrabold mb-12 text-center
+                   bg-gradient-to-r from-cyan-500 to-blue-600 
+                   bg-clip-text text-transparent drop-shadow-lg"
         variants={itemVariants}
       >
         GenauH₂ Dashboard
@@ -65,7 +70,11 @@ export default function TankDashboard() {
         {/* 왼쪽 영역 */}
         <motion.div className="flex flex-col gap-6" variants={containerVariants}>
           <motion.div variants={itemVariants}>
-            <HydrogenTank level={level} cycles={cycles} onDecrease={decreaseCycle} />
+            <HydrogenTank
+              level={level}
+              cycles={cycles}
+              onDecrease={decreaseCycle}
+            />
           </motion.div>
 
           <motion.div variants={itemVariants}>
