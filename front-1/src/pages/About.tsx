@@ -347,7 +347,7 @@ const About = () => {
   return (
     <div className={`min-h-screen p-6 transition-colors duration-300 ${
       isDarkMode 
-        ? 'bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900' 
+        ? 'bg-gradient-to-br from-stone-900 via-blue-900 to-stone-900' 
         : 'bg-white'
     }`}>
       {/* Header */}
@@ -363,7 +363,7 @@ const About = () => {
             수소 전해조 모니터링
           </h1>
           <div className={`space-y-1 transition-colors duration-300 ${
-            isDarkMode ? 'text-slate-300' : 'text-gray-600'
+            isDarkMode ? 'text-stone-300' : 'text-gray-600'
           }`}>
             <p>마지막 업데이트: {lastUpdate.toLocaleTimeString()}</p>
             {streamData && (

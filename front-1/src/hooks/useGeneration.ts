@@ -1,4 +1,4 @@
-import { getHourlyHydrogenProductionApi, getWeeklyProductionApi, getWeeklyHydrogenRangeApi, getWeeklyHydrogenPredictRangeApi } from "@/api/generationApi";
+import { getHourlyHydrogenProductionApi, getWeeklyProductionApi, getWeeklyHydrogenRangeApi, getWeeklyHydrogenPredictRangeApi, getPredictRangeDataApi } from "@/api/generationApi";
 import { fetchDailyGeneration, fetchRawGeneration } from "@/api/generationService";
 import { useState, useCallback } from "react";
 
@@ -125,6 +125,25 @@ export function useGeneration() {
         }
     }, [])
 
+    const getDailyHydrogenPredict = useCallback(async (orgId: string, startDate: string, endDate: string) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await getPredictRangeDataApi(startDate, endDate);
+            
+            // 사용자의 orgId에 맞는 데이터만 필터링
+            const userOrgId = parseInt(orgId);
+            const filteredData = data?.filter((item: any) => item.orgid === userOrgId) ?? [];
+            
+            return filteredData;
+        } catch (e: any) {
+            setError(e?.message ?? "일간 수소 생산량 예측 조회 실패");
+            return null;
+        } finally {
+            setLoading(false);
+        }
+    }, [])
+
 
 
 
@@ -138,5 +157,6 @@ export function useGeneration() {
         getWeeklyHydrogenRange,
         getWeeklyHydrogenPredictRange,
         getMonthlyHydrogenProduction,
+        getDailyHydrogenPredict,
     };
 }

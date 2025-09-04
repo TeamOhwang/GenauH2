@@ -41,6 +41,7 @@ export default function Dashboard() {
         monthlyData,
         monthlyHydrogenProductionData, // 월간 수소 생산량 데이터 추가
         monthlyHydrogenPredictData, // 월간 수소 생산량 예측 데이터 추가
+        dailyHydrogenPredictData, // 일간 수소 생산량 예측 데이터 추가
         hourlyHydrogenProduction,
         lastUpdateTime,
         isUpdating,
@@ -99,7 +100,7 @@ export default function Dashboard() {
     const h2ChartOptions = getH2ChartOptions();
     const h2ChartData = getH2ChartData();
     
-    const timeFrameData = buildTimeFrameData(plant1, plant2, plant3, currentHour, hourlyHydrogenProduction, hydrogenTargetRate, previousDayData, facilities, weeklyHydrogenRangeData, weeklyHydrogenPredictData, monthlyHydrogenProductionData, monthlyHydrogenPredictData); // 전일 데이터, 설비 정보, 주간 수소 데이터, 주간 수소 예측 데이터, 월간 수소 데이터, 월간 수소 예측 데이터 전달
+    const timeFrameData = buildTimeFrameData(plant1, plant2, plant3, currentHour, hourlyHydrogenProduction, hydrogenTargetRate, previousDayData, facilities, weeklyHydrogenRangeData, weeklyHydrogenPredictData, monthlyHydrogenProductionData, monthlyHydrogenPredictData, dailyHydrogenPredictData); // 전일 데이터, 설비 정보, 주간 수소 데이터, 주간 수소 예측 데이터, 월간 수소 데이터, 월간 수소 예측 데이터, 일간 수소 예측 데이터 전달
 
     const currentData = timeFrameData[activeTimeFrame];
 

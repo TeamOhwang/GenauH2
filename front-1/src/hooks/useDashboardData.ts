@@ -4,7 +4,7 @@ import { useHourlyUpdater } from './useHourlyUpdater';
 import { TimeFrame, Plant } from '@/types/dashboard';
 import { getFacilityListApi } from '@/api/adminApi';
 import { useAuthStore } from '@/stores/useAuthStore';
-import { getHydrogenPredictApi } from '@/api/generationApi';
+import { getHydrogenPredictApi, getPredictRangeDataApi } from '@/api/generationApi';
 
 // 발전소별 capacity_Kw 값 상수 정의
 const PLANT_CAPACITIES = {
@@ -24,7 +24,7 @@ const getPlantIdForBackend = (plant: Plant): string => {
 };
 
 export function useDashboardData() {
-    const { getRawGeneration, getDailyGeneration, getHourlyHydrogenProduction, getWeeklyProduction, getWeeklyHydrogenRange, getWeeklyHydrogenPredictRange, getMonthlyHydrogenProduction } = useGeneration();
+    const { getRawGeneration, getDailyGeneration, getHourlyHydrogenProduction, getWeeklyProduction, getWeeklyHydrogenRange, getWeeklyHydrogenPredictRange, getMonthlyHydrogenProduction, getDailyHydrogenPredict } = useGeneration();
     const orgId = useAuthStore((state) => state.orgId);
     const [activeTimeFrame, setActiveTimeFrame] = useState<TimeFrame>("daily");
     const [selectedPlant, setSelectedPlant] = useState<Plant>("plant1");
@@ -41,6 +41,7 @@ export function useDashboardData() {
     const [weeklyHydrogenPredictData, setWeeklyHydrogenPredictData] = useState<any[]>([]); // 주간 수소 생산량 예측 데이터
     const [monthlyHydrogenProductionData, setMonthlyHydrogenProductionData] = useState<any[]>([]); // 월간 수소 생산량 데이터
     const [monthlyHydrogenPredictData, setMonthlyHydrogenPredictData] = useState<any[]>([]); // 월간 수소 생산량 예측 데이터
+    const [dailyHydrogenPredictData, setDailyHydrogenPredictData] = useState<any[]>([]); // 일간 수소 생산량 예측 데이터
     const [currentHour, setCurrentHour] = useState(new Date().getHours());
     const [currentDate, setCurrentDate] = useState(new Date().toISOString().split('T')[0]);
     const [lastUpdateTime, setLastUpdateTime] = useState<Date | null>(null);
@@ -67,12 +68,13 @@ export function useDashboardData() {
             const yesterday = new Date(now);
             yesterday.setDate(now.getDate() - 1);
             const yesterdayString = yesterday.toISOString().split('T')[0];
-            // 오늘과 전일 데이터, 수소 생산량, 설비 정보를 병렬로 조회
-            const [todayResult, yesterdayResult, hourlyHydrogenProduction, facilitiesData] = await Promise.all([
+            // 오늘과 전일 데이터, 수소 생산량, 설비 정보, 일간 수소 생산 예측 데이터를 병렬로 조회
+            const [todayResult, yesterdayResult, hourlyHydrogenProduction, facilitiesData, dailyHydrogenPredictResult] = await Promise.all([
                 getRawGeneration(today, today),
                 getRawGeneration(yesterdayString, yesterdayString),
                 getHourlyHydrogenProduction(),
                 getFacilityListApi(orgId?.toString()), // 설비 정보 조회 (orgId 전달)
+                getDailyHydrogenPredict(orgId?.toString() || "2", today, today), // 일간 수소 생산 예측 데이터 조회
             ]);
 
             if (todayResult) {
@@ -97,6 +99,14 @@ export function useDashboardData() {
             } else {
                 console.log("❌ 설비 정보 없음");
                 setFacilities({data: [], success: false});
+            }
+
+            if (dailyHydrogenPredictResult) {
+                setDailyHydrogenPredictData(dailyHydrogenPredictResult);
+                console.log("✅ 일간 수소 생산 예측 데이터 설정 완료:", dailyHydrogenPredictResult);
+            } else {
+                console.log("❌ 일간 수소 생산 예측 데이터 없음");
+                setDailyHydrogenPredictData([]);
             }
 
 
@@ -127,17 +137,61 @@ export function useDashboardData() {
                 console.log("❌ 주간 수소 데이터 없음");
             }
 
-            // 주간 수소 생산량 예측 데이터 조회 (주차별 예측 데이터)
+            // 주간 수소 생산량 예측 데이터 조회 (일별 예측 데이터를 주간으로 집계)
             try {
-                const weeklyHydrogenPredictResult = await getWeeklyHydrogenPredictRange(orgId?.toString() || "2");
-                console.log("🔍 주간 수소 생산량 예측 데이터:", weeklyHydrogenPredictResult);
-                if (weeklyHydrogenPredictResult && Array.isArray(weeklyHydrogenPredictResult)) {
-                    weeklyHydrogenPredictResult.forEach((item, index) => {
-                        console.log(`  [${index}] year: ${item.year}, month: ${item.month}, weekOfMonth: ${item.weekOfMonth}, weekLabel: ${item.weekLabel}, totalPredictedKg: ${item.totalPredictedKg}`);
+                console.log("🔍 주간 수소 생산량 예측 데이터 조회 시작 - orgId:", orgId?.toString() || "2");
+                const weeklyHydrogenPredictResult = await getPredictRangeDataApi(startDate, endDate);
+                console.log("🔍 주간 수소 생산량 예측 데이터 조회 결과:", weeklyHydrogenPredictResult);
+                console.log("🔍 주간 수소 생산량 예측 데이터 타입:", typeof weeklyHydrogenPredictResult);
+                console.log("🔍 주간 수소 생산량 예측 데이터 배열 여부:", Array.isArray(weeklyHydrogenPredictResult));
+                console.log("🔍 주간 수소 생산량 예측 데이터 길이:", weeklyHydrogenPredictResult?.length);
+                
+                if (weeklyHydrogenPredictResult && Array.isArray(weeklyHydrogenPredictResult) && weeklyHydrogenPredictResult.length > 0) {
+                    // 사용자의 orgId에 맞는 데이터만 필터링
+                    const userOrgId = parseInt(orgId?.toString() || "2");
+                    const filteredData = weeklyHydrogenPredictResult.filter((item: any) => item.orgid === userOrgId);
+                    
+                    console.log("🔍 주간 수소 생산량 예측 데이터 상세 (필터링 후):");
+                    console.log("📊 전체 데이터 개수:", weeklyHydrogenPredictResult.length);
+                    console.log("📊 필터링된 데이터 개수:", filteredData.length);
+                    console.log("📊 사용자 orgId:", userOrgId);
+                    
+                    // 주간별 집계 계산
+                    const weeklyPredictions: { [weekKey: string]: number } = {};
+                    
+                    filteredData.forEach((item: any, index: number) => {
+                        console.log(`  [${index}] item:`, item);
+                        if (item.ts) {
+                            const date = new Date(item.ts);
+                            const weekKey = `${date.getFullYear()}-W${String(Math.ceil(date.getDate() / 7)).padStart(2, '0')}`;
+                            if (!weeklyPredictions[weekKey]) {
+                                weeklyPredictions[weekKey] = 0;
+                            }
+                            // 예측 데이터의 생산량 합산 (predictedmaxkg 필드 사용)
+                            const predictedKg = item.predictedmaxkg || 0;
+                            weeklyPredictions[weekKey] += predictedKg;
+                        } else {
+                            console.log(`    [${index}] ts 필드가 없음:`, item);
+                        }
                     });
-                    setWeeklyHydrogenPredictData(weeklyHydrogenPredictResult)
+                    
+                    console.log("🔍 주간별 집계 결과:", weeklyPredictions);
+                    
+                    // 주간별 예측 데이터를 배열로 변환
+                    const weeklyPredictData = Object.keys(weeklyPredictions).map(weekKey => {
+                        const [year, week] = weekKey.split('-W');
+                        return {
+                            year: parseInt(year),
+                            week: parseInt(week),
+                            totalPredictedKg: weeklyPredictions[weekKey]
+                        };
+                    });
+                    
+                    console.log("🔍 최종 주간별 예측 데이터:", weeklyPredictData);
+                    setWeeklyHydrogenPredictData(weeklyPredictData);
                 } else {
-                    console.log("❌ 주간 수소 생산량 예측 데이터 없음");
+                    console.log("❌ 주간 수소 생산량 예측 데이터 없음 또는 배열이 아님");
+                    console.log("❌ weeklyHydrogenPredictResult:", weeklyHydrogenPredictResult);
                     setWeeklyHydrogenPredictData([]);
                 }
             } catch (error) {
@@ -146,7 +200,6 @@ export function useDashboardData() {
             }
 
             // 모든 발전소의 주간 데이터를 개별적으로 조회
-            console.log("🔍 주간 데이터 조회 시작 - 기간:", startDate, "~", endDate);
             const [weeklyPlant1Result, weeklyPlant2Result, weeklyPlant3Result] = await Promise.all([
                 getDailyGeneration('plt001', startDate, endDate),
                 getDailyGeneration('plt002', startDate, endDate),
@@ -201,12 +254,6 @@ export function useDashboardData() {
             }
             setWeeklyData(selectedWeeklyData);
 
-            console.log("🔍 주간 데이터 조회 결과:");
-            console.log("  - Plant1 데이터 개수:", processedWeeklyPlant1Data.length);
-            console.log("  - Plant2 데이터 개수:", processedWeeklyPlant2Data.length);
-            console.log("  - Plant3 데이터 개수:", processedWeeklyPlant3Data.length);
-            console.log("  - 선택된 발전소 데이터 개수:", selectedWeeklyData.length);
-
             // 월간 데이터도 함께 조회 (현재 월 + 지난 월)
             const startOfCurrentMonth = new Date(now);
             startOfCurrentMonth.setDate(1);
@@ -232,20 +279,14 @@ export function useDashboardData() {
 
             // 월간 수소 생산량 데이터 조회
             try {
-                console.log("🔍 월간 수소 데이터 조회 시작 - 기간:", startDateOfMonth, "~", endDateOfMonth);
                 const monthlyHydrogenProduction = await getWeeklyHydrogenRange(orgId?.toString() || "2", startDateOfMonth, endDateOfMonth);
-                console.log("🔍 월간 수소 데이터 조회 결과:", monthlyHydrogenProduction);
-                console.log("🔍 월간 수소 데이터 개수:", monthlyHydrogenProduction?.length || 0);
                 
                 if (Array.isArray(monthlyHydrogenProduction) && monthlyHydrogenProduction.length > 0) {
                     setMonthlyHydrogenProductionData(monthlyHydrogenProduction);
-                    console.log("✅ 월간 수소 데이터 설정 완료");
                 } else {
                     setMonthlyHydrogenProductionData([]);
-                    console.log("❌ 월간 수소 데이터 없음");
                 }
             } catch (error) {
-                console.log("❌ 월간 수소 데이터 조회 실패:", error);
                 setMonthlyHydrogenProductionData([]);
             }
 
@@ -253,36 +294,58 @@ export function useDashboardData() {
             try {
                 const now = new Date();
                 const currentYear = now.getFullYear();
-                const currentMonth = now.getMonth() + 1;
+                const currentMonth = now.getMonth(); // 이전 달 데이터를 조회하기 위해 현재 월 그대로 사용
                 
                 // 해당 달의 1일과 마지막 날 계산
-                const firstDayOfMonth = new Date(currentYear, currentMonth - 1, 1);
-                const lastDayOfMonth = new Date(currentYear, currentMonth, 0);
+                const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+                const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
+
+                console.log("🔍 월간 예측 데이터 조회 기간:", firstDayOfMonth, "~", lastDayOfMonth);
                 
-                const startDateOfMonth = firstDayOfMonth.toISOString().split('T')[0] + "T00:00:00";
-                const endDateOfMonth = lastDayOfMonth.toISOString().split('T')[0] + "T23:59:59";
                 
-                console.log("🔍 월간 예측 데이터 조회 기간:", startDateOfMonth, "~", endDateOfMonth);
+                // console.log("🔍 월간 예측 데이터 조회 기간:", startDateOfMonth, "~", endDateOfMonth);
                 
                 // 해당 달의 일자별 예측 데이터 조회
-                const monthlyHydrogenPredictResult = await getHydrogenPredictApi(orgId?.toString() || "2", startDateOfMonth, endDateOfMonth);
-                console.log("🔍 월간 수소 생산량 예측 데이터 (일자별):", monthlyHydrogenPredictResult);
+                // console.log("🔍 월간 예측 데이터 API 호출 시작 - orgId:", orgId?.toString() || "2");
+                // console.log("🔍 API 파라미터 - startDateOfMonth:", startDateOfMonth, "endDateOfMonth:", endDateOfMonth);
                 
-                if (monthlyHydrogenPredictResult && Array.isArray(monthlyHydrogenPredictResult)) {
+                const monthlyHydrogenPredictResult = await getPredictRangeDataApi(
+                    firstDayOfMonth.toISOString().split('T')[0], 
+                    lastDayOfMonth.toISOString().split('T')[0]
+                );
+                // console.log("🔍 월간 수소 생산량 예측 데이터 (일자별):", monthlyHydrogenPredictResult);
+                // console.log("🔍 월간 예측 데이터 타입:", typeof monthlyHydrogenPredictResult);
+                // console.log("🔍 월간 예측 데이터 배열 여부:", Array.isArray(monthlyHydrogenPredictResult));
+                // console.log("🔍 월간 예측 데이터 길이:", monthlyHydrogenPredictResult?.length);
+                
+                if (monthlyHydrogenPredictResult && Array.isArray(monthlyHydrogenPredictResult) && monthlyHydrogenPredictResult.length > 0) {
+                    // 사용자의 orgId에 맞는 데이터만 필터링
+                    const userOrgId = parseInt(orgId?.toString() || "2");
+                    const filteredData = monthlyHydrogenPredictResult.filter((item: any) => item.orgid === userOrgId);
+                    
+                    // console.log("🔍 월간 예측 데이터 처리 시작 - 필터링된 데이터 개수:", filteredData.length);
+                    
                     // 일자별 예측 데이터를 월별로 집계
                     const monthlyPredictions: { [monthKey: string]: number } = {};
                     
-                    monthlyHydrogenPredictResult.forEach((item: any) => {
+                    filteredData.forEach((item: any, index: number) => {
+                        console.log(`  [${index}] item:`, item);
                         if (item.ts) {
                             const date = new Date(item.ts);
                             const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
                             if (!monthlyPredictions[monthKey]) {
                                 monthlyPredictions[monthKey] = 0;
                             }
-                            // 예측 데이터의 생산량 합산 (predictedMaxKg 필드 사용)
-                            monthlyPredictions[monthKey] += item.predictedMaxKg || 0;
+                            // 예측 데이터의 생산량 합산 (predictedmaxkg 필드 사용)
+                            const predictedKg = item.predictedmaxkg || 0;
+                            monthlyPredictions[monthKey] += predictedKg;
+                            // console.log(`    월별 집계: ${monthKey} += ${predictedKg}kg (총합: ${monthlyPredictions[monthKey]}kg)`);
+                        } else {
+                            console.log(`    [${index}] ts 필드가 없음:`, item);
                         }
                     });
+                    
+                    console.log("🔍 월별 집계 결과:", monthlyPredictions);
                     
                     // 월별 예측 데이터를 배열로 변환
                     const monthlyPredictData = Object.keys(monthlyPredictions).map(monthKey => {
@@ -294,10 +357,11 @@ export function useDashboardData() {
                         };
                     });
                     
-                    console.log("🔍 월별 집계된 예측 데이터:", monthlyPredictData);
+                    console.log("🔍 최종 월별 예측 데이터:", monthlyPredictData);
                     setMonthlyHydrogenPredictData(monthlyPredictData);
                 } else {
-                    console.log("❌ 월간 수소 생산량 예측 데이터 없음");
+                    console.log("❌ 월간 수소 생산량 예측 데이터 없음 또는 배열이 아님");
+                    console.log("❌ monthlyHydrogenPredictResult:", monthlyHydrogenPredictResult);
                     setMonthlyHydrogenPredictData([]);
                 }
             } catch (error) {
@@ -312,7 +376,7 @@ export function useDashboardData() {
         } finally {
             setIsUpdating(false);
         }
-    }, [getRawGeneration, getDailyGeneration, getHourlyHydrogenProduction, getWeeklyProduction, getWeeklyHydrogenRange, getWeeklyHydrogenPredictRange, getMonthlyHydrogenProduction, selectedPlant, orgId, isUpdating]);
+    }, [getRawGeneration, getDailyGeneration, getHourlyHydrogenProduction, getWeeklyProduction, getWeeklyHydrogenRange, getWeeklyHydrogenPredictRange, getMonthlyHydrogenProduction, getDailyHydrogenPredict, selectedPlant, orgId, isUpdating]);
 
     // refreshData 함수가 변경될 때마다 ref 업데이트
     useEffect(() => {
@@ -375,7 +439,10 @@ export function useDashboardData() {
         // 월간 데이터
         monthlyData,
         monthlyHydrogenProductionData,
-        monthlyHydrogenPredictData, // 월간 수소 생산량 예측 데이터 추가
+        monthlyHydrogenPredictData, // 월간 수소 생산량 예측 데이터
+
+        // 일간 데이터
+        dailyHydrogenPredictData, // 일간 수소 생산량 예측 데이터 추가
 
         // 액션
         setActiveTimeFrame,

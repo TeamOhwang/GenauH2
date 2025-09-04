@@ -74,29 +74,37 @@ export async function getWeeklyHydrogenRangeApi(orgId: string, startDate: string
 // 주차별 수소 생산량 예측 데이터 조회
 export async function getWeeklyHydrogenPredictRangeApi(orgId: string) {
     try {
-        console.log("🔍 API 호출 시작 - getWeeklyHydrogenPredictRangeApi");
-        console.log("🔍 API URL:", `/predict/weekly-production/${orgId}`);
         
         const res = await apiClient.get(`/predict/weekly-production/${orgId}`);
         
-        console.log("🔍 API 응답 상태:", res.status);
-        console.log("🔍 API 응답 데이터:", res.data);
-        console.log("🔍 API 응답 데이터 타입:", typeof res.data);
-        console.log("🔍 API 응답 데이터 길이:", res.data?.length);
         
         return res.data ?? [];
     } catch (error) {
-        console.error("❌ API 호출 실패 - getWeeklyHydrogenPredictRangeApi:", error);
         throw error;
     }
 }
 
+// 진짜 사용할 수소 생산량 예측 데이터 조회
 export async function getHydrogenPredictApi(orgId: string, start: string, end: string) {
     try {
         const res = await apiClient.get(`${GENERATION_ENDPOINTS.getHydrogenPredict(orgId)}`, { params: { start, end } });
         console.log("🔍 API 응답 데이터:", res.data);
         return res.data ?? [];
     } catch (error) {
+        throw error;
+    }
+}
+
+// 예측 데이터 범위 조회 (날짜 범위로)
+export async function getPredictRangeDataApi(startDate: string, endDate: string) {
+    try {
+        const res = await apiClient.get(GENERATION_ENDPOINTS.getPredictRangeData, { 
+            params: { startDate, endDate } 
+        });
+        console.log("🔍 예측 범위 데이터 API 응답:", res.data);
+        return res.data ?? [];
+    } catch (error) {
+        console.error("❌ 예측 범위 데이터 조회 실패:", error);
         throw error;
     }
 }

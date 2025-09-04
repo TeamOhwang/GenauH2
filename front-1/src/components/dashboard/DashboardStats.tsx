@@ -146,14 +146,8 @@ export default function DashboardStats({ stats, efficiencyData }: DashboardStats
                             </div>
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400">
-                            목표: {currentEfficiencyData.daily.target}kg
+                            목표: {(currentEfficiencyData.daily.target / 1000).toFixed(2)}t
                         </div>
-                        {currentEfficiencyData.daily.details && (
-                            <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                                에너지효율: {currentEfficiencyData.daily.details.energyEfficiency.toFixed(2)} kg/kWh<br/>
-                                가동률: {currentEfficiencyData.daily.details.capacityUtilization.toFixed(1)}%
-                            </div>
-                        )}
                     </div>
 
                     {/* 주간 효율 */}
@@ -189,14 +183,8 @@ export default function DashboardStats({ stats, efficiencyData }: DashboardStats
                             </div>
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400">
-                            목표: {currentEfficiencyData.weekly.target}kg
+                            목표: {(currentEfficiencyData.weekly.target / 1000).toFixed(2)}t
                         </div>
-                        {currentEfficiencyData.weekly.details && (
-                            <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                                일관성: {currentEfficiencyData.weekly.details.consistency.toFixed(1)}%<br/>
-                                안정성: {currentEfficiencyData.weekly.details.stability.toFixed(1)}%
-                            </div>
-                        )}
                     </div>
 
                     {/* 월간 효율 */}
@@ -232,14 +220,8 @@ export default function DashboardStats({ stats, efficiencyData }: DashboardStats
                             </div>
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400">
-                            목표: {currentEfficiencyData.monthly.target}kg
+                            목표: {(currentEfficiencyData.monthly.target / 1000).toFixed(2)}t
                         </div>
-                        {currentEfficiencyData.monthly.details && (
-                            <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                                성장률: {currentEfficiencyData.monthly.details.growth.toFixed(1)}%<br/>
-                                예측정확도: {currentEfficiencyData.monthly.details.predictionAccuracy.toFixed(1)}%
-                            </div>
-                        )}
                     </div>
                 </div>
             </div>
