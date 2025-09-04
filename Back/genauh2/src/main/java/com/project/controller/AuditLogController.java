@@ -25,7 +25,6 @@ import com.project.service.OrganizationService;
 
 @RestController
 @RequestMapping("/admin/audit-logs")
-@CrossOrigin(origins = { "http://115.68.194.84:5174" })
 public class AuditLogController {
 
     @Autowired

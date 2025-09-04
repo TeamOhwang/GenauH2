@@ -35,7 +35,6 @@ import com.project.service.UserCleanupService;
 
 @RestController
 @RequestMapping("/user")
-@CrossOrigin(origins = { "http://115.68.194.84:5174" })
 public class OrganizationController {
 
    @Autowired
