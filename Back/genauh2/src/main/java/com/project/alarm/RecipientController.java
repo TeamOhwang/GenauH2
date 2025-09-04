@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-// 필요 시 CORS 열기: @CrossOrigin(origins = {"http://localhost:5173","http://localhost:5174"})
+// 필요 시 CORS 열기: @CrossOrigin(origins = {"http://http://115.68.194.84:5173","http://http://115.68.194.84:5174"})
 @RestController
 @RequestMapping("/alert")
 @RequiredArgsConstructor

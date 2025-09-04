@@ -34,7 +34,7 @@ const ChangePassword = () => {
             // 토큰 검증
             const validateToken = async () => {
                 try {
-                    const response = await fetch(`http://localhost:8088/gh/user/validate-reset-token/${token}`);
+                    const response = await fetch(`http://115.68.194.84:8088/gh/user/validate-reset-token/${token}`);
                     const data = await response.json();
                     setTokenValid(data.success);
                 } catch (error) {
@@ -75,7 +75,7 @@ const ChangePassword = () => {
         setIsLoading(true);
         try {
             const token = authToken.get();
-            const response = await fetch('http://localhost:8088/gh/user/change-password', {
+            const response = await fetch('http://115.68.194.84:8088/gh/user/change-password', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -118,7 +118,7 @@ const ChangePassword = () => {
 
         setIsLoading(true);
         try {
-            const response = await fetch('http://localhost:8088/gh/user/reset-password', {
+            const response = await fetch('http://115.68.194.84:8088/gh/user/reset-password', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -153,7 +153,7 @@ const ChangePassword = () => {
     const requestPasswordReset = async () => {
         try {
             const token = authToken.get();
-            const response = await fetch('http://localhost:8088/gh/user/request-password-reset', {
+            const response = await fetch('http://115.68.194.84:8088/gh/user/request-password-reset', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`

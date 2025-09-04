@@ -15,7 +15,7 @@ KST = timezone(timedelta(hours=9))
 
 TICK_SECONDS = float(os.getenv("TICK_SECONDS", "2"))
 KAPPA = float(os.getenv("KAPPA", "0.05"))
-ORIGINS = os.getenv("ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
+ORIGINS = os.getenv("ORIGINS", "http://115.68.194.84:5173,http://127.0.0.1:5173")
 FAULT_CODES = [c.strip() for c in os.getenv("FAULT_CODES", "E101,E217,E503").split(",") if c.strip()]
 
 # Single facility spec (from first row in your table)

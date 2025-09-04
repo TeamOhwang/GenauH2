@@ -22,9 +22,9 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       // 1. SockJS 관련 모든 경로를 먼저 처리 (WebSocket + JSONP + 폴백)
-      // 프론트엔드에서 /gh/ws 로 시작하는 모든 요청을 -> 백엔드의 http://localhost:8088/gh/ws 로 프록시
+      // 프론트엔드에서 /gh/ws 로 시작하는 모든 요청을 -> 백엔드의 http://115.68.194.84:8088/gh/ws 로 프록시
       "/gh/ws": {
-        target: "http://localhost:8088",
+        target: "http://115.68.194.84:8088",
         changeOrigin: true,
         secure: false,
         ws: true, // WebSocket 프록시 활성화
@@ -36,16 +36,16 @@ export default defineConfig({
         },
       },
       // 2. WebSocket 관련 REST API 경로 처리 (컨텍스트 경로 /gh 포함)
-      // 프론트엔드에서 /gh/api/websocket 로 요청하면 -> 백엔드의 http://localhost:8088/gh/api/websocket 로 프록시
+      // 프론트엔드에서 /gh/api/websocket 로 요청하면 -> 백엔드의 http://115.68.194.84:8088/gh/api/websocket 로 프록시
       "/gh/api/websocket": {
-        target: "http://localhost:8088",
+        target: "http://115.68.194.84:8088",
         changeOrigin: true,
         secure: false,
       },
       // 3. 일반 API 요청 (컨텍스트 경로 /gh 포함)
-      // 프론트엔드에서 /gh 로 시작하는 다른 요청들을 -> 백엔드의 http://localhost:8088/gh 로 프록시
+      // 프론트엔드에서 /gh 로 시작하는 다른 요청들을 -> 백엔드의 http://115.68.194.84:8088/gh 로 프록시
       "/gh": {
-        target: "http://localhost:8088",
+        target: "http://115.68.194.84:8088",
         changeOrigin: true,
         secure: false,
       },

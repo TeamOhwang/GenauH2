@@ -103,8 +103,8 @@ public class SecurityConfig {
         
         // 허용할 Origin 설정 (정확히 일치해야 함)
         configuration.setAllowedOrigins(Arrays.asList(
-            "http://localhost:5173", 
-            "http://localhost:5174"
+            "http://http://115.68.194.84:5173", 
+            "http://http://115.68.194.84:5174"
         ));
         
         // 허용할 HTTP 메서드
