@@ -34,8 +34,7 @@ export function useFacilityDashboard(
         const date = cur.ts.slice(0, 10); // YYYY-MM-DD
         if (!dailyMap[date]) dailyMap[date] = { production: 0, predicted: 0 };
         dailyMap[date].production += cur.productionKg ?? 0;
-        dailyMap[date].predicted += cur.predictedMaxKg ?? 0;
-      });
+        dailyMap[date].predicted += (cur.predictedMaxKg ?? 0) / 3;      });
 
       const sortedDates = Object.keys(dailyMap).sort();
       const dailyData = sortedDates.map((d) => ({
