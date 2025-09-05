@@ -31,7 +31,7 @@ export default function LoginForm({ loading = false, error, onSubmit }: Props) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col gap-4 w-full max-w-xs"
+      className="flex flex-col gap-4 w-full max-w-xs mx-auto"
     >
       <input
         type="email"
